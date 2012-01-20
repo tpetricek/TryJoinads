@@ -1,0 +1,50 @@
+﻿<span id="title">Welcome</span>
+
+Introducing try joinads
+=======================
+
+This web site
+
+Introducing joinads
+-------------------
+
+Joinads is an
+
+    type Tree = Node
+    type MaybeBuilder() =
+      member x.Bind(v, f) = Option.bind f v
+      member x.Return(a) = Some a
+      member x.ReturnFrom(o) = o
+      member x.Fail() = None
+
+Publicatons
+-----------
+
+See our great pappers.
+
+Programming with joinads
+------------------------
+
+see the following nice
+
+ * Programming with option values
+
+ * Joinads and asynchronous workflows
+
+ * User-interfacce programming with events
+
+ * Joins
+
+ * Parsers
+
+ * Tasks
+
+Implementing joinads
+--------------------
+
+see the following nice
+
+ * Options
+ * Async
+ * Parsers
+

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+# Copyright (c) 2010 Microsoft Corporation. 
+#
+# You must not remove this notice, or any other, from this software.
+-->
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <!-- Default library locations  -->
+    <SilverlightRefAssembliesPath Condition="Exists('C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0')">C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0</SilverlightRefAssembliesPath>
+    <SilverlightRefAssembliesPath Condition="Exists('C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0')">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0</SilverlightRefAssembliesPath>
+    <!-- Default library locations (Relative to TryFSharpSourceRoot)  -->
+    <FSharpSilverlightAssembliesPath>$(SamplesRoot)\..\..\Debug\Silverlight\4.0\Compiler\Bin</FSharpSilverlightAssembliesPath>
+  </PropertyGroup>
+
+</Project>

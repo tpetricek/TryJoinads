@@ -1,0 +1,70 @@
+<h1>Implementing option joinad</h1>
+
+<p>aIn this article</p>
+
+<pre class="runnable">type MaybeBuilder() =
+  member x.Bind(v, f) = Option.bind f v
+  member x.Return(a) = Some a
+  member x.ReturnFrom(o) = o
+  member x.Fail() = None<br /><button onclick="loadCode('type MaybeBuilder() =\r\n  member x.Bind(v, f) = Option.bind f v\r\n  member x.Return(a) = Some a\r\n  member x.ReturnFrom(o) = o\r\n  member x.Fail() = None');"></button></pre>
+
+<p>and</p>
+
+<pre class="runnable">type MaybeBuilder() =
+  (...)
+  // Combine two options into option of tuple 
+  member x.Merge(v1, v2) = 
+    match v1, v2 with
+    | Some a, Some b -&gt; Some (a, b)
+    | _ -&gt; None
+  // Return first option that contains value
+  member x.Choose(v1, v2) = 
+    match v1 with 
+    | Some(v1) -&gt; Some(v1) 
+    | _ -&gt; v2
+
+  // Creating &amp; executing delayed computations
+  member x.Delay(f) = f
+  member x.Run(f) = f()<br /><button onclick="loadCode('type MaybeBuilder() =\r\n  (...)\r\n  // Combine two options into option of tuple \r\n  member x.Merge(v1, v2) = \r\n    match v1, v2 with\r\n    | Some a, Some b -\u003e Some (a, b)\r\n    | _ -\u003e None\r\n  // Return first option that contains value\r\n  member x.Choose(v1, v2) = \r\n    match v1 with \r\n    | Some(v1) -\u003e Some(v1) \r\n    | _ -\u003e v2\r\n\r\n  // Creating \u0026 executing delayed computations\r\n  member x.Delay(f) = f\r\n  member x.Run(f) = f()');"></button></pre>
+
+<p>then</p>
+
+<pre class="runnable">// Create an instance of the computation builder
+let maybe = new MaybeBuilder()<br /><button onclick="loadCode('// Create an instance of the computation builder\r\nlet maybe = new MaybeBuilder()');"></button></pre>
+
+<p>// --------------------------------------------------------------------------------------</p>
+
+<p>/// Logical 'or' operator for ternary (Kleene) logic
+let kleeneOr a b = maybe {
+  match! a, b with
+  | !true, <em> -> return true
+  | </em>, !true -> return true 
+  | !a, !b -> return a || b }</p>
+
+<p>// Print truth table for the ternary operator
+for a in [Some true; None; Some false] do
+  for b in [Some true; None; Some false] do
+    printfn "%A or %A = %A" a b (kleeneOr a b)</p>
+
+<p>// --------------------------------------------------------------------------------------</p>
+
+<p>let a = Some true
+let b = Some true</p>
+
+<p>// Translation of individual clauses - inputs are combined 
+// using 'Merge' and body is wrapped using 'Delay'
+let cl1 = maybe.Bind(a, function 
+  | true -> maybe.Return(maybe.Delay(fun () -> maybe.Return(true)))
+  | <em> -> maybe.Fail() )
+let cl2 = maybe.Bind(b, function 
+  | true -> maybe.Return(maybe.Delay(fun () -> maybe.Return(true)))
+  | </em> -> maybe.Fail() )
+let cl3 = maybe.Bind(maybe.Merge(a, b), fun (a, b) -> 
+  maybe.Return(maybe.Delay(fun () -> maybe.Return(true))))</p>
+
+<p>// Clauses are combined using 'Choose' and selected
+// delayed clause is then evaluated using 'Run'
+maybe.Bind(maybe.Choose(maybe.Choose(cl1, cl2), cl3), fun r -> 
+  maybe.Run(r))</p>
+
+<p>// --------------------------------------------------------------------------------------</p>

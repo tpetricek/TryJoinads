@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0C8403FB-8A70-469B-9250-41B8EE4ADC9F}"
+	ProjectSection(SolutionItems) = preProject
+		build.fsx = build.fsx
+		Maybe.fsx = Maybe.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{5F357B68-8172-4CA3-B762-A74E76690F54}"
+	ProjectSection(SolutionItems) = preProject
+		documents\intro.text = documents\intro.text
+		documents\options.text = documents\options.text
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{66DC0390-1540-43F2-ABC2-25B0D78482F6}"
+	ProjectSection(SolutionItems) = preProject
+		output\fsi.html = output\fsi.html
+		output\index.html = output\index.html
+		output\script.js = output\script.js
+		output\silverlight.js = output\silverlight.js
+		output\splitter.js = output\splitter.js
+		output\style.css = output\style.css
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

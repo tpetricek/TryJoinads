@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+# Copyright (c) 2010 Microsoft Corporation. 
+#
+# You must not remove this notice, or any other, from this software.
+-->
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SamplesRoot>.</SamplesRoot>
+  </PropertyGroup>
+  <Import Project="$(SamplesRoot)\Samples.Settings.targets" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{ef7dec4f-f138-4850-9f05-a518a7ba2350}</ProjectGuid>
+    <ProjectTypeGuids>{A1591282-1198-4647-A2B1-27E5FF5F6F3B};{f2a71f9b-5d33-465a-a702-920d77279786}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Samples.ConsoleApp</RootNamespace>
+    <AssemblyName>Samples.ConsoleApp</AssemblyName>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <SilverlightApplication>true</SilverlightApplication>
+    <SupportedCultures>
+    </SupportedCultures>
+    <XapOutputs>true</XapOutputs>
+    <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
+    <XapFilename>Samples.ConsoleApp.xap</XapFilename>
+    <SilverlightManifestTemplate>AppManifest.xml</SilverlightManifestTemplate>
+    <SilverlightAppEntry>Samples.ConsoleApp.App</SilverlightAppEntry>
+    <TestPageFileName>ConsoleAppTestPage.html</TestPageFileName>
+    <CreateTestPage>true</CreateTestPage>
+    <ValidateXaml>true</ValidateXaml>
+    <EnableOutOfBrowser>false</EnableOutOfBrowser>
+    <OutOfBrowserSettingsFile>Properties\OutOfBrowserSettings.xml</OutOfBrowserSettingsFile>
+    <UsePlatformExtensions>false</UsePlatformExtensions>
+    <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+    <LinkedServerProject>
+    </LinkedServerProject>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.Common.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{A1591282-1198-4647-A2B1-27E5FF5F6F3B}">
+        <SilverlightProjectProperties />
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <ItemGroup>
+    <None Include="AppManifest.xml" />
+    <Resource Include="App.xaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="ConsoleContextMenu.xaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="ConsoleControl.xaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Compile Include="RichTextTool.fs" />
+    <Compile Include="CompilerStreams.fs" />
+    <Compile Include="ConsoleControl.xaml.fs" />
+    <Compile Include="App.xaml.fs" />
+    <Content Include="$(SilverlightRefAssembliesPath)\mscorlib.dll">
+      <Link>mscorlib.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.Core.dll">
+      <Link>System.Core.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\system.dll">
+      <Link>system.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.Net.dll">
+      <Link>System.Net.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.Runtime.Serialization.dll">
+      <Link>System.Runtime.Serialization.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.ServiceModel.dll">
+      <Link>System.ServiceModel.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.ServiceModel.Web.dll">
+      <Link>System.ServiceModel.Web.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.Windows.Browser.dll">
+      <Link>System.Windows.Browser.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.Windows.dll">
+      <Link>System.Windows.dll</Link>
+    </Content>
+    <Content Include="$(SilverlightRefAssembliesPath)\System.Xml.dll">
+      <Link>System.Xml.dll</Link>
+    </Content>
+    <Content Include="$(FSharpSilverlightAssembliesPath)\FSharp.Core.optdata">
+      <Link>FSharp.Core.optdata</Link>
+    </Content>
+    <Content Include="$(FSharpSilverlightAssembliesPath)\FSharp.Core.sigdata">
+      <Link>FSharp.Core.sigdata</Link>
+    </Content>
+    <Resource Include="Images\Reset.png" />
+    <Resource Include="Images\Copy.png" />
+    <Resource Include="Images\Cut.png" />
+    <Resource Include="Images\Paste.png" />
+    <Resource Include="Images\Delete.png" />
+    <Content Include="init.fsx" />
+    <Content Include="$(FSharpSilverlightAssembliesPath)\FSharp.Core.dll">
+      <Link>FSharp.Core.dll</Link>
+    </Content>
+    <Content Include="$(FSharpSilverlightAssembliesPath)\FSharp.Core.xml">
+      <Link>FSharp.Core.xml</Link>
+    </Content>
+    <Content Include="$(FSharpSilverlightAssembliesPath)\FSharp.Compiler.Silverlight.dll">
+      <Link>FSharp.Compiler.Silverlight.dll</Link>
+    </Content>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=1.9.9.999, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="FSharp.Compiler.Silverlight, Version=1.9.9.999, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="System.ComponentModel.DataAnnotations, Version=2.0.5.0, Culture=neutral, PublicKeyToken=ddd0da4d3e678217" />
+    <Reference Include="System.Windows" />
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Windows.Controls, Version=2.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Windows.Browser" />
+  </ItemGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+  <PropertyGroup>
+    <PostBuildEvent>copy /y "$(ProjectDir)bin\$(ConfigurationName)\Samples.ConsoleApp.xap" "$(ProjectDir)..\Samples.Web\ClientBin\Samples.ConsoleApp.xap"</PostBuildEvent>
+  </PropertyGroup>
+</Project>

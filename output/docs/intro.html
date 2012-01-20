@@ -1,0 +1,42 @@
+<span id="title">Welcome</span>
+
+<h1>Introducing try joinads</h1>
+
+<p>This web site</p>
+
+<h2>Introducing joinads</h2>
+
+<p>Joinads is an</p>
+
+<pre class="runnable">type MaybeBuilder() =
+  member x.Bind(v, f) = Option.bind f v
+  member x.Return(a) = Some a
+  member x.ReturnFrom(o) = o
+  member x.Fail() = None<br /><button onclick="loadCode('type MaybeBuilder() =\r\n  member x.Bind(v, f) = Option.bind f v\r\n  member x.Return(a) = Some a\r\n  member x.ReturnFrom(o) = o\r\n  member x.Fail() = None');"></button></pre>
+
+<h2>Publicatons</h2>
+
+<p>See our great pappers.</p>
+
+<h2>Programming with joinads</h2>
+
+<p>see the following nice</p>
+
+<ul>
+<li><p>Programming with option values</p></li>
+<li><p>Joinads and asynchronous workflows</p></li>
+<li><p>User-interfacce programming with events</p></li>
+<li><p>Joins</p></li>
+<li><p>Parsers</p></li>
+<li><p>Tasks</p></li>
+</ul>
+
+<h2>Implementing joinads</h2>
+
+<p>see the following nice</p>
+
+<ul>
+<li>Options</li>
+<li>Async</li>
+<li>Parsers</li>
+</ul>

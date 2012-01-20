@@ -1,0 +1,279 @@
+/* ---------------------------------- layout ---------------------------------- */
+body, html { 
+  margin:0px; 
+  padding:0px; 
+  overflow:hidden;
+} 
+
+div#header {
+  height:60px;
+  background:white;
+}
+
+div#wrapper {
+  height: 500px;
+  margin:0px 20px 0px 20px;
+}
+
+div#left, div#right {  
+  overflow:hidden; 
+} 
+
+.vsplitbar {
+	width: 25px;
+	background-image:url('img/divider.png');
+	background-position:center;
+	background-repeat:no-repeat;
+}
+
+/* footer */
+
+div#footer {
+  padding:25px 0px 0px 30px;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:60%;
+  color:#606060;
+}
+
+div#footer .block {
+  float:left;
+  margin-right:30px;
+}
+
+div#footer a:link, div#footer a:visited {
+  color:#2050e0;
+  text-decoration:none;
+}
+div#footer a:hover {
+  color:#2050e0;
+  text-decoration:underline;
+}
+
+/* ---------------------------------- rounded corners ---------------------------------- */
+
+#corner_tl {
+  position:absolute;
+  left:0px;
+  top:0px;
+  background:url('img/corner_tl.png');
+  width:4px;
+  height:3px;
+}
+#corner_tr {
+  position:absolute;
+  right:0px;
+  top:0px;
+  background:url('img/corner_tr.png');
+  width:4px;
+  height:3px;
+}
+#corner_bl {
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background:url('img/corner_bl.png');
+  width:4px;
+  height:3px;
+}
+#corner_br {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  background:url('img/corner_br.png');
+  width:4px;
+  height:3px;
+}
+
+#ddcorner_tl {
+  position:absolute;
+  left:0px;
+  top:0px;
+  background:url('img/ddcorner_tl.png');
+  width:4px;
+  height:3px;
+}
+#ddcorner_tr {
+  position:absolute;
+  right:0px;
+  top:0px;
+  background:url('img/ddcorner_tr.png');
+  width:4px;
+  height:3px;
+}
+#ddcorner_bl {
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background:url('img/ddcorner_bl.png');
+  width:4px;
+  height:3px;
+}
+#ddcorner_br {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  background:url('img/ddcorner_br.png');
+  width:4px;
+  height:3px;
+}
+
+#dcorner_tl {
+  position:absolute;
+  left:0px;
+  top:0px;
+  background:url('img/dcorner_tl.png');
+  width:4px;
+  height:3px;
+}
+#dcorner_tr {
+  position:absolute;
+  right:0px;
+  top:0px;
+  background:url('img/dcorner_tr.png');
+  width:4px;
+  height:3px;
+}
+#dcorner_bl {
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background:url('img/dcorner_bl.png');
+  width:4px;
+  height:3px;
+}
+#dcorner_br {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  background:url('img/dcorner_br.png');
+  width:4px;
+  height:3px;
+}
+
+/* ---------------------------------- panels ---------------------------------- */
+
+div#content_title {
+  background:#70879a;
+  height:23px;
+  padding:7px 0px 0px 10px;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:90%;
+  color:White;
+}
+div#content {  
+  overflow:auto; 
+  overflow-y:scroll;
+  border:1px solid #70879a;
+  background:#f4f8f8;
+  padding:20px;
+} 
+
+/* placeholder stuff in the right panel */
+
+div#slplaceholder {
+  background:#4c667c;
+  padding:60px 60px 20px 60px;
+  text-align:center;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:90%;
+  color:White;
+}
+
+div#loadbutton {
+  background:#709cc4;
+  position:relative;
+  width:200px;
+  margin:60px auto 0px auto;
+  padding:5px;
+}
+
+div#slplaceholder a {
+  color:white;
+  font-size:90%;
+  text-decoration:none;
+}
+
+#info {
+  color:White;
+  font-size:90%;
+}
+
+#info h1 {
+  font-family:Gudea, Verdana, Verdana, Geneva, sans-serif;
+  margin:0px 0px 10px 0px;
+  font-size:170%;
+}
+
+#info p {
+  margin:15px 0px 0px 0px;
+}
+#info p a {
+  color:#c0d0ff;
+}
+
+/* ---------------------------------- header ---------------------------------- */
+
+@font-face {
+  font-family: 'Gudea';
+  font-style: normal;
+  font-weight: 400;
+  src: url('gudea.eot');
+}
+
+#header h1 {
+  font-family:Gudea, Verdana, Verdana, Geneva, sans-serif;
+  font-weight:normal;
+  margin-left:25px;
+  color:#4c667c;
+}
+
+#header h1 small
+{
+  font-size:60%;
+  margin-left:40px;
+}
+
+/* ---------------------------------- text style ---------------------------------- */
+
+.content {  
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:80%;
+}
+
+.content h1 {
+  margin:0px 0px 10px 0px;
+  color:#707070;
+  font-size:160%;
+  font-family:Gudea, Verdana, Verdana, Geneva, sans-serif;
+}
+
+.content h2 {
+  margin:15px 0px 5px 0px;
+  color:#707070;
+  font-size:140%;
+  font-family:Gudea, Verdana, Verdana, Geneva, sans-serif;
+}
+
+.content pre {
+  margin:15px 0px 0px 20px;
+  border:1px solid #70879a;
+  background:white;
+  padding:7px;
+}
+
+.content pre.runnable {
+  padding-bottom:40px;
+}
+.content pre.runnable button {
+  background:url('img/load.png');
+  width:53px;
+  height:20px;
+  margin:10px 0px 0px 15px;
+  border-style:none;
+  float:left;
+  cursor:pointer;
+}
+
+.content p {
+  margin:15px 0px 0px 0px;
+}

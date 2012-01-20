@@ -1,0 +1,19 @@
+﻿<!--
+<copyright company="Microsoft Corporation">
+    Copyright (c) 2010-2011 Microsoft Corporation. 
+
+    You must not remove this notice, or any other, from this software.
+</copyright>
+-->
+<Application xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+             xmlns:sdk="http://schemas.microsoft.com/winfx/2006/xaml/presentation/sdk" 
+             xmlns:System="clr-namespace:System;assembly=mscorlib" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             mc:Ignorable="d" 
+             x:Class="Samples.ConsoleApp.App"
+             >
+    <Application.Resources>
+    </Application.Resources>
+</Application>
