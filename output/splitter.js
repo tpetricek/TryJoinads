@@ -37,6 +37,7 @@
 	return this.each(function() {
 		var zombie;		// left-behind splitbar for outline resizes
 		function startSplitMouse(evt) {
+      if (args.onstart) args.onstart();
 			if ( opts.outline )
 				zombie = zombie || bar.clone(false).insertAfter(A);
 			panes.css("-webkit-user-select", "none");	// Safari selects A/B text on a move
@@ -55,6 +56,7 @@
 				resplit(newPos);
 		}
 		function endSplitMouse(evt) {
+      if (args.onstop) args.onstop();
 			bar.removeClass(opts.activeClass);
 			var newPos = A._posSplit+evt[opts.eventPos];
 			if ( opts.outline ) {

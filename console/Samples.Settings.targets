@@ -8,10 +8,10 @@
 
   <PropertyGroup>
     <!-- Default library locations  -->
-    <SilverlightRefAssembliesPath Condition="Exists('C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0')">C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0</SilverlightRefAssembliesPath>
-    <SilverlightRefAssembliesPath Condition="Exists('C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0')">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0</SilverlightRefAssembliesPath>
+    <SilverlightRefAssembliesPath Condition="Exists('C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0')">C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0</SilverlightRefAssembliesPath>
+    <SilverlightRefAssembliesPath Condition="Exists('C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0')">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0</SilverlightRefAssembliesPath>
     <!-- Default library locations (Relative to TryFSharpSourceRoot)  -->
-    <FSharpSilverlightAssembliesPath>$(SamplesRoot)\..\..\Debug\Silverlight\4.0\Compiler\Bin</FSharpSilverlightAssembliesPath>
+    <FSharpSilverlightAssembliesPath>compiler</FSharpSilverlightAssembliesPath>
   </PropertyGroup>
 
 </Project>

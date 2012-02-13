@@ -1,42 +1,132 @@
-<span id="title">Welcome</span>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Introduction</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../contentstyle.css" />
+    <script type="text/javascript" src="../tips.js"></script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Introducing joinads</h1>
 
-<h1>Introducing try joinads</h1>
+<p>Joinads is a general-purpose extension of the F# <em>computation expression</em> syntax (also called <em>monadic</em> syntax)
+in F# and is mainly useful for concurrent, parallal and reactive programming. The extension adds a new 
+piece of notation, written <code>match!</code> that can be used to compose computations using <em>non-deterministic choice</em>,
+<em>parallel composition</em> and <em>aliasing</em>.</p>
 
-<p>This web site</p>
+<p>For example, when programming with futures (the <code>Task&lt;T&gt;</code> type), you may want to implement logical "or" operator 
+for tasks that returns <code>true</code> immediately when the first task completes returning <code>true</code>. When programming with 
+events (the <code>IObservable&lt;T&gt;</code> type in .NET), we'd like to wait for the event that happens first. Finally, when 
+programming using agents, we sometimes need to wait only for certain types of messages. All of these problems can 
+be solved, but require the use of (sometimes fairly complicated) functions.</p>
 
-<h2>Introducing joinads</h2>
+<p>Joinads make it possible to solve them directly using the <code>match!</code> syntax. For example, the following snippet
+shows the "or" operator for tasks:</p>
 
-<p>Joinads is an</p>
+<pre class="fssnip runnable">
+<span class="k">open</span> <span onmouseout="hideTip(event, 'ft1', 1)" onmouseover="showTip(event, 'ft1', 1)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft2', 2)" onmouseover="showTip(event, 'ft2', 2)" class="i">Threading</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft3', 3)" onmouseover="showTip(event, 'ft3', 3)" class="i">Tasks</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'ft4', 4)" onmouseover="showTip(event, 'ft4', 4)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft5', 5)" onmouseover="showTip(event, 'ft5', 5)" class="i">Extensions</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft6', 6)" onmouseover="showTip(event, 'ft6', 6)" class="i">Joinads</span>
 
-<pre class="runnable">type MaybeBuilder() =
-  member x.Bind(v, f) = Option.bind f v
-  member x.Return(a) = Some a
-  member x.ReturnFrom(o) = o
-  member x.Fail() = None<br /><button onclick="loadCode('type MaybeBuilder() =\r\n  member x.Bind(v, f) = Option.bind f v\r\n  member x.Return(a) = Some a\r\n  member x.ReturnFrom(o) = o\r\n  member x.Fail() = None');"></button></pre>
+<span class="c">/// Returns a Task that produces the given</span>
+<span class="c">/// value after the specified time</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft7', 7)" onmouseover="showTip(event, 'ft7', 7)" class="i">after</span> (<span onmouseout="hideTip(event, 'ft8', 8)" onmouseover="showTip(event, 'ft8', 8)" class="i">time</span><span class="o">:</span><span onmouseout="hideTip(event, 'ft9', 9)" onmouseover="showTip(event, 'ft9', 9)" class="i">int</span>) <span onmouseout="hideTip(event, 'ft10', 10)" onmouseover="showTip(event, 'ft10', 10)" class="i">res</span> <span class="o">=</span> <span id="ftt11" onmouseout="hideTip(event, 'ft11', 11)" onmouseover="showTip(event, 'ft11', 11, document.getElementById('ftt11'))" class="omitted">(...)</span>
 
-<h2>Publicatons</h2>
+<span class="c">/// Short-circuiting implementation </span>
+<span class="c">/// of the &#39;or&#39; operator for tasks. </span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft12', 12)" onmouseover="showTip(event, 'ft12', 12)" class="i">taskOr</span> <span onmouseout="hideTip(event, 'ft13', 13)" onmouseover="showTip(event, 'ft13', 13)" class="i">t1</span> <span onmouseout="hideTip(event, 'ft14', 14)" onmouseover="showTip(event, 'ft14', 14)" class="i">t2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft15', 15)" onmouseover="showTip(event, 'ft15', 15)" class="i">future</span> {
+  <span class="k">match!</span> <span onmouseout="hideTip(event, 'ft13', 16)" onmouseover="showTip(event, 'ft13', 16)" class="i">t1</span>, <span onmouseout="hideTip(event, 'ft14', 17)" onmouseover="showTip(event, 'ft14', 17)" class="i">t2</span> <span class="k">with</span>
+  | <span class="k">true</span>, <span class="o">?</span> <span class="k">-&gt;</span> <span class="k">return</span> <span class="k">true</span>
+  | <span class="o">?</span>, <span class="k">true</span> <span class="k">-&gt;</span> <span class="k">return</span> <span class="k">true</span>
+  | <span onmouseout="hideTip(event, 'ft16', 18)" onmouseover="showTip(event, 'ft16', 18)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft17', 19)" onmouseover="showTip(event, 'ft17', 19)" class="i">b</span>    <span class="k">-&gt;</span> <span class="k">return</span> <span onmouseout="hideTip(event, 'ft16', 20)" onmouseover="showTip(event, 'ft16', 20)" class="i">a</span> <span class="o">||</span> <span onmouseout="hideTip(event, 'ft17', 21)" onmouseover="showTip(event, 'ft17', 21)" class="i">b</span> }
 
-<p>See our great pappers.</p>
+<span class="c">// Apply &#39;or&#39; to a task that returns true after 100ms</span>
+<span class="c">// and a task that returns false after 2 sec.</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft18', 22)" onmouseover="showTip(event, 'ft18', 22)" class="i">res</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft12', 23)" onmouseover="showTip(event, 'ft12', 23)" class="i">taskOr</span> (<span onmouseout="hideTip(event, 'ft7', 24)" onmouseover="showTip(event, 'ft7', 24)" class="i">after</span> <span class="n">100</span> <span class="k">true</span>) (<span onmouseout="hideTip(event, 'ft7', 25)" onmouseover="showTip(event, 'ft7', 25)" class="i">after</span> <span class="n">2000</span> <span class="k">true</span>)
+<span onmouseout="hideTip(event, 'ft19', 26)" onmouseover="showTip(event, 'ft19', 26)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">\n</span><span class="s">Completed</span><span class="s"> </span><span class="s">with</span><span class="s"> </span><span class="s">result</span><span class="s">:</span><span class="s"> </span><span class="s">%</span><span class="s">b</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'ft18', 27)" onmouseover="showTip(event, 'ft18', 27)" class="i">res</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft20', 28)" onmouseover="showTip(event, 'ft20', 28)" class="i">Result</span><br /><button class="run" onclick='parent.runCode("open System.Threading.Tasks\r\nopen FSharp.Extensions.Joinads\r\n\r\n/// Returns a Task that produces the given\r\n/// value after the specified time\r\nlet after (time:int) res = (*[omit:(...)]*)\r\n  future { System.Threading.Thread.Sleep(time)\r\n           return res }(*[/omit]*)\r\n\r\n/// Short-circuiting implementation \r\n/// of the \u0027or\u0027 operator for tasks. \r\nlet taskOr t1 t2 = future {\r\n  match! t1, t2 with\r\n  | true, ? -\u003e return true\r\n  | ?, true -\u003e return true\r\n  | a, b    -\u003e return a || b }\r\n\r\n// Apply \u0027or\u0027 to a task that returns true after 100ms\r\n// and a task that returns false after 2 sec.\r\nlet res = taskOr (after 100 true) (after 2000 true)\r\nprintfn \"\\nCompleted with result: %b\" res.Result");'></button></pre>
 
-<h2>Programming with joinads</h2>
 
-<p>see the following nice</p>
+<p>The <code>match!</code> notation intentionally resembles pattern matching. However, instead of pattern matching on actual
+values, we are pattern matching on computations of type <code>Task&lt;'T&gt;</code>. The patterns used in the clauses of <code>match!</code>
+can be either normal F# patterns or a special pattern <code>?</code> which specifies that the clause can run even if 
+the value of the corresponding computation is not available.</p>
 
-<ul>
-<li><p>Programming with option values</p></li>
-<li><p>Joinads and asynchronous workflows</p></li>
-<li><p>User-interfacce programming with events</p></li>
-<li><p>Joins</p></li>
-<li><p>Parsers</p></li>
-<li><p>Tasks</p></li>
-</ul>
+<p>In the above example, the last clause specifies that both of the computations have to complete,
+producing <code>bool</code> values <code>a</code> and <code>b</code>. When the clause matches, the result is calculated as <code>a || b</code>.
+The first two clauses are more interesting. For example, the pattern <code>true, ?</code> specifies that
+the first computation should produce <code>true</code>, but the second does not have to finish for the 
+clause to match. As a result, when one of the computations returns <code>true</code>, the <code>match!</code> construct
+does not wait for the other computation and immediately returns <code>true</code>.</p>
 
-<h2>Implementing joinads</h2>
+<p>If you run the above code (run the last two lines separately to get a readable output), then you 
+can see that the task created by <code>taskOr</code> completes after 100ms, even though the second argument
+of <code>taskOr</code> is still running. If you change the result of the first argument to <code>false</code>, the 
+computation needs to wait for the second value, and so it take 2 seconds to complete.</p>
 
-<p>see the following nice</p>
+<h3>Applicative functors</h3>
 
-<ul>
-<li>Options</li>
-<li>Async</li>
-<li>Parsers</li>
-</ul>
+<p>Aside from the support for <em>joinads</em>, the F# interactive console on this site also supports 
+syntax for programming with <em>applicative functors</em> (also called <em>idioms</em>). Applicative
+functors are an abstract notion of computations that is weaker (and thus more common)
+than monads - every monad is an applicative functor, but not all applicative functors
+are monads. For more information about the extensions for applicative functors, see 
+<a href="http://tomasp.net/blog/fsharp-variations-joinads.aspx" title="Variations in F#: Research compiler with Joinads and more!">a blog post that discusses them</a>.</p>
+
+<h2>Joinads in Haskell</h2>
+
+<p>Joinads are an abstract concept that describes what operations are required to implement
+pattern matching on monadic computations. This means that the general idea can be used in
+any programming language.</p>
+
+<p>In addition, languages that already have some syntactic support for writing monadic 
+computations can be extended with a special syntax for joinads. This tutorial shows numerous
+examples of the <code>match!</code> syntax in F#, but there is also an implementation for Haskell.</p>
+
+<p>The Haskell extension is currently available as a <a href="https://github.com/tpetricek/Haskell.Extensions" title="Haskell.Extensions on GitHub">patch on GitHub</a> and you can
+find more information in a <a href="docs/pubs.html">our papers on joinads</a> 
+or in the <a href="http://hackage.haskell.org/trac/ghc/ticket/5429" title="Docase notation as GHC extension">GHC Trac description</a>. Akin to
+the <code>do</code> notation and <code>case</code> construct, the patch adds <code>docase</code> notation, which allows
+pattern matching on monadic computations that implement three additional operation.
+The previous F# example could be written in Haskell as follows:</p>
+
+<pre>taskOr t1 t2 = 
+  docase t1, t2 of
+    True, ? -&gt; return True
+    ?, True -&gt; return True
+    a, b    -&gt; return $ a || b</pre>
+
+<p>The syntax is quite similar to the F# version, but there are several differences. Most notably,
+thanks to type-classes, the above code is polymorphic over the actual joinad - any type that
+implements a couple of involved type-classes can be used with this function.</p>
+
+<div class="navigation">
+
+<p>Next: <a href="pubs.html">Publications</a> | <a href="toc.html">Table of contents</a></p>
+
+</div>
+
+
+    <!-- HTML for Tool Tips -->
+    <div class="tip" id="ft1">namespace System</div>
+<div class="tip" id="ft2">namespace System.Threading</div>
+<div class="tip" id="ft3">namespace System.Threading.Tasks</div>
+<div class="tip" id="ft4">namespace FSharp</div>
+<div class="tip" id="ft5">namespace FSharp.Extensions</div>
+<div class="tip" id="ft6">namespace FSharp.Extensions.Joinads</div>
+<div class="tip" id="ft7">val after : int -&gt; &#39;a -&gt; Task&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.after<br /><em><br /><br />&#160;Returns a Task that produces the given<br />&#160;value after the specified time</em></div>
+<div class="tip" id="ft8">val time : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft9">Multiple items<br />val int : &#39;T -&gt; int (requires member op_Explicit)<br /><br />Full name: Microsoft.FSharp.Core.Operators.int<br /><br />--------------------<br />type int&lt;&#39;Measure&gt; = int<br /><br />Full name: Microsoft.FSharp.Core.int&lt;_&gt;<br />&#160;&#160;type: int&lt;&#39;Measure&gt;<br />&#160;&#160;inherits: System.ValueType<br /><br /><br />--------------------<br />type int = int32<br /><br />Full name: Microsoft.FSharp.Core.int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft10">val res : &#39;a</div>
+<div class="tip" id="ft11">future { System.Threading.Thread.Sleep(time)<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return res }</div>
+<div class="tip" id="ft12">val taskOr : Task&lt;bool&gt; -&gt; Task&lt;bool&gt; -&gt; Task&lt;bool&gt;<br /><br />Full name: TryJoinads.taskOr<br /><em><br /><br />&#160;Short-circuiting implementation <br />&#160;of the &#39;or&#39; operator for tasks. </em></div>
+<div class="tip" id="ft13">val t1 : Task&lt;bool&gt;<br />&#160;&#160;type: Task&lt;bool&gt;<br />&#160;&#160;inherits: Task<br /></div>
+<div class="tip" id="ft14">val t2 : Task&lt;bool&gt;<br />&#160;&#160;type: Task&lt;bool&gt;<br />&#160;&#160;inherits: Task<br /></div>
+<div class="tip" id="ft15">val future : FutureBuilder<br /><br />Full name: FSharp.Extensions.Joinads.TopLevelValues.future</div>
+<div class="tip" id="ft16">val a : bool<br />&#160;&#160;type: bool<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft17">val b : bool<br />&#160;&#160;type: bool<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft18">val res : Task&lt;bool&gt;<br /><br />Full name: TryJoinads.res<br />&#160;&#160;type: Task&lt;bool&gt;<br />&#160;&#160;inherits: Task<br /></div>
+<div class="tip" id="ft19">val printfn : Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="ft20">property Task.Result: bool</div>
+
+  </body>
+  </html>

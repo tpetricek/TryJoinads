@@ -1,20 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0C8403FB-8A70-469B-9250-41B8EE4ADC9F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0C8403FB-8A70-469B-9250-41B8EE4ADC9F}"
 	ProjectSection(SolutionItems) = preProject
 		build.fsx = build.fsx
-		Maybe.fsx = Maybe.fsx
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{5F357B68-8172-4CA3-B762-A74E76690F54}"
 	ProjectSection(SolutionItems) = preProject
+		documents\home.text = documents\home.text
 		documents\intro.text = documents\intro.text
-		documents\options.text = documents\options.text
+		documents\pubs.text = documents\pubs.text
+		documents\toc.text = documents\toc.text
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{66DC0390-1540-43F2-ABC2-25B0D78482F6}"
 	ProjectSection(SolutionItems) = preProject
+		output\contentstyle.css = output\contentstyle.css
 		output\fsi.html = output\fsi.html
 		output\index.html = output\index.html
 		output\script.js = output\script.js
@@ -23,8 +25,56 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{66DC0390-154
 		output\style.css = output\style.css
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharpConsole", "console\FSharpConsole.fsproj", "{EF7DEC4F-F138-4850-9F05-A518A7BA2350}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{842D864E-6FF2-467A-B9FE-0BF78691D988}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "use", "use", "{B0E01907-FBF2-4DF5-BFC4-93D2AC4A3931}"
+	ProjectSection(SolutionItems) = preProject
+		documents\use\agents.text = documents\use\agents.text
+		documents\use\async.text = documents\use\async.text
+		documents\use\joins.text = documents\use\joins.text
+		documents\use\tasks.text = documents\use\tasks.text
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "implement", "implement", "{8867D529-112A-453E-8369-6EA192197D0F}"
+	ProjectSection(SolutionItems) = preProject
+		documents\implement\async.text = documents\implement\async.text
+		documents\implement\options.text = documents\implement\options.text
+		documents\implement\parsers.text = documents\implement\parsers.text
+	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Joinads.Silverlight", "src\FSharp.Joinads.Silverlight\FSharp.Joinads.Silverlight.fsproj", "{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Joinads", "src\FSharp.Joinads\FSharp.Joinads.fsproj", "{3EA40A85-B62B-4FB9-BC96-84910AD34756}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF7DEC4F-F138-4850-9F05-A518A7BA2350}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF7DEC4F-F138-4850-9F05-A518A7BA2350}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF7DEC4F-F138-4850-9F05-A518A7BA2350}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF7DEC4F-F138-4850-9F05-A518A7BA2350}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EA40A85-B62B-4FB9-BC96-84910AD34756}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EA40A85-B62B-4FB9-BC96-84910AD34756}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EA40A85-B62B-4FB9-BC96-84910AD34756}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EA40A85-B62B-4FB9-BC96-84910AD34756}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B0E01907-FBF2-4DF5-BFC4-93D2AC4A3931} = {5F357B68-8172-4CA3-B762-A74E76690F54}
+		{8867D529-112A-453E-8369-6EA192197D0F} = {5F357B68-8172-4CA3-B762-A74E76690F54}
+		{EF7DEC4F-F138-4850-9F05-A518A7BA2350} = {842D864E-6FF2-467A-B9FE-0BF78691D988}
+		{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C} = {842D864E-6FF2-467A-B9FE-0BF78691D988}
+		{3EA40A85-B62B-4FB9-BC96-84910AD34756} = {842D864E-6FF2-467A-B9FE-0BF78691D988}
 	EndGlobalSection
 EndGlobal

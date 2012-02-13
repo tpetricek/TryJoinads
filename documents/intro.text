@@ -1,50 +1,106 @@
-﻿<span id="title">Welcome</span>
-
-Introducing try joinads
-=======================
-
-This web site
+﻿> Introduction
 
 Introducing joinads
--------------------
+===================
 
-Joinads is an
+Joinads is a general-purpose extension of the F# _computation expression_ syntax (also called _monadic_ syntax)
+in F# and is mainly useful for concurrent, parallal and reactive programming. The extension adds a new 
+piece of notation, written `match!` that can be used to compose computations using _non-deterministic choice_,
+_parallel composition_ and _aliasing_.
 
-    type Tree = Node
-    type MaybeBuilder() =
-      member x.Bind(v, f) = Option.bind f v
-      member x.Return(a) = Some a
-      member x.ReturnFrom(o) = o
-      member x.Fail() = None
+For example, when programming with futures (the `Task<T>` type), you may want to implement logical "or" operator 
+for tasks that returns `true` immediately when the first task completes returning `true`. When programming with 
+events (the `IObservable<T>` type in .NET), we'd like to wait for the event that happens first. Finally, when 
+programming using agents, we sometimes need to wait only for certain types of messages. All of these problems can 
+be solved, but require the use of (sometimes fairly complicated) functions. 
 
-Publicatons
------------
+Joinads make it possible to solve them directly using the `match!` syntax. For example, the following snippet
+shows the "or" operator for tasks:
 
-See our great pappers.
+    open System.Threading.Tasks
+    open FSharp.Extensions.Joinads
 
-Programming with joinads
-------------------------
+    /// Returns a Task that produces the given
+    /// value after the specified time
+    let after (time:int) res = (*[omit:(...)]*)
+      future { System.Threading.Thread.Sleep(time)
+               return res }(*[/omit]*)
 
-see the following nice
+    /// Short-circuiting implementation 
+    /// of the 'or' operator for tasks. 
+    let taskOr t1 t2 = future {
+      match! t1, t2 with
+      | true, ? -> return true
+      | ?, true -> return true
+      | a, b    -> return a || b }
 
- * Programming with option values
+    // Apply 'or' to a task that returns true after 100ms
+    // and a task that returns false after 2 sec.
+    let res = taskOr (after 100 true) (after 2000 true)
+    printfn "\nCompleted with result: %b" res.Result
 
- * Joinads and asynchronous workflows
+The `match!` notation intentionally resembles pattern matching. However, instead of pattern matching on actual
+values, we are pattern matching on computations of type `Task<'T>`. The patterns used in the clauses of `match!`
+can be either normal F# patterns or a special pattern `?` which specifies that the clause can run even if 
+the value of the corresponding computation is not available.
 
- * User-interfacce programming with events
+In the above example, the last clause specifies that both of the computations have to complete,
+producing `bool` values `a` and `b`. When the clause matches, the result is calculated as `a || b`.
+The first two clauses are more interesting. For example, the pattern `true, ?` specifies that
+the first computation should produce `true`, but the second does not have to finish for the 
+clause to match. As a result, when one of the computations returns `true`, the `match!` construct
+does not wait for the other computation and immediately returns `true`.
 
- * Joins
+If you run the above code (run the last two lines separately to get a readable output), then you 
+can see that the task created by `taskOr` completes after 100ms, even though the second argument
+of `taskOr` is still running. If you change the result of the first argument to `false`, the 
+computation needs to wait for the second value, and so it take 2 seconds to complete.
 
- * Parsers
+### Applicative functors
 
- * Tasks
+Aside from the support for _joinads_, the F# interactive console on this site also supports 
+syntax for programming with _applicative functors_ (also called _idioms_). Applicative
+functors are an abstract notion of computations that is weaker (and thus more common)
+than monads - every monad is an applicative functor, but not all applicative functors
+are monads. For more information about the extensions for applicative functors, see 
+[a blog post that discusses them][jblg].
 
-Implementing joinads
---------------------
+  [jblg]: http://tomasp.net/blog/fsharp-variations-joinads.aspx "Variations in F#: Research compiler with Joinads and more!"
 
-see the following nice
+Joinads in Haskell
+------------------
 
- * Options
- * Async
- * Parsers
+Joinads are an abstract concept that describes what operations are required to implement
+pattern matching on monadic computations. This means that the general idea can be used in
+any programming language. 
 
+In addition, languages that already have some syntactic support for writing monadic 
+computations can be extended with a special syntax for joinads. This tutorial shows numerous
+examples of the `match!` syntax in F#, but there is also an implementation for Haskell.
+
+The Haskell extension is currently available as a [patch on GitHub][dcgit] and you can
+find more information in a [our papers on joinads](docs/pubs.html) 
+or in the [GHC Trac description][dctrac]. Akin to
+the `do` notation and `case` construct, the patch adds `docase` notation, which allows
+pattern matching on monadic computations that implement three additional operation.
+The previous F# example could be written in Haskell as follows:
+
+    [copy=no]
+    taskOr t1 t2 = 
+      docase t1, t2 of
+        True, ? -> return True
+        ?, True -> return True
+        a, b    -> return $ a || b
+
+The syntax is quite similar to the F# version, but there are several differences. Most notably,
+thanks to type-classes, the above code is polymorphic over the actual joinad - any type that
+implements a couple of involved type-classes can be used with this function.
+
+  [dctrac]: http://hackage.haskell.org/trac/ghc/ticket/5429 "Docase notation as GHC extension"
+  [dcgit]: https://github.com/tpetricek/Haskell.Extensions "Haskell.Extensions on GitHub"
+
+<div class="navigation">
+
+Next: [Publications](pubs.html) | [Table of contents](toc.html)
+
+</div>

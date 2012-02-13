@@ -1,0 +1,137 @@
+/* ---------------------------------- text style ---------------------------------- */
+
+@font-face {
+  font-family: 'GudeaLocal';
+  font-style: normal;
+  font-weight: 400;
+  src: url('gudea.eot');
+}
+
+.content {  
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:80%;
+  padding:15px 15px 25px 15px;
+}
+
+.content h1 {
+  margin:0px 0px 10px 0px;
+  color:#505050;
+  font-size:160%;
+  font-family:Gudea, GudeaLocal, Verdana, Verdana, Geneva, sans-serif;
+}
+
+.content h2 {
+  margin:20px 0px 5px 0px;
+  color:#505050;
+  font-size:135%;
+  font-family:Gudea, GudeaLocal, Verdana, Verdana, Geneva, sans-serif;
+}
+
+.content h3 {
+  margin:15px 0px -5px 0px;
+  color:#606060;
+  font-size:115%;
+  font-family:Gudea, GudeaLocal, Verdana, Verdana, Geneva, sans-serif;
+}
+
+.content pre {
+  margin:15px 50px 0px 20px;
+  border:1px solid #70879a;
+  background:white;
+  padding:7px;
+  font-family:consolas,'Lucida Console','courier new',monospace;
+  overflow-x:auto;
+}
+
+.content pre.runnable {
+  padding-bottom:15px;
+}
+.content pre.runnable button.load {
+  background:url('img/load.png');
+  width:53px;
+  height:20px;
+  margin:10px 0px 0px 15px;
+  border-style:none;
+  float:left;
+  cursor:pointer;
+}
+.content pre.runnable button.run {
+  background:url('img/run.png');
+  width:90px;
+  height:20px;
+  margin:10px 0px 0px 15px;
+  border-style:none;
+  float:left;
+  cursor:pointer;
+}
+
+.content p {
+  margin:15px 0px 0px 0px;
+}
+
+.content a:link, .content a:visited {
+  color:#4e84b6;
+  text-decoration:none;
+}
+.content a:hover {
+  color:#4e84b6;
+  text-decoration:underline;
+}
+
+.content code {
+  font-family:consolas,'Lucida Console','courier new',monospace;
+  color:#335a7d;
+}
+
+.content blockquote {
+  font-style:italic;
+  margin-left:2em;
+}
+
+.navigation {
+  text-align:right;
+  margin-top:10px;
+}
+
+
+
+/* identifier */
+span.i { color:#000000; }
+/* comment */
+span.c { color:#008000; }
+/* inactive code */
+span.inactive { color:#808080; }
+/* keywords */
+span.k { color:#000080;  }
+/* numbers */
+span.n { color:#008000; }
+/* operators */
+span.o { color:#800080; }
+/* preprocessor */
+span.prep { color:#800080; }
+/* string */
+span.s { color:#808000; }
+/* line number */
+span.l { color:#80b0b0; }
+/* fsi output */
+span.fsi { font-style:italic; color:#606060; }
+/* omitted */
+span.omitted { 
+	border:solid 1px #d8d8d8;
+	color:#808080;
+	padding:0px 0px 1px 0px;
+	background:#fafafa;
+}
+/* error */
+span.cerr {
+  background:url(tilde.png) repeat-x left bottom;
+}
+/* tool tip */
+div.tip 
+{
+	font:8pt calibri;
+	padding:3px;
+	border:1px solid #606060;
+	background:#ffffd0;
+	display:none;
+}

@@ -1,0 +1,118 @@
+﻿> Publications
+
+Publications about joinads
+==========================
+
+We first implemented joinads as an extension for F# and wrote a preliminary report
+about the work, which appeared in PADL 2011. More recently, joinads have been added
+to Haskell and refined slightly to make the algebraic structure simple and better
+defined. The extended paper appeared in Haskell Symposium 2011. 
+
+There are numerous differences between the two versions - the original version 
+didn't require _joinad_ to be a _monad_ and had a more complex operation corresponding
+to _choice_ and _aliasing_. The revised version simplifies the set of operations
+and provides better formal background. The implementation on this page is mostly
+based on the newer (Haskell) version.
+
+## Extending Monads with Pattern Matching
+
+Tomas Petricek, Alan Mycroft and Don Syme  
+_Proceedings of Haskell Symposium 2011_
+
+The abstract of the paper:
+
+> Sequencing of effectful computations can be neatly captured using monads and elegantly 
+written using `do` notation. In practice such monads often allow additional ways of 
+composing computations, which have to be written explicitly using combinators. 
+>
+> We identify joinads, an abstract notion of computation that is stronger than monads 
+and captures many such ad-hoc extensions. In particular, joinads are monads with three 
+additional operations: one of type `m a -> m b -> m (a, b)` captures various forms of 
+parallel composition, one of type `m a -> m a -> m a` that is inspired by choice and one 
+of type `m a -> m (m a)` that captures aliasing of computations. Algebraically, the first 
+two operations form a near-semiring with commutative multiplication. 
+>
+> We introduce `docase` notation that can be viewed as a monadic version of `case`. Joinad 
+laws make it possible to prove various syntactic equivalences of programs written using 
+`docase` that are analogous to equivalences about `case`. Examples of joinads that benefit 
+from the notation include speculative parallelism, waiting for a combination of user 
+interface events, but also encoding of validation rules using the intersection of parsers. 
+
+The paper can be downloaded from [the author's academic page](http://www.cl.cam.ac.uk/~tp322/papers/docase.html).  
+
+<br />
+
+## Evaluation strategies for monadic computations
+
+Tomas Petricek  
+_Proceedings of MSFP 2012_
+
+> Monads have become a powerful tool for structuring effectful computations in functional 
+programming, because they make the order of effects explicit. When translating pure code to a 
+monadic version, we need to specify evaluation order explicitly. This requires us to choose 
+between _call-by-value_ or _call-by-name_ style. The two translations give programs with 
+different semantics, structure and also different types.
+>
+> In this paper, we translate pure code to monadic using an additional operation `malias` 
+that abstracts out the evaluation strategy. The `malias` operation is based on _computational comonads_; 
+we use a categorical framework to specify the laws that are required to hold about the operation.
+>
+> We show two implementations of `malias` for any monad that give _call-by-value_ and 
+_call-by-name_ semantics. Although we do not give _call-by-need_ semantics for any monad, we 
+show how to turn any monad into an extended monad with _call-by-need_ semantics, which partly 
+answers a standing open question. Moreover, using our unified translation, it is possible to 
+change the evaluation strategy of functional code translated to the monadic form without 
+changing its structure or types. 
+
+The paper can be downloaded from [the author's academic page](http://www.cl.cam.ac.uk/~tp322/papers/malias.html).  
+
+<br />
+
+## Fun with Parallel Monad Comprehensions
+
+Tomas Petricek  
+_The Monad.Reader, Issue 18 (Unreviewed article)_
+
+> Monad comprehensions have an interesting history. They were the first syntactic extension for 
+programming with monads. They were implemented in Haskell, but later replaced with plain list 
+comprehensions and monadic `do` notation. Now, monad comprehensions are back in Haskell,
+more powerful than ever before! 
+>
+> Redesigned monad comprehensions generalize the syntax for working with lists. Quite interestingly, 
+they also generalize syntax for zipping, grouping and ordering of lists. This article shows how 
+to use some of the new expressive power when working with well-known monads. You'll learn 
+what "parallel composition" means for parsers, a poor man's concurrency monad and an 
+evaluation order monad. 
+
+The article can be downloaded from [the author's academic page](http://www.cl.cam.ac.uk/~tp322/articles/comprefun.html).  
+
+<br />
+
+## Joinads: a retargetable control-flow construct<br />for reactive, parallel and concurrent programming
+
+Tomas Petricek and Don Syme  
+_Proceedings of PADL 2011_
+
+The abstract of the paper:
+
+> Modern challenges led to a design of a wide range of programming models for reactive,
+parallel and concurrent programming, but these are often difficult to encode in general 
+purpose languages. We present an abstract type of computations called _joinads_ together 
+with a syntactic language extension that aims to make it easier to use joinads in 
+modern functional languages. 
+> 
+> Our extension generalizes pattern matching to work on abstract computations. It keeps a 
+familiar syntax and semantics of pattern matching making it easy to reason about code, 
+even in a non-standard programming model. We demonstrate our extension using three important 
+programming models – a reactive model based on events; a concurrent model based on join 
+calculus and a parallel model using futures. All three models are implemented as libraries 
+that benefit from our syntactic extension. This makes them easier to use and also opens 
+space for exploring new useful programming models. 
+
+The paper can be downloaded from [the author's academic page](http://www.cl.cam.ac.uk/~tp322/papers/joinads.html).
+
+<div class="navigation">
+
+Next: [Asynchronous workflows and joinads](use/async.html) | [Table of contents](toc.html)
+
+</div>

@@ -1,27 +1,32 @@
+function updateTitle(title)
+{
+  $("#content_title").html(title);
+}
+
 $().ready(function ()
 {
   var space = 150;
   $("#wrapper").height(window.innerHeight - space);
-  $("#wrapper").splitter();
-
-  $("#content").height(window.innerHeight - space - 32 - 40);
-  $("#slplaceholder").height(window.innerHeight - space - 32 - 40);
-
-  $.ajax({
-    url: "docs/intro.html",
-    success: function (data)
-    {
-      $("#content").html(data);
-      $("#content_title").html($("#title").html());
-      $("#title").remove();
-    }
+  $("#wrapper").splitter({
+    onstart: function () { $("#content_hider").show(); },
+    onstop: function () { $("#content_hider").hide(); }
   });
+
+  $("#content").height(window.innerHeight - space - 32 - 25);
+  $("#slplaceholder").height(window.innerHeight - space - 32 - 40);
 });
+
+function runCode(code)
+{
+  var cons = document.getElementById("fsiConsole");
+  cons.Content.FsiConsole.Script += "\n" + code + "\n";
+  cons.Content.FsiConsole.Execute(code);
+}
 
 function loadCode(code)
 {
   var cons = document.getElementById("fsiConsole");
-  cons.Content.FsiConsole.Script += "\n" + code;
+  cons.Content.FsiConsole.Script += "\n" + code + "\n";
 }
 
 function loadSilverlight()

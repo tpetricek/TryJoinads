@@ -10,17 +10,23 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-namespace Samples.ConsoleApp
+namespace FSharp.Console
 
 open System
 open System.Windows
 open System.Windows.Browser
 open System.Windows.Threading
 
+open FSharp.Console
+
 type App() as this = 
     inherit Application()
-    do Application.LoadComponent(this, new System.Uri("/Samples.ConsoleApp;component/App.xaml", System.UriKind.Relative));
+
+    static let mutable consoleInstance = Unchecked.defaultof<_>
+
+    do Application.LoadComponent(this, new System.Uri("/FSharp.Console;component/App.xaml", System.UriKind.Relative));
     let console = new ConsoleControl()
+    do consoleInstance <- console
     do this.Startup.Add (fun _ -> 
             this.RootVisual <- console
             // Make the control available to JavaScript code
@@ -47,5 +53,7 @@ type App() as this =
                 with _ -> ()))
               |> ignore)
 
+    static member Console = consoleInstance
 
-
+    static member Dispatch(func:unit -> unit) =
+      Deployment.Current.Dispatcher.BeginInvoke(Action(func)) |> ignore

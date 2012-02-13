@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Welcome to Try Joinads</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../contentstyle.css" />
+    <script type="text/javascript" src="../tips.js"></script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Introducing Try Joinads</h1>
+
+<p>Welcome to Try Joinads!</p>
+
+<p>This web site is an interactive tutorial that introduces <em>joinads</em> - a research extension of the F# language.
+The tutorial presents several uses of the extension. It focuses on concurrent, parallel and asynchronous
+programming, but it also shows several examples from other domains, including parsers and option values.
+Aside from uses of <em>joinads</em>, there are also several sections that discuss how to implement joinads for other
+types of values or computations.</p>
+
+<p>The tutorial uses an Interactive F# console hosted in a web browser using <a href="http://www.silverlight.net/" title="Silverlight homepage">Silverlight</a> (Windows or Mac) or 
+<a href="http://www.go-mono.com/moonlight/" title="Moonlight homepage">Moonlight</a> (Linux), so you can run the tutorials in your browser and experiment on your own. The console is based
+on an <a href="http://fsharppowerpack.codeplex.com/" title="Open-source release of F#">open-source release</a> of the F# compiler. A research implementation of the F# compiler that implements
+joinads is <a href="https://github.com/tpetricek/FSharp.Extensions" title="F# Extensions Source Code">also available</a>.</p>
+
+<p>If you have any comments or suggestions regarding the tutorials, or if you have another interesting implementation
+of joinads or an extension of the F# compiler that could be added, please get in touch: <a href="tomas@tomasp.net">tomas@tomasp.net</a> or 
+<a href="http://twitter.com/tomaspetricek">@tomaspetricek</a>.</p>
+
+<h2>Table of contents</h2>
+
+<h3>Introduction</h3>
+
+<p>The following article is the best place to start if you haven't seen joinads before.
+It shows a basic example and includes links to other resources.</p>
+
+<ul>
+<li><p><a href="intro.html"><strong>Introduction</strong></a> shows a
+basic example of parallel programming with joinads in F# and provides a
+general overview of the concept, as well as basic Haskell example.</p></li>
+<li><p><a href="pubs.html"><strong>Publications</strong></a> provides
+links to academic publications related to joinads. These contain more details about
+<em>joinad</em> as an algebraic structure and about the language feature design.</p></li>
+</ul>
+
+<h3>Programming with joinads</h3>
+
+<p>The following articles show several examples of using joinads for concurrent, parallel 
+and reactive programming. They use an implementation of joinad operations that is available
+in standard joinads library.</p>
+
+<ul>
+<li><a href="use/async.html"><strong>Asynchronous workflows and joinads</strong></a>
+shows how to use joinads in asynchronous programming. Applications include asynchronously waiting
+for multiple computations or waiting for the first computation that produces certain value.</li>
+</ul>
+
+<h3>More content comming soon!</h3>
+
+<p>More articles will be added to this web site as I publish them on <a href="http://tomasp.net/blog">my blog</a>.
+If you're interested in using joinads for task-based parallelism (using <code>Task&lt;'T&gt;</code>), for programming
+with agents (<code>MailboxProcessor&lt;'T&gt;</code> in F#), for implementing join calculus or for writing
+parsers, please check back soon!</p>
+
+
+    <!-- HTML for Tool Tips -->
+    
+  </body>
+  </html>

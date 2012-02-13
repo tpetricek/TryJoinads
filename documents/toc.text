@@ -1,0 +1,18 @@
+﻿> Table of contents
+
+Table of contents
+=================
+
+This page contains a brief table of contents of the Try Joinads web site. For a more detailed
+table of contents that shows annotations for every article, go to the
+[Welcome to Try Joinads](home.html) page.
+
+### Introduction
+
+* [Welcome to Try Joinads](home.html)
+* [Introduction](intro.html)
+* [Publications](pubs.html)
+
+### Programming with joinads
+
+* [Asynchronous workflows and joinads](use/async.html)

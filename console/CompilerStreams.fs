@@ -10,7 +10,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-namespace Samples.ConsoleApp
+namespace FSharp.Console
 
 open System
 open System.Collections.Generic

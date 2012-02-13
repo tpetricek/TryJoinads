@@ -10,7 +10,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-namespace Samples.ConsoleApp
+namespace FSharp.Console
 
 open System
 open System.Collections.Generic
@@ -28,6 +28,7 @@ open Microsoft.FSharp.Compiler.Interactive
 
 [<AutoOpen>]
 module private Utilities = 
+
     /// Use this implementation of the dynamic binding operator
     /// to bind to Xaml components in code-behind, see example below
     let (?) (c:obj) (s:string) =
@@ -57,7 +58,7 @@ type CanvasPosition =
 /// </remarks>
 type ConsoleControl() as this = 
     inherit UserControl()
-    do Application.LoadComponent(this, new System.Uri("/Samples.ConsoleApp;component/ConsoleControl.xaml", System.UriKind.Relative));
+    do Application.LoadComponent(this, new System.Uri("/FSharp.Console;component/ConsoleControl.xaml", System.UriKind.Relative));
     let txtInput : RichTextBox = this?txtInput
     let txtOutput : TextBox = this?txtOutput
     let outputCanvas : Canvas = this?OutputCanvas
@@ -80,14 +81,8 @@ type ConsoleControl() as this =
     let OutputPause = 50
 
     let WelcomeMessage = ""
-                          + "//\n"
-                          + "// Welcome to Try F#. Type your F# script in this window. To run code use:\n"
-                          + "//\n"
-                          + "// * Ctrl-Enter or the Run button to send selected text to F# Interactive.\n"
-                          + "//   If no text is selected the entire script will be sent.\n"
-                          + "//\n"
-                          + "// * Ctrl-Shift-Enter to send the current line to F# Interactive.\n"
-                          + "//\n"
+                          + "// Welcome to Try Joinads!\n"
+                          + "// Use Ctrl-Enter to run the selected text in F# Interactive. \n"
 
     //// TextReader to feed code to the compiler
     let mutable fsiIn : StreamReader = null
@@ -287,7 +282,7 @@ type ConsoleControl() as this =
 
         // Prepare a new console
         fsiIn <- createFsiReader()
-        let args = [| "fsi.exe" |]
+        let args = [| "fsi.exe"; "--define:SILVERLIGHT"; "--define:INTERACTIVE" |]
         consoleOpt <- Some (new Runner.InteractiveConsole(args, fsiIn, fsiOut, fsiOut))
 
         // Clear any output and launch the new session
@@ -391,9 +386,9 @@ type ConsoleControl() as this =
         // Set up FSI instance
         fsiIn <- createFsiReader()
         fsiOut <- createFsiWriter()
-        let args = [|  "fsi.exe" |]
+        let args = [| "fsi.exe"; "--define:SILVERLIGHT"; "--define:INTERACTIVE" |]
         consoleOpt <- Some (new Runner.InteractiveConsole(args, fsiIn, fsiOut, fsiOut))
-        srcCodeServices <- Some (new Runner.SimpleSourceCodeServices())
+        srcCodeServices <- Some (new Runner.SimpleSourceCodeServices(["SILVERLIGHT"; "INTERACTIVE"]))
 
         // Allow generated code to be interrupted
         Microsoft.FSharp.Silverlight.EmitInterruptChecks <- true
@@ -573,7 +568,7 @@ type ConsoleControl() as this =
 /// </summary>
 and ConsoleContextMenu(isInScriptWindow: bool, consoleControl: ConsoleControl) as this = 
     inherit UserControl()   
-    do Application.LoadComponent(this, new System.Uri("/Samples.ConsoleApp;component/ConsoleContextMenu.xaml", System.UriKind.Relative));
+    do Application.LoadComponent(this, new System.Uri("/FSharp.Console;component/ConsoleContextMenu.xaml", System.UriKind.Relative));
     let pasteButton : Button = this?PasteButton
     let cancelButton : Button = this?CancelButton
     let clearOutputButton : Button = this?ClearOutputButton

@@ -1,3 +1,4 @@
 console/bin
 console/obj
 *.suo
+*.xap

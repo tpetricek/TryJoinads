@@ -1,4 +1,6 @@
-﻿#r "System.Windows.dll";;
-#r "System.Windows.Controls.dll";;
-#r "Samples.ConsoleApp.dll";;
-1 + 1;;
+﻿#r "System.Numerics.dll"
+#r "System.Windows.dll"
+#r "System.Windows.Controls.dll"
+#r "System.Reactive.dll"
+#r "FSharp.Console.dll"
+#r "FSharp.Joinads.Silverlight.dll"
