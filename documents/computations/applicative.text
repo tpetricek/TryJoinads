@@ -1,0 +1,196 @@
+﻿> Computation expressions for applicative functors
+
+Applicative computations
+========================
+
+Applicative functors (also called _idioms_) are a weaker abstraction than monads. This
+means that certain computations that cannot implement the full monadic structure can still
+implement the _applicative_ interface. Perhaps the best known example is the _formlet_
+abstraction that is used to represent server-side HTML forms.
+
+In key difference between applicative functors and monadic computations is that, given
+an applicative computation, we can statically determine the basic operations that are
+used to compose it - for monads, this is not possible, because the structure may depend
+on the values provided at runtime.
+
+In this section, we look at a research extension to F# computation expressions that makes
+it possible to write applicative computations. Note that this is not a part of standard
+F# 2.0 (and it is not planned for any future version of F#). However, the implementation
+[is available][fsx] for the open-source release of F# and is also available in the
+Interactive F# console on this site.
+
+  [fsx]: https://github.com/tpetricek/FSharp.Extensions "F# Extensions Source Code"
+
+Applicative formlets
+--------------------
+
+Implementing a complete formlet library is beyond the scope of this page, but we show
+a simple formlet-like computation. The computation `Formlet<'T>` is defined as follows:
+  
+    type Formlet<'T> = 
+      F of list<string> * (Map<string, string> -> 'T)
+
+    /// Represents a textbox formlet
+    let textBox key = 
+      F([key], fun map -> map.[key])
+
+    // Primitive operations for working with formlets
+    let render (F(keys, _)) = keys
+    let evaluate state (F(_, op)) = op state
+
+The second component `Map<string, string> -> 'T` is a function that calculates the 
+value of a form, when provided with a map that assigns values to individual keys 
+(form elements). The first component `list<string>` is a list of keys that need to 
+be provided in order to evaluate the second component. In a real implementation, 
+the first element would represent the HTML to be rendered when the page is accessed
+for the first time - in this phase, we do not have values for the keys yet and so
+it is not possible to run the processing function, but we need to obtain the form
+- that is, the static structure of the computation.
+
+The `textBox` function constructs a primitive formlet - the formlet consists of a 
+list with just the name of the textbox and a function that returns the value associated
+with the text box.
+
+The following operations define the applicative functor structure for our simple
+formlet:
+
+    module Formlets = 
+      /// Formlet that always returns the given value
+      let unit v = F([], fun _ -> v)
+
+      /// The map operation applies 'f' to the result
+      let map f (F(keys, op)) =
+        F(keys, fun state -> f (op state))
+
+      /// Combine two formlets and pair their results
+      let merge (F(keys1, op1)) (F(keys2, op2)) =
+        F(keys1 @ keys2, fun state -> (op1 state, op2 state))
+
+The `unit` operation returns a formlet that does not require any form elements
+and always returns the provided value (when evaluated using the second 
+component). The `map` operation does not affect the structure of the form - 
+it just applies the given function to the result that is calculated by the
+original formlet.
+
+Finally, the `merge` operation generates a new formlet that consists of all
+form elments of the two given formlets (this is done by concatenating the lists
+of keys). When executed, it runs both underlying formlets and returns a tuple
+that contains both of the results. The tuple is not usually returned as the
+final result, but it can be easily transformed further using `map`.
+
+Applicative computation builder
+-------------------------------
+
+A basic computaiton builder for working with applicative functors consists of the
+three operations defined in the previous section:
+
+    type FormletBuilder() =
+      member x.Merge(form1, form2) = Formlets.merge form1 form2
+      member x.Select(form, f) = Formlets.map f form
+      member x.Return(v) = Formlets.unit v
+      member x.ReturnFrom(form) = form
+
+    let form = FormletBuilder()
+
+The `map` operation is provided as a `Select` member - this matches with the usual
+.NET framework naming guidelines where the name `Select` is used for the _map_
+operation in LINQ. The rest of the definition is straightforward. We also added
+`ReturnFrom` in order to allow the `return!` syntax, although it is less useful than
+when working with monads.
+
+The following example creates a simple formlet that can be used for entering user information.
+When the data is available, the formlet returns a message "Your name is X Y" as a single
+string:
+
+    [load]
+    let userInfo = 
+      form { let! name = textBox "name"
+             and surname = textBox "surname"
+             let combined = name + " " + surname
+             let message = "Your name is " + combined
+             return message }
+
+    // Select and run the following to get the required form keys
+    userInfo |> render
+    // Select and run the following to evaluate the formlet
+    let inputs = Map.ofSeq ["name", "Tomas"; "surname", "Petricek"]
+    userInfo |> evaluate inputs
+
+The structure of the computations that can be written is quite limited - the computation
+block `form { .. }` has to start with a binding of a form `let! .. and .. and ..` (with
+an arbitrary fixed number of `and` constructs). This can be followed by any expression 
+that always ends with `return` (for example, `return!` or other computation expressions
+are not be allowed). The only other form that is allowed is `f { return! e }`. 
+
+The translation of the above example looks as follows:
+
+    [module=ApplicativeTranslation,load]
+    let userInfo = 
+      form.Select
+        ( form.Merge(textBox "name", textBox "surname"),
+          fun (name, surname) ->
+             let combined = name + " " + surname
+             let message = "Your name is " + combined
+             message )
+
+The code is translated quite differently to monadic or monoidal computations. All 
+bindings that are performed using `let! .. and` block are combined using `Merge` and the
+rest of the computation is translated to the application of `Select`. The `return` keyword
+is removed (and is only used to keep the computations syntactically uniform).
+
+These syntactic limitations explain why we do not extend the computation builder with members that define
+other standard F# control flow constructs. These can be used in their standard form 
+(i.e. after the initial binding and before the last `return`), but in this form, they
+do not have any non-standard meaning and they are pushed into the function that is used
+as an argument to `Select`.
+
+Applicative functor laws
+------------------------
+
+    [hide]
+    let f = form
+    let shouldEqual a b = failwith "!"
+
+Formally, formlets can be defined in two ways. The approach that is used in F# computation
+expression uses the (lax) monoidal functor definition (as opposed to the applicative 
+definition emphasized by Paterson and McBride). The structure requires a number of laws
+that can be expressed using the computation expression syntax as follows:
+
+    [noload]
+    /// The left and right identity laws of monoidal functors
+    let identity g = 
+      let f1 = f { let! a = g
+                   and b = f { return () }
+                   return a } 
+      let f2 = f { let! a = f { return () }
+                   and b = g
+                   return b } 
+      let f3 = f { return! g } 
+      f1 |> shouldEqual f3
+      f2 |> shouldEqual f3
+
+    /// The associativity law of monoidal functors
+    /// (The translation of 'f2' and 'f3' is the same.)
+    let associativity g1 g2 g3 = 
+      let f1 = f { let! a, b = f { let! a = g1
+                                   and b = g2
+                                   return a, b }
+                   and c = g3
+                   return (a, b), c }
+      let f2 = f { let! a = g1
+                   and b, c = f { let! b = g2
+                                  and c = g3
+                                  return b, c }
+                   return (a, b), c }
+      let f3 = f { let! a = g1
+                   and b = g2
+                   and c = g3 
+                   return (a, b), c }
+      f1 |> shouldEqual f3
+      f2 |> shouldEqual f3
+
+<div class="navigation">
+
+Prev: [Composed computations](composed.html) | [Table of Contents](home.html)
+
+</div>

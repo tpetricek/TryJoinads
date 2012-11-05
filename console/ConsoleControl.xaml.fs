@@ -164,6 +164,12 @@ type ConsoleControl() as this =
             if (value <> this.CanvasPosition) then 
                 this.SetCanvasPosition(value)
 
+    /// Sets the font size
+    [<ScriptableMember>]
+    member this.SetFontSize(v) =
+      txtInput.FontSize <- v
+      txtOutput.FontSize <- v
+
     /// Clears the current content of the output window.
     [<ScriptableMember>]
     member this.ClearOutput() = 

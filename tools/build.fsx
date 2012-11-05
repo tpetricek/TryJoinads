@@ -24,6 +24,20 @@ let template =
     <link href=""http://fonts.googleapis.com/css?family=Gudea"" rel=""stylesheet"" type=""text/css"">
     <link rel=""stylesheet"" type=""text/css"" href=""{2}contentstyle.css"" />
     <script type=""text/javascript"" src=""{2}tips.js""></script>
+    <script type=""text/javascript"">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {{
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      }})();
+
+    </script>
   </head>
   <body class=""content"" onload=""parent.updateTitle(document.getElementById('title').innerHTML)"">
     {1}
@@ -74,10 +88,13 @@ let rec replaceCodes (codeLookup:IDictionary<_, _>) = function
       else
         let formatted : string = codeLookup.[code]
         let run = 
-          if cmds.ContainsKey("load") then
+          if cmds.ContainsKey("noload") then ""
+          elif cmds.ContainsKey("load") then
                "<br /><button class=\"load\" onclick=\'parent.loadCode(\"" + HttpUtility.JavaScriptStringEncode(code) + "\");\'></button>"
           else "<br /><button class=\"run\" onclick=\'parent.runCode(\"" + HttpUtility.JavaScriptStringEncode(code) + "\");\'></button>"
-        let html = formatted.Replace("</pre>", run + "</pre>").Replace("<pre class=\"fssnip\"", "<pre class=\"fssnip runnable\"")
+        let html = formatted.Replace("</pre>", run + "</pre>")
+        let html = if cmds.ContainsKey("noload") then html 
+                   else html.Replace("<pre class=\"fssnip\"", "<pre class=\"fssnip runnable\"")
         HtmlBlock(html) |> Some
   | Matching.ParagraphNested(pn, nested) ->
       Matching.ParagraphNested(pn, List.map (List.choose (replaceCodes codeLookup)) nested) |> Some
@@ -127,10 +144,11 @@ let rec build (unnest:string) subdir =
         File.WriteAllText(target + ".fs", fsharpSource)
         let args = 
           "--noframework --nowarn:26" + 
-          @" -r:""" + __SOURCE_DIRECTORY__ + @"\console\compiler\FSharp.Core.dll""" +
-          @" -r:""" + __SOURCE_DIRECTORY__ + @"\console\bin\Debug\FSharp.Console.dll""" +
-          @" -r:""" + __SOURCE_DIRECTORY__ + @"\src\FSharp.Joinads.Silverlight\bin\Debug\FSharp.Joinads.Silverlight.dll""" +
-          @" -r:""C:\Program Files (x86)\Microsoft Reactive Extensions SDK\v1.1.10621\Binaries\Silverlight\v5.0\System.Reactive.dll""" +
+          @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\console\compiler\FSharp.Core.dll""" +
+          @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\console\bin\Debug\FSharp.Console.dll""" +
+          @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\src\FSharp.Joinads.Silverlight\bin\Debug\FSharp.Joinads.Silverlight.dll""" +
+          //@" -r:""C:\Program Files (x86)\Microsoft Reactive Extensions SDK\v1.1.10621\Binaries\Silverlight\v5.0\System.Reactive.dll""" +
+          @" -r:""C:\Tomas\Research\TryJoinads\src\FSharp.Joinads.Silverlight\bin\Debug\System.Reactive.dll""" +
           @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\mscorlib.dll""" + 
           @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.dll""" +
           @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.Net.dll""" +

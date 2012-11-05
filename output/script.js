@@ -14,6 +14,14 @@ $().ready(function ()
 
   $("#content").height(window.innerHeight - space - 32 - 25);
   $("#slplaceholder").height(window.innerHeight - space - 32 - 40);
+
+  var str = document.location + "";
+  var idx = str.indexOf('?');
+  if (idx > -1)
+  {
+    var src = str.substr(idx + 1);
+    document.getElementById("content").src = "/docs/" + src;
+  }
 });
 
 function runCode(code)

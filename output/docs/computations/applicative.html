@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Computation expressions for applicative functors</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../../contentstyle.css" />
+    <script type="text/javascript" src="../../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Applicative computations</h1>
+
+<p>Applicative functors (also called <em>idioms</em>) are a weaker abstraction than monads. This
+means that certain computations that cannot implement the full monadic structure can still
+implement the <em>applicative</em> interface. Perhaps the best known example is the <em>formlet</em>
+abstraction that is used to represent server-side HTML forms.</p>
+
+<p>In key difference between applicative functors and monadic computations is that, given
+an applicative computation, we can statically determine the basic operations that are
+used to compose it - for monads, this is not possible, because the structure may depend
+on the values provided at runtime.</p>
+
+<p>In this section, we look at a research extension to F# computation expressions that makes
+it possible to write applicative computations. Note that this is not a part of standard
+F# 2.0 (and it is not planned for any future version of F#). However, the implementation
+<a href="https://github.com/tpetricek/FSharp.Extensions" title="F# Extensions Source Code">is available</a> for the open-source release of F# and is also available in the
+Interactive F# console on this site.</p>
+
+<h2>Applicative formlets</h2>
+
+<p>Implementing a complete formlet library is beyond the scope of this page, but we show
+a simple formlet-like computation. The computation <code>Formlet&lt;'T&gt;</code> is defined as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span class="i">Formlet</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft1', 1)" onmouseover="showTip(event, 'ft1', 1)" class="i">F</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'ft2', 2)" onmouseover="showTip(event, 'ft2', 2)" class="i">list</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'ft3', 3)" onmouseover="showTip(event, 'ft3', 3)" class="i">string</span><span class="o">&gt;</span> <span class="o">*</span> (<span onmouseout="hideTip(event, 'ft4', 4)" onmouseover="showTip(event, 'ft4', 4)" class="i">Map</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'ft3', 5)" onmouseover="showTip(event, 'ft3', 5)" class="i">string</span>, <span onmouseout="hideTip(event, 'ft3', 6)" onmouseover="showTip(event, 'ft3', 6)" class="i">string</span><span class="o">&gt;</span> <span class="k">-&gt;</span> <span class="o">&#39;</span><span class="i">T</span>)
+
+<span class="c">/// Represents a textbox formlet</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft5', 7)" onmouseover="showTip(event, 'ft5', 7)" class="i">textBox</span> <span onmouseout="hideTip(event, 'ft6', 8)" onmouseover="showTip(event, 'ft6', 8)" class="i">key</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft1', 9)" onmouseover="showTip(event, 'ft1', 9)" class="i">F</span>([<span onmouseout="hideTip(event, 'ft6', 10)" onmouseover="showTip(event, 'ft6', 10)" class="i">key</span>], <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft7', 11)" onmouseover="showTip(event, 'ft7', 11)" class="i">map</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft7', 12)" onmouseover="showTip(event, 'ft7', 12)" class="i">map</span><span class="o">.</span>[<span onmouseout="hideTip(event, 'ft6', 13)" onmouseover="showTip(event, 'ft6', 13)" class="i">key</span>])
+
+<span class="c">// Primitive operations for working with formlets</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft8', 14)" onmouseover="showTip(event, 'ft8', 14)" class="i">render</span> (<span onmouseout="hideTip(event, 'ft1', 15)" onmouseover="showTip(event, 'ft1', 15)" class="i">F</span>(<span onmouseout="hideTip(event, 'ft9', 16)" onmouseover="showTip(event, 'ft9', 16)" class="i">keys</span>, _)) <span class="o">=</span> <span class="i">keys</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft10', 17)" onmouseover="showTip(event, 'ft10', 17)" class="i">evaluate</span> <span onmouseout="hideTip(event, 'ft11', 18)" onmouseover="showTip(event, 'ft11', 18)" class="i">state</span> (<span onmouseout="hideTip(event, 'ft1', 19)" onmouseover="showTip(event, 'ft1', 19)" class="i">F</span>(_, <span onmouseout="hideTip(event, 'ft12', 20)" onmouseover="showTip(event, 'ft12', 20)" class="i">op</span>)) <span class="o">=</span> <span class="i">op</span> <span onmouseout="hideTip(event, 'ft11', 21)" onmouseover="showTip(event, 'ft11', 21)" class="i">state</span><br /><button class="run" onclick='parent.runCode("type Formlet\u003c\u0027T\u003e = \r\n  F of list\u003cstring\u003e * (Map\u003cstring, string\u003e -\u003e \u0027T)\r\n\r\n/// Represents a textbox formlet\r\nlet textBox key = \r\n  F([key], fun map -\u003e map.[key])\r\n\r\n// Primitive operations for working with formlets\r\nlet render (F(keys, _)) = keys\r\nlet evaluate state (F(_, op)) = op state");'></button></pre>
+
+
+<p>The second component <code>Map&lt;string, string&gt; -&gt; 'T</code> is a function that calculates the 
+value of a form, when provided with a map that assigns values to individual keys 
+(form elements). The first component <code>list&lt;string&gt;</code> is a list of keys that need to 
+be provided in order to evaluate the second component. In a real implementation, 
+the first element would represent the HTML to be rendered when the page is accessed
+for the first time - in this phase, we do not have values for the keys yet and so
+it is not possible to run the processing function, but we need to obtain the form
+- that is, the static structure of the computation.</p>
+
+<p>The <code>textBox</code> function constructs a primitive formlet - the formlet consists of a 
+list with just the name of the textbox and a function that returns the value associated
+with the text box.</p>
+
+<p>The following operations define the applicative functor structure for our simple
+formlet:</p>
+
+<pre class="fssnip runnable">
+<span class="k">module</span> <span class="i">Formlets</span> <span class="o">=</span> 
+  <span class="c">/// Formlet that always returns the given value</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft13', 22)" onmouseover="showTip(event, 'ft13', 22)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft14', 23)" onmouseover="showTip(event, 'ft14', 23)" class="i">v</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft1', 24)" onmouseover="showTip(event, 'ft1', 24)" class="i">F</span>([], <span class="k">fun</span> _ <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft14', 25)" onmouseover="showTip(event, 'ft14', 25)" class="i">v</span>)
+
+  <span class="c">/// The map operation applies &#39;f&#39; to the result</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft15', 26)" onmouseover="showTip(event, 'ft15', 26)" class="i">map</span> <span onmouseout="hideTip(event, 'ft16', 27)" onmouseover="showTip(event, 'ft16', 27)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft1', 28)" onmouseover="showTip(event, 'ft1', 28)" class="i">F</span>(<span onmouseout="hideTip(event, 'ft9', 29)" onmouseover="showTip(event, 'ft9', 29)" class="i">keys</span>, <span onmouseout="hideTip(event, 'ft12', 30)" onmouseover="showTip(event, 'ft12', 30)" class="i">op</span>)) <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'ft1', 31)" onmouseover="showTip(event, 'ft1', 31)" class="i">F</span>(<span class="i">keys</span>, <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft11', 32)" onmouseover="showTip(event, 'ft11', 32)" class="i">state</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft16', 33)" onmouseover="showTip(event, 'ft16', 33)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft12', 34)" onmouseover="showTip(event, 'ft12', 34)" class="i">op</span> <span onmouseout="hideTip(event, 'ft11', 35)" onmouseover="showTip(event, 'ft11', 35)" class="i">state</span>))
+
+  <span class="c">/// Combine two formlets and pair their results</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft17', 36)" onmouseover="showTip(event, 'ft17', 36)" class="i">merge</span> (<span onmouseout="hideTip(event, 'ft1', 37)" onmouseover="showTip(event, 'ft1', 37)" class="i">F</span>(<span onmouseout="hideTip(event, 'ft18', 38)" onmouseover="showTip(event, 'ft18', 38)" class="i">keys1</span>, <span onmouseout="hideTip(event, 'ft19', 39)" onmouseover="showTip(event, 'ft19', 39)" class="i">op1</span>)) (<span onmouseout="hideTip(event, 'ft1', 40)" onmouseover="showTip(event, 'ft1', 40)" class="i">F</span>(<span onmouseout="hideTip(event, 'ft20', 41)" onmouseover="showTip(event, 'ft20', 41)" class="i">keys2</span>, <span onmouseout="hideTip(event, 'ft21', 42)" onmouseover="showTip(event, 'ft21', 42)" class="i">op2</span>)) <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'ft1', 43)" onmouseover="showTip(event, 'ft1', 43)" class="i">F</span>(<span class="i">keys1</span> <span class="o">@</span> <span class="i">keys2</span>, <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft11', 44)" onmouseover="showTip(event, 'ft11', 44)" class="i">state</span> <span class="k">-&gt;</span> (<span onmouseout="hideTip(event, 'ft19', 45)" onmouseover="showTip(event, 'ft19', 45)" class="i">op1</span> <span onmouseout="hideTip(event, 'ft11', 46)" onmouseover="showTip(event, 'ft11', 46)" class="i">state</span>, <span onmouseout="hideTip(event, 'ft21', 47)" onmouseover="showTip(event, 'ft21', 47)" class="i">op2</span> <span onmouseout="hideTip(event, 'ft11', 48)" onmouseover="showTip(event, 'ft11', 48)" class="i">state</span>))<br /><button class="run" onclick='parent.runCode("module Formlets = \r\n  /// Formlet that always returns the given value\r\n  let unit v = F([], fun _ -\u003e v)\r\n\r\n  /// The map operation applies \u0027f\u0027 to the result\r\n  let map f (F(keys, op)) =\r\n    F(keys, fun state -\u003e f (op state))\r\n\r\n  /// Combine two formlets and pair their results\r\n  let merge (F(keys1, op1)) (F(keys2, op2)) =\r\n    F(keys1 @ keys2, fun state -\u003e (op1 state, op2 state))");'></button></pre>
+
+
+<p>The <code>unit</code> operation returns a formlet that does not require any form elements
+and always returns the provided value (when evaluated using the second 
+component). The <code>map</code> operation does not affect the structure of the form - 
+it just applies the given function to the result that is calculated by the
+original formlet.</p>
+
+<p>Finally, the <code>merge</code> operation generates a new formlet that consists of all
+form elments of the two given formlets (this is done by concatenating the lists
+of keys). When executed, it runs both underlying formlets and returns a tuple
+that contains both of the results. The tuple is not usually returned as the
+final result, but it can be easily transformed further using <code>map</code>.</p>
+
+<h2>Applicative computation builder</h2>
+
+<p>A basic computaiton builder for working with applicative functors consists of the
+three operations defined in the previous section:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft22', 49)" onmouseover="showTip(event, 'ft22', 49)" class="i">FormletBuilder</span>() <span class="o">=</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft23', 50)" onmouseover="showTip(event, 'ft23', 50)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft24', 51)" onmouseover="showTip(event, 'ft24', 51)" class="i">Merge</span>(<span onmouseout="hideTip(event, 'ft25', 52)" onmouseover="showTip(event, 'ft25', 52)" class="i">form1</span>, <span onmouseout="hideTip(event, 'ft26', 53)" onmouseover="showTip(event, 'ft26', 53)" class="i">form2</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft27', 54)" onmouseover="showTip(event, 'ft27', 54)" class="i">Formlets</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft17', 55)" onmouseover="showTip(event, 'ft17', 55)" class="i">merge</span> <span onmouseout="hideTip(event, 'ft25', 56)" onmouseover="showTip(event, 'ft25', 56)" class="i">form1</span> <span onmouseout="hideTip(event, 'ft26', 57)" onmouseover="showTip(event, 'ft26', 57)" class="i">form2</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft23', 58)" onmouseover="showTip(event, 'ft23', 58)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft28', 59)" onmouseover="showTip(event, 'ft28', 59)" class="i">Select</span>(<span onmouseout="hideTip(event, 'ft29', 60)" onmouseover="showTip(event, 'ft29', 60)" class="i">form</span>, <span onmouseout="hideTip(event, 'ft30', 61)" onmouseover="showTip(event, 'ft30', 61)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft27', 62)" onmouseover="showTip(event, 'ft27', 62)" class="i">Formlets</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft15', 63)" onmouseover="showTip(event, 'ft15', 63)" class="i">map</span> <span onmouseout="hideTip(event, 'ft30', 64)" onmouseover="showTip(event, 'ft30', 64)" class="i">f</span> <span onmouseout="hideTip(event, 'ft29', 65)" onmouseover="showTip(event, 'ft29', 65)" class="i">form</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft23', 66)" onmouseover="showTip(event, 'ft23', 66)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft31', 67)" onmouseover="showTip(event, 'ft31', 67)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft32', 68)" onmouseover="showTip(event, 'ft32', 68)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft27', 69)" onmouseover="showTip(event, 'ft27', 69)" class="i">Formlets</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft33', 70)" onmouseover="showTip(event, 'ft33', 70)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft32', 71)" onmouseover="showTip(event, 'ft32', 71)" class="i">v</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft23', 72)" onmouseover="showTip(event, 'ft23', 72)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft34', 73)" onmouseover="showTip(event, 'ft34', 73)" class="i">ReturnFrom</span>(<span onmouseout="hideTip(event, 'ft35', 74)" onmouseover="showTip(event, 'ft35', 74)" class="i">form</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft35', 75)" onmouseover="showTip(event, 'ft35', 75)" class="i">form</span>
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft36', 76)" onmouseover="showTip(event, 'ft36', 76)" class="i">form</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft22', 77)" onmouseover="showTip(event, 'ft22', 77)" class="i">FormletBuilder</span>()<br /><button class="run" onclick='parent.runCode("type FormletBuilder() =\r\n  member x.Merge(form1, form2) = Formlets.merge form1 form2\r\n  member x.Select(form, f) = Formlets.map f form\r\n  member x.Return(v) = Formlets.unit v\r\n  member x.ReturnFrom(form) = form\r\n\r\nlet form = FormletBuilder()");'></button></pre>
+
+
+<p>The <code>map</code> operation is provided as a <code>Select</code> member - this matches with the usual
+.NET framework naming guidelines where the name <code>Select</code> is used for the <em>map</em>
+operation in LINQ. The rest of the definition is straightforward. We also added
+<code>ReturnFrom</code> in order to allow the <code>return!</code> syntax, although it is less useful than
+when working with monads.</p>
+
+<p>The following example creates a simple formlet that can be used for entering user information.
+When the data is available, the formlet returns a message "Your name is X Y" as a single
+string:</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft37', 78)" onmouseover="showTip(event, 'ft37', 78)" class="i">userInfo</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 79)" onmouseover="showTip(event, 'ft36', 79)" class="i">form</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft38', 80)" onmouseover="showTip(event, 'ft38', 80)" class="i">name</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft5', 81)" onmouseover="showTip(event, 'ft5', 81)" class="i">textBox</span> <span class="s">&quot;</span><span class="s">name</span><span class="s">&quot;</span>
+         <span class="k">and</span> <span onmouseout="hideTip(event, 'ft39', 82)" onmouseover="showTip(event, 'ft39', 82)" class="i">surname</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft5', 83)" onmouseover="showTip(event, 'ft5', 83)" class="i">textBox</span> <span class="s">&quot;</span><span class="s">surname</span><span class="s">&quot;</span>
+         <span class="k">let</span> <span onmouseout="hideTip(event, 'ft40', 84)" onmouseover="showTip(event, 'ft40', 84)" class="i">combined</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft38', 85)" onmouseover="showTip(event, 'ft38', 85)" class="i">name</span> <span class="o">+</span> <span class="s">&quot;</span><span class="s"> </span><span class="s">&quot;</span> <span class="o">+</span> <span onmouseout="hideTip(event, 'ft39', 86)" onmouseover="showTip(event, 'ft39', 86)" class="i">surname</span>
+         <span class="k">let</span> <span onmouseout="hideTip(event, 'ft41', 87)" onmouseover="showTip(event, 'ft41', 87)" class="i">message</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Your</span><span class="s"> </span><span class="s">name</span><span class="s"> </span><span class="s">is</span><span class="s"> </span><span class="s">&quot;</span> <span class="o">+</span> <span onmouseout="hideTip(event, 'ft40', 88)" onmouseover="showTip(event, 'ft40', 88)" class="i">combined</span>
+         <span class="k">return</span> <span onmouseout="hideTip(event, 'ft41', 89)" onmouseover="showTip(event, 'ft41', 89)" class="i">message</span> }
+
+<span class="c">// Select and run the following to get the required form keys</span>
+<span onmouseout="hideTip(event, 'ft37', 90)" onmouseover="showTip(event, 'ft37', 90)" class="i">userInfo</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft8', 91)" onmouseover="showTip(event, 'ft8', 91)" class="i">render</span>
+<span class="c">// Select and run the following to evaluate the formlet</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft42', 92)" onmouseover="showTip(event, 'ft42', 92)" class="i">inputs</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft4', 93)" onmouseover="showTip(event, 'ft4', 93)" class="i">Map</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft43', 94)" onmouseover="showTip(event, 'ft43', 94)" class="i">ofSeq</span> [<span class="s">&quot;</span><span class="s">name</span><span class="s">&quot;</span>, <span class="s">&quot;</span><span class="s">Tomas</span><span class="s">&quot;</span>; <span class="s">&quot;</span><span class="s">surname</span><span class="s">&quot;</span>, <span class="s">&quot;</span><span class="s">Petricek</span><span class="s">&quot;</span>]
+<span onmouseout="hideTip(event, 'ft37', 95)" onmouseover="showTip(event, 'ft37', 95)" class="i">userInfo</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft10', 96)" onmouseover="showTip(event, 'ft10', 96)" class="i">evaluate</span> <span onmouseout="hideTip(event, 'ft42', 97)" onmouseover="showTip(event, 'ft42', 97)" class="i">inputs</span><br /><button class="load" onclick='parent.loadCode("let userInfo = \r\n  form { let! name = textBox \"name\"\r\n         and surname = textBox \"surname\"\r\n         let combined = name + \" \" + surname\r\n         let message = \"Your name is \" + combined\r\n         return message }\r\n\r\n// Select and run the following to get the required form keys\r\nuserInfo |\u003e render\r\n// Select and run the following to evaluate the formlet\r\nlet inputs = Map.ofSeq [\"name\", \"Tomas\"; \"surname\", \"Petricek\"]\r\nuserInfo |\u003e evaluate inputs");'></button></pre>
+
+
+<p>The structure of the computations that can be written is quite limited - the computation
+block <code>form { .. }</code> has to start with a binding of a form <code>let! .. and .. and ..</code> (with
+an arbitrary fixed number of <code>and</code> constructs). This can be followed by any expression 
+that always ends with <code>return</code> (for example, <code>return!</code> or other computation expressions
+are not be allowed). The only other form that is allowed is <code>f { return! e }</code>.</p>
+
+<p>The translation of the above example looks as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft44', 98)" onmouseover="showTip(event, 'ft44', 98)" class="i">userInfo</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 99)" onmouseover="showTip(event, 'ft36', 99)" class="i">form</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft45', 100)" onmouseover="showTip(event, 'ft45', 100)" class="i">Select</span>
+    ( <span onmouseout="hideTip(event, 'ft36', 101)" onmouseover="showTip(event, 'ft36', 101)" class="i">form</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft46', 102)" onmouseover="showTip(event, 'ft46', 102)" class="i">Merge</span>(<span onmouseout="hideTip(event, 'ft5', 103)" onmouseover="showTip(event, 'ft5', 103)" class="i">textBox</span> <span class="s">&quot;</span><span class="s">name</span><span class="s">&quot;</span>, <span onmouseout="hideTip(event, 'ft5', 104)" onmouseover="showTip(event, 'ft5', 104)" class="i">textBox</span> <span class="s">&quot;</span><span class="s">surname</span><span class="s">&quot;</span>),
+      <span class="k">fun</span> (<span onmouseout="hideTip(event, 'ft38', 105)" onmouseover="showTip(event, 'ft38', 105)" class="i">name</span>, <span onmouseout="hideTip(event, 'ft39', 106)" onmouseover="showTip(event, 'ft39', 106)" class="i">surname</span>) <span class="k">-&gt;</span>
+         <span class="k">let</span> <span onmouseout="hideTip(event, 'ft40', 107)" onmouseover="showTip(event, 'ft40', 107)" class="i">combined</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft38', 108)" onmouseover="showTip(event, 'ft38', 108)" class="i">name</span> <span class="o">+</span> <span class="s">&quot;</span><span class="s"> </span><span class="s">&quot;</span> <span class="o">+</span> <span onmouseout="hideTip(event, 'ft39', 109)" onmouseover="showTip(event, 'ft39', 109)" class="i">surname</span>
+         <span class="k">let</span> <span onmouseout="hideTip(event, 'ft41', 110)" onmouseover="showTip(event, 'ft41', 110)" class="i">message</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Your</span><span class="s"> </span><span class="s">name</span><span class="s"> </span><span class="s">is</span><span class="s"> </span><span class="s">&quot;</span> <span class="o">+</span> <span onmouseout="hideTip(event, 'ft40', 111)" onmouseover="showTip(event, 'ft40', 111)" class="i">combined</span>
+         <span onmouseout="hideTip(event, 'ft41', 112)" onmouseover="showTip(event, 'ft41', 112)" class="i">message</span> )<br /><button class="load" onclick='parent.loadCode("let userInfo = \r\n  form.Select\r\n    ( form.Merge(textBox \"name\", textBox \"surname\"),\r\n      fun (name, surname) -\u003e\r\n         let combined = name + \" \" + surname\r\n         let message = \"Your name is \" + combined\r\n         message )");'></button></pre>
+
+
+<p>The code is translated quite differently to monadic or monoidal computations. All 
+bindings that are performed using <code>let! .. and</code> block are combined using <code>Merge</code> and the
+rest of the computation is translated to the application of <code>Select</code>. The <code>return</code> keyword
+is removed (and is only used to keep the computations syntactically uniform).</p>
+
+<p>These syntactic limitations explain why we do not extend the computation builder with members that define
+other standard F# control flow constructs. These can be used in their standard form 
+(i.e. after the initial binding and before the last <code>return</code>), but in this form, they
+do not have any non-standard meaning and they are pushed into the function that is used
+as an argument to <code>Select</code>.</p>
+
+<h2>Applicative functor laws</h2>
+
+<p>Formally, formlets can be defined in two ways. The approach that is used in F# computation
+expression uses the (lax) monoidal functor definition (as opposed to the applicative 
+definition emphasized by Paterson and McBride). The structure requires a number of laws
+that can be expressed using the computation expression syntax as follows:</p>
+
+<pre class="fssnip">
+<span class="c">/// The left and right identity laws of monoidal functors</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft52', 119)" onmouseover="showTip(event, 'ft52', 119)" class="i">identity</span> <span onmouseout="hideTip(event, 'ft53', 120)" onmouseover="showTip(event, 'ft53', 120)" class="i">g</span> <span class="o">=</span> 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft54', 121)" onmouseover="showTip(event, 'ft54', 121)" class="i">f1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 122)" onmouseover="showTip(event, 'ft47', 122)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft49', 123)" onmouseover="showTip(event, 'ft49', 123)" class="i">a</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft53', 124)" onmouseover="showTip(event, 'ft53', 124)" class="i">g</span>
+               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft55', 125)" onmouseover="showTip(event, 'ft55', 125)" class="i">b</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 126)" onmouseover="showTip(event, 'ft47', 126)" class="i">f</span> { <span class="k">return</span> () }
+               <span class="k">return</span> <span onmouseout="hideTip(event, 'ft49', 127)" onmouseover="showTip(event, 'ft49', 127)" class="i">a</span> } 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft56', 128)" onmouseover="showTip(event, 'ft56', 128)" class="i">f2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 129)" onmouseover="showTip(event, 'ft47', 129)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft57', 130)" onmouseover="showTip(event, 'ft57', 130)" class="i">a</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 131)" onmouseover="showTip(event, 'ft47', 131)" class="i">f</span> { <span class="k">return</span> () }
+               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft58', 132)" onmouseover="showTip(event, 'ft58', 132)" class="i">b</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft53', 133)" onmouseover="showTip(event, 'ft53', 133)" class="i">g</span>
+               <span class="k">return</span> <span onmouseout="hideTip(event, 'ft58', 134)" onmouseover="showTip(event, 'ft58', 134)" class="i">b</span> } 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft59', 135)" onmouseover="showTip(event, 'ft59', 135)" class="i">f3</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 136)" onmouseover="showTip(event, 'ft47', 136)" class="i">f</span> { <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft53', 137)" onmouseover="showTip(event, 'ft53', 137)" class="i">g</span> } 
+  <span onmouseout="hideTip(event, 'ft54', 138)" onmouseover="showTip(event, 'ft54', 138)" class="i">f1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft48', 139)" onmouseover="showTip(event, 'ft48', 139)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft59', 140)" onmouseover="showTip(event, 'ft59', 140)" class="i">f3</span>
+  <span onmouseout="hideTip(event, 'ft56', 141)" onmouseover="showTip(event, 'ft56', 141)" class="i">f2</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft48', 142)" onmouseover="showTip(event, 'ft48', 142)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft59', 143)" onmouseover="showTip(event, 'ft59', 143)" class="i">f3</span>
+
+<span class="c">/// The associativity law of monoidal functors</span>
+<span class="c">/// (The translation of &#39;f2&#39; and &#39;f3&#39; is the same.)</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft60', 144)" onmouseover="showTip(event, 'ft60', 144)" class="i">associativity</span> <span onmouseout="hideTip(event, 'ft61', 145)" onmouseover="showTip(event, 'ft61', 145)" class="i">g1</span> <span onmouseout="hideTip(event, 'ft62', 146)" onmouseover="showTip(event, 'ft62', 146)" class="i">g2</span> <span onmouseout="hideTip(event, 'ft63', 147)" onmouseover="showTip(event, 'ft63', 147)" class="i">g3</span> <span class="o">=</span> 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft64', 148)" onmouseover="showTip(event, 'ft64', 148)" class="i">f1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 149)" onmouseover="showTip(event, 'ft47', 149)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft49', 150)" onmouseover="showTip(event, 'ft49', 150)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft50', 151)" onmouseover="showTip(event, 'ft50', 151)" class="i">b</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 152)" onmouseover="showTip(event, 'ft47', 152)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft49', 153)" onmouseover="showTip(event, 'ft49', 153)" class="i">a</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft61', 154)" onmouseover="showTip(event, 'ft61', 154)" class="i">g1</span>
+                               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft50', 155)" onmouseover="showTip(event, 'ft50', 155)" class="i">b</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft62', 156)" onmouseover="showTip(event, 'ft62', 156)" class="i">g2</span>
+                               <span class="k">return</span> <span onmouseout="hideTip(event, 'ft49', 157)" onmouseover="showTip(event, 'ft49', 157)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft50', 158)" onmouseover="showTip(event, 'ft50', 158)" class="i">b</span> }
+               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft65', 159)" onmouseover="showTip(event, 'ft65', 159)" class="i">c</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft63', 160)" onmouseover="showTip(event, 'ft63', 160)" class="i">g3</span>
+               <span class="k">return</span> (<span onmouseout="hideTip(event, 'ft49', 161)" onmouseover="showTip(event, 'ft49', 161)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft50', 162)" onmouseover="showTip(event, 'ft50', 162)" class="i">b</span>), <span onmouseout="hideTip(event, 'ft65', 163)" onmouseover="showTip(event, 'ft65', 163)" class="i">c</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft66', 164)" onmouseover="showTip(event, 'ft66', 164)" class="i">f2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 165)" onmouseover="showTip(event, 'ft47', 165)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft49', 166)" onmouseover="showTip(event, 'ft49', 166)" class="i">a</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft61', 167)" onmouseover="showTip(event, 'ft61', 167)" class="i">g1</span>
+               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft50', 168)" onmouseover="showTip(event, 'ft50', 168)" class="i">b</span>, <span onmouseout="hideTip(event, 'ft65', 169)" onmouseover="showTip(event, 'ft65', 169)" class="i">c</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 170)" onmouseover="showTip(event, 'ft47', 170)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft50', 171)" onmouseover="showTip(event, 'ft50', 171)" class="i">b</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft62', 172)" onmouseover="showTip(event, 'ft62', 172)" class="i">g2</span>
+                              <span class="k">and</span> <span onmouseout="hideTip(event, 'ft65', 173)" onmouseover="showTip(event, 'ft65', 173)" class="i">c</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft63', 174)" onmouseover="showTip(event, 'ft63', 174)" class="i">g3</span>
+                              <span class="k">return</span> <span onmouseout="hideTip(event, 'ft50', 175)" onmouseover="showTip(event, 'ft50', 175)" class="i">b</span>, <span onmouseout="hideTip(event, 'ft65', 176)" onmouseover="showTip(event, 'ft65', 176)" class="i">c</span> }
+               <span class="k">return</span> (<span onmouseout="hideTip(event, 'ft49', 177)" onmouseover="showTip(event, 'ft49', 177)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft50', 178)" onmouseover="showTip(event, 'ft50', 178)" class="i">b</span>), <span onmouseout="hideTip(event, 'ft65', 179)" onmouseover="showTip(event, 'ft65', 179)" class="i">c</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft67', 180)" onmouseover="showTip(event, 'ft67', 180)" class="i">f3</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 181)" onmouseover="showTip(event, 'ft47', 181)" class="i">f</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft49', 182)" onmouseover="showTip(event, 'ft49', 182)" class="i">a</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft61', 183)" onmouseover="showTip(event, 'ft61', 183)" class="i">g1</span>
+               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft50', 184)" onmouseover="showTip(event, 'ft50', 184)" class="i">b</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft62', 185)" onmouseover="showTip(event, 'ft62', 185)" class="i">g2</span>
+               <span class="k">and</span> <span onmouseout="hideTip(event, 'ft65', 186)" onmouseover="showTip(event, 'ft65', 186)" class="i">c</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft63', 187)" onmouseover="showTip(event, 'ft63', 187)" class="i">g3</span> 
+               <span class="k">return</span> (<span onmouseout="hideTip(event, 'ft49', 188)" onmouseover="showTip(event, 'ft49', 188)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft50', 189)" onmouseover="showTip(event, 'ft50', 189)" class="i">b</span>), <span onmouseout="hideTip(event, 'ft65', 190)" onmouseover="showTip(event, 'ft65', 190)" class="i">c</span> }
+  <span onmouseout="hideTip(event, 'ft64', 191)" onmouseover="showTip(event, 'ft64', 191)" class="i">f1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft48', 192)" onmouseover="showTip(event, 'ft48', 192)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft67', 193)" onmouseover="showTip(event, 'ft67', 193)" class="i">f3</span>
+  <span onmouseout="hideTip(event, 'ft66', 194)" onmouseover="showTip(event, 'ft66', 194)" class="i">f2</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft48', 195)" onmouseover="showTip(event, 'ft48', 195)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft67', 196)" onmouseover="showTip(event, 'ft67', 196)" class="i">f3</span></pre>
+
+
+<div class="navigation">
+
+<p>Prev: <a href="composed.html">Composed computations</a> | <a href="home.html">Table of Contents</a></p>
+
+</div>
+
+
+    <!-- HTML for Tool Tips -->
+    <div class="tip" id="ft1">union case Formlet.F: string list * (Map&lt;string,string&gt; -&gt; &#39;T) -&gt; Formlet&lt;&#39;T&gt;</div>
+<div class="tip" id="ft2">type &#39;T list = List&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Collections.list&lt;_&gt;<br />&#160;&#160;type: &#39;T list<br /></div>
+<div class="tip" id="ft3">Multiple items<br />val string : &#39;T -&gt; string<br /><br />Full name: Microsoft.FSharp.Core.Operators.string<br /><br />--------------------<br />type string = System.String<br /><br />Full name: Microsoft.FSharp.Core.string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft4">Multiple items<br />module Map<br /><br />from Microsoft.FSharp.Collections<br /><br />--------------------<br />type Map&lt;&#39;Key,&#39;Value (requires comparison)&gt; =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;interface System.Collections.IEnumerable<br />&#160;&#160;&#160;&#160;interface System.IComparable<br />&#160;&#160;&#160;&#160;interface System.Collections.Generic.IEnumerable&lt;System.Collections.Generic.KeyValuePair&lt;&#39;Key,&#39;Value&gt;&gt;<br />&#160;&#160;&#160;&#160;interface System.Collections.Generic.ICollection&lt;System.Collections.Generic.KeyValuePair&lt;&#39;Key,&#39;Value&gt;&gt;<br />&#160;&#160;&#160;&#160;interface System.Collections.Generic.IDictionary&lt;&#39;Key,&#39;Value&gt;<br />&#160;&#160;&#160;&#160;new : elements:seq&lt;&#39;Key * &#39;Value&gt; -&gt; Map&lt;&#39;Key,&#39;Value&gt;<br />&#160;&#160;&#160;&#160;member Add : key:&#39;Key * value:&#39;Value -&gt; Map&lt;&#39;Key,&#39;Value&gt;<br />&#160;&#160;&#160;&#160;member ContainsKey : key:&#39;Key -&gt; bool<br />&#160;&#160;&#160;&#160;override Equals : obj -&gt; bool<br />&#160;&#160;&#160;&#160;member Remove : key:&#39;Key -&gt; Map&lt;&#39;Key,&#39;Value&gt;<br />&#160;&#160;&#160;&#160;member TryFind : key:&#39;Key -&gt; &#39;Value option<br />&#160;&#160;&#160;&#160;member Count : int<br />&#160;&#160;&#160;&#160;member IsEmpty : bool<br />&#160;&#160;&#160;&#160;member Item : key:&#39;Key -&gt; &#39;Value with get<br />&#160;&#160;end<br /><br />Full name: Microsoft.FSharp.Collections.Map&lt;_,_&gt;<br />&#160;&#160;type: Map&lt;&#39;Key,&#39;Value&gt;<br /></div>
+<div class="tip" id="ft5">val textBox : string -&gt; Formlet&lt;string&gt;<br /><br />Full name: TryJoinads.textBox<br /><em><br /><br />&#160;Represents a textbox formlet</em></div>
+<div class="tip" id="ft6">val key : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft7">val map : Map&lt;string,string&gt;<br />&#160;&#160;type: Map&lt;string,string&gt;<br /></div>
+<div class="tip" id="ft8">val render : Formlet&lt;&#39;a&gt; -&gt; string list<br /><br />Full name: TryJoinads.render</div>
+<div class="tip" id="ft9">val keys : string list<br />&#160;&#160;type: string list<br /></div>
+<div class="tip" id="ft10">val evaluate : Map&lt;string,string&gt; -&gt; Formlet&lt;&#39;a&gt; -&gt; &#39;a<br /><br />Full name: TryJoinads.evaluate</div>
+<div class="tip" id="ft11">val state : Map&lt;string,string&gt;<br />&#160;&#160;type: Map&lt;string,string&gt;<br /></div>
+<div class="tip" id="ft12">val op : (Map&lt;string,string&gt; -&gt; &#39;a)</div>
+<div class="tip" id="ft13">Multiple items<br />val unit : &#39;a -&gt; Formlet&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.Formlets.unit<br /><em><br /><br />&#160;Formlet that always returns the given value</em><br /><br />--------------------<br />type unit = Unit<br /><br />Full name: Microsoft.FSharp.Core.unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft14">val v : &#39;a</div>
+<div class="tip" id="ft15">val map : (&#39;a -&gt; &#39;b) -&gt; Formlet&lt;&#39;a&gt; -&gt; Formlet&lt;&#39;b&gt;<br /><br />Full name: TryJoinads.Formlets.map<br /><em><br /><br />&#160;The map operation applies &#39;f&#39; to the result</em></div>
+<div class="tip" id="ft16">val f : (&#39;a -&gt; &#39;b)</div>
+<div class="tip" id="ft17">val merge : Formlet&lt;&#39;a&gt; -&gt; Formlet&lt;&#39;b&gt; -&gt; Formlet&lt;&#39;a * &#39;b&gt;<br /><br />Full name: TryJoinads.Formlets.merge<br /><em><br /><br />&#160;Combine two formlets and pair their results</em></div>
+<div class="tip" id="ft18">val keys1 : string list<br />&#160;&#160;type: string list<br /></div>
+<div class="tip" id="ft19">val op1 : (Map&lt;string,string&gt; -&gt; &#39;a)</div>
+<div class="tip" id="ft20">val keys2 : string list<br />&#160;&#160;type: string list<br /></div>
+<div class="tip" id="ft21">val op2 : (Map&lt;string,string&gt; -&gt; &#39;b)</div>
+<div class="tip" id="ft22">type FormletBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; FormletBuilder<br />&#160;&#160;&#160;&#160;member Merge : form1:Formlet&lt;&#39;e&gt; * form2:Formlet&lt;&#39;f&gt; -&gt; Formlet&lt;&#39;e * &#39;f&gt;<br />&#160;&#160;&#160;&#160;member Return : v:&#39;b -&gt; Formlet&lt;&#39;b&gt;<br />&#160;&#160;&#160;&#160;member ReturnFrom : form:&#39;a -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member Select : form:Formlet&lt;&#39;c&gt; * f:(&#39;c -&gt; &#39;d) -&gt; Formlet&lt;&#39;d&gt;<br />&#160;&#160;end<br /><br />Full name: TryJoinads.FormletBuilder</div>
+<div class="tip" id="ft23">val x : FormletBuilder</div>
+<div class="tip" id="ft24">member FormletBuilder.Merge : form1:Formlet&lt;&#39;e&gt; * form2:Formlet&lt;&#39;f&gt; -&gt; Formlet&lt;&#39;e * &#39;f&gt;<br /><br />Full name: TryJoinads.FormletBuilder.Merge</div>
+<div class="tip" id="ft25">val form1 : Formlet&lt;&#39;e&gt;</div>
+<div class="tip" id="ft26">val form2 : Formlet&lt;&#39;f&gt;</div>
+<div class="tip" id="ft27">module Formlets<br /><br />from TryJoinads</div>
+<div class="tip" id="ft28">member FormletBuilder.Select : form:Formlet&lt;&#39;c&gt; * f:(&#39;c -&gt; &#39;d) -&gt; Formlet&lt;&#39;d&gt;<br /><br />Full name: TryJoinads.FormletBuilder.Select</div>
+<div class="tip" id="ft29">val form : Formlet&lt;&#39;c&gt;</div>
+<div class="tip" id="ft30">val f : (&#39;c -&gt; &#39;d)</div>
+<div class="tip" id="ft31">member FormletBuilder.Return : v:&#39;b -&gt; Formlet&lt;&#39;b&gt;<br /><br />Full name: TryJoinads.FormletBuilder.Return</div>
+<div class="tip" id="ft32">val v : &#39;b</div>
+<div class="tip" id="ft33">val unit : &#39;a -&gt; Formlet&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.Formlets.unit<br /><em><br /><br />&#160;Formlet that always returns the given value</em></div>
+<div class="tip" id="ft34">member FormletBuilder.ReturnFrom : form:&#39;a -&gt; &#39;a<br /><br />Full name: TryJoinads.FormletBuilder.ReturnFrom</div>
+<div class="tip" id="ft35">val form : &#39;a</div>
+<div class="tip" id="ft36">val form : FormletBuilder<br /><br />Full name: TryJoinads.form</div>
+<div class="tip" id="ft37">val userInfo : Formlet&lt;string&gt;<br /><br />Full name: TryJoinads.userInfo</div>
+<div class="tip" id="ft38">val name : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft39">val surname : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft40">val combined : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft41">val message : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft42">val inputs : Map&lt;string,string&gt;<br /><br />Full name: TryJoinads.inputs<br />&#160;&#160;type: Map&lt;string,string&gt;<br /></div>
+<div class="tip" id="ft43">val ofSeq : seq&lt;&#39;Key * &#39;T&gt; -&gt; Map&lt;&#39;Key,&#39;T&gt; (requires comparison)<br /><br />Full name: Microsoft.FSharp.Collections.Map.ofSeq</div>
+<div class="tip" id="ft44">val userInfo : Formlet&lt;string&gt;<br /><br />Full name: TryJoinads.ApplicativeTranslation.userInfo</div>
+<div class="tip" id="ft45">member FormletBuilder.Select : form:Formlet&lt;&#39;c&gt; * f:(&#39;c -&gt; &#39;d) -&gt; Formlet&lt;&#39;d&gt;</div>
+<div class="tip" id="ft46">member FormletBuilder.Merge : form1:Formlet&lt;&#39;e&gt; * form2:Formlet&lt;&#39;f&gt; -&gt; Formlet&lt;&#39;e * &#39;f&gt;</div>
+<div class="tip" id="ft47">val f : FormletBuilder<br /><br />Full name: TryJoinads.f</div>
+<div class="tip" id="ft48">val shouldEqual : &#39;a -&gt; &#39;b -&gt; &#39;c<br /><br />Full name: TryJoinads.shouldEqual</div>
+<div class="tip" id="ft49">val a : &#39;a</div>
+<div class="tip" id="ft50">val b : &#39;b</div>
+<div class="tip" id="ft51">val failwith : string -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.Operators.failwith</div>
+<div class="tip" id="ft52">val identity : Formlet&lt;&#39;a&gt; -&gt; &#39;b<br /><br />Full name: TryJoinads.identity<br /><em><br /><br />&#160;The left and right identity laws of monoidal functors</em></div>
+<div class="tip" id="ft53">val g : Formlet&lt;&#39;a&gt;</div>
+<div class="tip" id="ft54">val f1 : Formlet&lt;&#39;a&gt;</div>
+<div class="tip" id="ft55">val b : unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft56">val f2 : Formlet&lt;&#39;a&gt;</div>
+<div class="tip" id="ft57">val a : unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft58">val b : &#39;a</div>
+<div class="tip" id="ft59">val f3 : Formlet&lt;&#39;a&gt;</div>
+<div class="tip" id="ft60">val associativity : Formlet&lt;&#39;a&gt; -&gt; Formlet&lt;&#39;b&gt; -&gt; Formlet&lt;&#39;c&gt; -&gt; &#39;d<br /><br />Full name: TryJoinads.associativity<br /><em><br /><br />&#160;The associativity law of monoidal functors<br />&#160;(The translation of &#39;f2&#39; and &#39;f3&#39; is the same.)</em></div>
+<div class="tip" id="ft61">val g1 : Formlet&lt;&#39;a&gt;</div>
+<div class="tip" id="ft62">val g2 : Formlet&lt;&#39;b&gt;</div>
+<div class="tip" id="ft63">val g3 : Formlet&lt;&#39;c&gt;</div>
+<div class="tip" id="ft64">val f1 : Formlet&lt;(&#39;a * &#39;b) * &#39;c&gt;</div>
+<div class="tip" id="ft65">val c : &#39;c</div>
+<div class="tip" id="ft66">val f2 : Formlet&lt;(&#39;a * &#39;b) * &#39;c&gt;</div>
+<div class="tip" id="ft67">val f3 : Formlet&lt;(&#39;a * &#39;b) * &#39;c&gt;</div>
+
+  </body>
+  </html>

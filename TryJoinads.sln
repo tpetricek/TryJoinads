@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0C8403FB-8A70-469B-9250-41B8EE4ADC9F}"
 	ProjectSection(SolutionItems) = preProject
-		build.fsx = build.fsx
+		tools\build.fsx = tools\build.fsx
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{5F357B68-8172-4CA3-B762-A74E76690F54}"
@@ -20,7 +20,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{66DC0390-154
 		output\fsi.html = output\fsi.html
 		output\index.html = output\index.html
 		output\script.js = output\script.js
-		output\silverlight.js = output\silverlight.js
 		output\splitter.js = output\splitter.js
 		output\style.css = output\style.css
 	EndProjectSection
@@ -48,6 +47,21 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Joinads.Silverlight"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Joinads", "src\FSharp.Joinads\FSharp.Joinads.fsproj", "{3EA40A85-B62B-4FB9-BC96-84910AD34756}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{A3A695D0-51E9-4827-AABF-BA516EACA2C6}"
+	ProjectSection(SolutionItems) = preProject
+		documents\examples\philosophers.text = documents\examples\philosophers.text
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "computations", "computations", "{96B8E61A-BCE3-44F9-ACC8-E0507EE7AEB4}"
+	ProjectSection(SolutionItems) = preProject
+		documents\computations\additive.text = documents\computations\additive.text
+		documents\computations\applicative.text = documents\computations\applicative.text
+		documents\computations\home.text = documents\computations\home.text
+		documents\computations\layered.text = documents\computations\layered.text
+		documents\computations\monads.text = documents\computations\monads.text
+		documents\computations\monoids.text = documents\computations\monoids.text
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +87,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{B0E01907-FBF2-4DF5-BFC4-93D2AC4A3931} = {5F357B68-8172-4CA3-B762-A74E76690F54}
 		{8867D529-112A-453E-8369-6EA192197D0F} = {5F357B68-8172-4CA3-B762-A74E76690F54}
+		{A3A695D0-51E9-4827-AABF-BA516EACA2C6} = {5F357B68-8172-4CA3-B762-A74E76690F54}
+		{96B8E61A-BCE3-44F9-ACC8-E0507EE7AEB4} = {5F357B68-8172-4CA3-B762-A74E76690F54}
 		{EF7DEC4F-F138-4850-9F05-A518A7BA2350} = {842D864E-6FF2-467A-B9FE-0BF78691D988}
 		{8EC98D88-6E3A-4789-AB38-FCCC4EF49F1C} = {842D864E-6FF2-467A-B9FE-0BF78691D988}
 		{3EA40A85-B62B-4FB9-BC96-84910AD34756} = {842D864E-6FF2-467A-B9FE-0BF78691D988}

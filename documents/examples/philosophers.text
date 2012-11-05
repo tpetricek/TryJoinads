@@ -1,0 +1,66 @@
+﻿> Dining Philosophers
+
+Dining philosophers using join calculus
+=======================================
+
+This example shows an implementation of the [dining philosophers problem](http://en.wikipedia.org/wiki/Dining_philosophers_problem)
+implemented using joinads. The sample has been written by Nick Palladinos (see [F# Snippets](http://fssnip.net/aL)).
+The description of the dining philosophers problem from [WikiPedia](http://en.wikipedia.org/wiki/Dining_philosophers_problem) looks like this:
+
+> * Five silent philosophers sit at a table around a bowl of spaghetti. A fork is placed between each pair of adjacent philosophers.
+> 
+> * Each philosopher must alternately think and eat. Eating is not limited by the amount of spaghetti left: assume an infinite supply. However, a philosopher can only eat while holding both the fork to the left and the fork to the right (an alternative problem formulation uses rice and chopsticks instead of spaghetti and forks).
+>  
+> * Each philosopher can pick up an adjacent fork, when available, and put it down, when holding it. These are separate actions: forks must be picked up and put down one by one.
+>
+> * The problem is how to design a discipline of behavior (a concurrent algorithm) such that each philosopher won't starve, i.e. can forever continue to alternate between eating and thinking.
+
+The solution using joinads represents each philosopher and a fork (or a chopstick) using
+a single channel. The initialization code looks like this:
+
+    open System
+    open FSharp.Extensions.Joinads
+
+    // Initialize channel for every philosopher and every chopstick
+    let n = 5
+    let chopsticks = [| for i = 1 to n do yield new Channel<unit>() |]
+    let hungry = [| for i = 1 to n do yield new Channel<unit>() |]
+    let philosophers = [| "Plato"; "Konfuzius"; "Socrates"; "Voltaire"; "Descartes" |]
+
+    let randomDelay (r : Random) = System.Threading.Thread.Sleep(r.Next(1, 10) * 1000)
+
+The situation when a philosopher can start eating is captured by
+a join pattern that matches on channels representing the philosopher and a fork on
+the left and on the right:
+
+    // Start join patterns that enable philosophers to eat
+    for i = 0 to n - 1 do
+        let left = chopsticks.[i]
+        let right = chopsticks.[(i+1) % n]
+        let random = new Random()
+        join {
+            match! hungry.[i], left, right with
+            | _, _, _ ->
+                printfn "%s is eating" philosophers.[i] 
+                randomDelay random
+                left.Call(); right.Call()
+                printfn "%s is thinking" philosophers.[i] 
+        }
+
+Now we can start the code by making all chopsticks (initially) available and by running
+a loop that makes random philosophers hungry:
+    
+    // Run
+    for chopstick in chopsticks do
+        chopstick.Call()
+
+    let random = new Random()    
+    for i in 0 .. 10 do
+        hungry.[random.Next(0, n)].Call()
+        randomDelay random
+
+<div class="navigation">
+
+Next: [Table of contents](../toc.html)
+
+</div

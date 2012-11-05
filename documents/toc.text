@@ -16,3 +16,12 @@ table of contents that shows annotations for every article, go to the
 ### Programming with joinads
 
 * [Asynchronous workflows and joinads](use/async.html)
+* [Task-based parallelism](use/tasks.html)
+* [Agent-based programming](use/agents.html)
+* [Concurrent programming using joins](use/joins.html)
+
+### Implementing joinads
+
+* [Programming with option values](implement/options.html)
+* [Writing parsers with joinads](implement/parsers.html)
+* [Joinads for asynchronous workflows](implement/async.html)

@@ -1,4 +1,5 @@
-﻿#r "System.Numerics.dll"
+﻿#nowarn "26"
+#r "System.Numerics.dll"
 #r "System.Windows.dll"
 #r "System.Windows.Controls.dll"
 #r "System.Reactive.dll"

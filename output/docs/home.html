@@ -6,6 +6,20 @@
     <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
     <link rel="stylesheet" type="text/css" href="../contentstyle.css" />
     <script type="text/javascript" src="../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
   </head>
   <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
     <h1>Introducing Try Joinads</h1>
@@ -50,17 +64,39 @@ and reactive programming. They use an implementation of joinad operations that i
 in standard joinads library.</p>
 
 <ul>
-<li><a href="use/async.html"><strong>Asynchronous workflows and joinads</strong></a>
+<li><p><a href="use/async.html"><strong>Asynchronous workflows and joinads</strong></a>
 shows how to use joinads in asynchronous programming. Applications include asynchronously waiting
-for multiple computations or waiting for the first computation that produces certain value.</li>
+for multiple computations or waiting for the first computation that produces certain value.</p></li>
+<li><p><a href="use/tasks.html"><strong>Task-based parallelism</strong></a>
+has been already demonstrated in the <a href="intro.html">introduction</a>. This tutorial
+shows a more complete example that uses joinads for recursive tree processing with
+short-circuiting.</p></li>
+<li><p><a href="use/agents.html"><strong>Agent-based programming</strong></a>
+can benefit from the notation used by joinads when implementing agent (<code>MailboxProcessor</code>) that
+uses the <code>Scan</code> method. This tutorial shows several examples.</p></li>
+<li><p><a href="use/joins.html"><strong>Concurrent programming using joins</strong></a> 
+shows a library that uses joinads to embed <em>join calculus</em> in F#. The library can be used for
+writing concurrent primitives, such as blocking collection and others.</p></li>
 </ul>
 
-<h3>More content comming soon!</h3>
+<h3>Implementing joinads</h3>
 
-<p>More articles will be added to this web site as I publish them on <a href="http://tomasp.net/blog">my blog</a>.
-If you're interested in using joinads for task-based parallelism (using <code>Task&lt;'T&gt;</code>), for programming
-with agents (<code>MailboxProcessor&lt;'T&gt;</code> in F#), for implementing join calculus or for writing
-parsers, please check back soon!</p>
+<p>The following articles briefly explain how to implement joinads for several standard types
+of computations including <code>option</code> values and F# asynchronous workflows.</p>
+
+<ul>
+<li><p><a href="implement/options.html"><strong>Programming with option values</strong></a>
+shows the implementation of joinad computation builder for the <code>option&lt;'T&gt;</code> type. The sample
+uses parallel <em>composition</em> and <em>choice</em>.</p></li>
+<li><p><a href="implement/parsers.html"><strong>Writing parsers with joinads</strong></a>
+shows that joinads are useful in areas other than just concurrent and parallel programming.
+For parsers, joinads make it possible to express the <em>intersection of languages</em>.</p></li>
+<li><p><a href="implement/async.html"><strong>Joinads for asynchronous workflows</strong></a>
+explains how to add joinad operations to the <code>Async&lt;'T&gt;</code> type. The sample also provides more
+details on how aliasing is used in joinads.</p></li>
+</ul>
+
+<span></span>
 
 
     <!-- HTML for Tool Tips -->

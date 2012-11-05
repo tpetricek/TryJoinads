@@ -1,0 +1,197 @@
+﻿> Programming with option values
+
+Implementing the option joinad
+==============================
+
+This article shows how to implement the _joinad_ structure for one of the 
+simplest monads - the `option<'T>` type. This is a slightly oversimplified example. 
+The `match!` construct can be used to write patterns that specify that a monadic
+value (in this case `option<'T>`) should contain a certain value, or we can specify
+that we do not require a value. When working with options, this means the same thing 
+as matching the value against `Some` and against `_`, respectively. 
+
+However, the example demonstrates the operations that need to be implemented and
+their type signatures. Later articles give more interesting examples including
+parsers and asynchronous workflows (and you can explore other examples if you look
+at the [FSharp.Joiands source code](https://github.com/tpetricek/FSharp.Joinads) at GitHub).
+
+Implementing the maybe builder
+------------------------------
+ 
+To implement computation builder that supports the `match!` construct, we first create 
+a usual F# computation builder with the standard members that are used by F# today. For
+options, we provide `Bind`, `Return` and `ReturnFrom` to support the `let!` construct, 
+`return` and `return!`:
+
+    /// Computation builder for option values that
+    /// defines standard members for monads
+    type MaybeBuilder() =
+      member x.Bind(v, f) = Option.bind f v
+      member x.Return(a) = Some a
+      member x.ReturnFrom(o) = o
+
+To support `match!` we need to add five additional members. The most important members are
+`Merge` (to allow matching on multiple values in a single clause), `Choose` and `Fail` (to allow
+multiple clauses). The members `Delay` and `Run` do not have to be 
+implemented, but should be provided to handle side-effects in clause bodies.
+
+    /// Adds implementation of joinad operations
+    type MaybeBuilder with
+      /// Combine two options into option of a tuple 
+      member x.Merge(v1, v2) = 
+        match v1, v2 with
+        | Some a, Some b -> Some (a, b)
+        | _ -> None
+      /// Return the first option that contains a value
+      member x.Choose(v1, v2) = 
+        match v1 with 
+        | Some(v1) -> Some(v1) 
+        | _ -> v2
+      /// Represents a failed computation
+      member x.Fail() = None
+
+      // Creating & executing delayed computations
+      member x.Delay(f) = f
+      member x.Run(f) = f()
+
+    // Create an instance of the computation builder
+    let maybe = new MaybeBuilder()
+
+The computation builder implements most of the operations in the usual way. The `Delay` operation 
+can be implemented in two ways. For computations that can wrap a function `unit -> M<'T>` into a 
+computation value `M<'T>` (without running it), we could wrap the function in `Delay` and don't 
+include `Run`. The above sample uses another approach which is to return the function passed to 
+`Delay` as it is (as a function) and add `Run` member that runs the function.
+
+Other members needed for the `match!` construct are:
+
+ * The `Fail` operation creates a computation that never produces any value. 
+   For options, this is the None value. This is quite similar to the `Zero` member,
+   but it may have a different meaning for some types.
+
+ * The `Merge` operation has a type `M<'T> -> M<'U> -> M<'T * 'U>`. It takes two computations 
+   and returns a single computation that contains a tuple with the values. If any of the 
+   options passed as arguments is `None`, the result will also be `None`. If both of the 
+   options are `Some`, then we can get both values and return a tuple wrapped in `Some`. 
+   For some computations including options, this operation can be implemented using `Bind` 
+   and `Return`. However, this doesn't work for all computation.
+
+ * Finally, the `Choose` operation has a type `M<'T> -> M<'T> -> M<'T>`. The intuitive explanation 
+   of the operation is that it should return the "first available value" and prefer values 
+   from the first argument. For options this means that if the first argument is `Some`, we 
+   return its value (wrapped in `Some`). Otherwise, we return the value of the second argument. 
+   The operation returns `None` only if both of the arguments are `None`.
+ 
+Now that we have a computation builder `maybe`, let's write some interesting computation. 
+We look how the example looks using the `match!` syntactic sugar and then explain how the translation works...
+
+Implementing three-valued logic
+-------------------------------
+
+As a simple example, we look how to implement the logical "or" operation for a 
+[three-valued logic](http://en.wikipedia.org/wiki/Ternary_logic). 
+As the name suggests, the logic works with three values (true, false and unknown). We can represent 
+values of the three-valued logic using `option<bool>` and take `None` to represent the unknown value.
+ 
+The unknown value means that the value may be either true or false, but we don't know which one. 
+The "or" operator reflects this interpretation - for example, when we write `false || unknown`, the result 
+is `unknown` (it may be either `true` or `false` depending on the second value). 
+
+The following snippet uses `match!` to implement the "or" operator as defined in the 
+[Kleene logic](http://en.wikipedia.org/wiki/Ternary_logic#Kleene_logic):
+
+    /// Logical 'or' operator for ternary (Kleene) logic
+    let kleeneOr a b = maybe {
+      match! a, b with
+      | true, ? -> return true
+      | ?, true -> return true 
+      | a, b -> return a || b }
+
+    // Print truth table for the ternary operator
+    for a in [Some true; None; Some false] do
+      for b in [Some true; None; Some false] do
+        printfn "%A or %A = %A" a b (kleeneOr a b)
+
+The example is quite easy to read. When using `match!`, the patterns we write in clauses can be of two forms. 
+The form `<pat>` (binding pattern) means that the computation must produce a value and the value should match 
+the usual F# pattern `<pat>`. In case of options, `true` essentially means that the value should be `Some(true)`. 
+The form `?` (ignore pattern) specifies that we don't care about the value (there may or may not be some value). 
+For options, this means the same thing as underscore `_` (wildcard pattern) used in the standard `match` construct.
+ 
+The first two clauses encode the situation when one of the values is `true`. In that case, we immediately know 
+that the result of the "or" operation is also `true`. The last case handles the case when both values are known - 
+in that case, we simply use the standard logical or. In all remaining cases that are not covered by any of the patterns, 
+the result is unknown (or `None`).
+ 
+When using joinads to work with option values, we don't get any interesting benefits. The true power of the 
+construct is that it can be used for working with other interesting types of computations. This is possible, 
+because `match!` is just a syntactic sugar that is translated to the primitives of the computation builder.
+
+Translation of joinads 
+----------------------
+ 
+The desugaring of `match!` is slightly more sophisticated than the desugaring of `let!` and other standard constructs. 
+The idea is that we combine all inputs for a clause (horizontally) using the `Merge` operation. Then 
+we select the first matching clause (vertically) using the `Choose` operation. A pattern matching failure 
+is represented using the `Fail` operation. The above example will be translated to the following code:
+
+    [load]
+    // Sample inputs
+    let a = Some true
+    let b = None
+
+    // Translation of individual clauses - inputs are combined 
+    // using 'Merge' and body is wrapped using 'Delay'
+    let cl1 = maybe.Bind(a, function 
+      | true -> maybe.Return(maybe.Delay(fun () -> maybe.Return(true)))
+      | _ -> maybe.Fail() )
+    let cl2 = maybe.Bind(b, function 
+      | true -> maybe.Return(maybe.Delay(fun () -> maybe.Return(true)))
+      | _ -> maybe.Fail() )
+    let cl3 = maybe.Bind(maybe.Merge(a, b), fun (a, b) -> 
+      maybe.Return(maybe.Delay(fun () -> maybe.Return(true))))
+
+    // Clauses are combined using 'Choose' and selected
+    // delayed clause is then evaluated using 'Run'
+    maybe.Bind(maybe.Choose(maybe.Choose(cl1, cl2), cl3), fun r -> 
+      maybe.Run(r))
+
+When translating joinads, the modified F# compiler works in two steps:
+
+ * Every clause is translated into a separate computation of type `M<M<'T>>` 
+   (or `M<unit -> M<'T>>` when using `Delay` that returns a function as in this example). 
+   The inner computation represents the body to be executed when the clause is selected.
+   To create this computation, the compiler first merges are inputs that appear in 
+   binding patterns using Merge. Then it uses `Bind` to transform the input into either 
+   `Return` (containing a delayed body when the value matches a pattern) or `Fail` (when 
+   the produced value doesn't match).
+
+ * After translating the clauses, the compiler constructs an expression that selects the first 
+   clause that contains or produces body (the terminology is intentionally vaugue, because 
+   the meaning depends on the type of computation). This is done by combining all clauses in 
+   the top-to-bottom order using `Choose`. The result is a computation `M<M<'T>>` 
+   (or `M<unit -> M<'T>>` for delayed functions), so we need to unwrap the body. This is 
+   done by passing the overall result as an argument to `Bind`. In the continuation, we 
+   apply the `Run` operation, which can unwrap the delayed computation (for computations that 
+   are delayed by design, the Run operation isn't required).
+ 
+Summary
+-------
+
+This article demonstrated how to add the joinad structure to the maybe monad. This is
+a very basic example, but it demonstrated what operations need to be implemented. We
+also looked how the translation works, so you should have enough information to implement
+your own joinads. The upcoming two articles will give more complex examples and also
+cover an additional feature that is needed, for example, for asynchronous workflows.
+
+The best way to understand how the translation works is to experiment with it. At the moment,
+the only specification for the translation is the modified source code itself, because
+it includes various small tweaks that are not documented in the [publications](../pubs.html).
+You can find the changes in the `tc.fs` file [on GitHub](https://github.com/tpetricek/FSharp.Extensions).
+
+
+<div class="navigation">
+
+Next: [Writing parsers with joinads](parsers.html) | [Table of contents](../toc.html)
+
+</div>

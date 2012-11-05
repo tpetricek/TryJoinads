@@ -1,0 +1,201 @@
+﻿> Computation expressions for layered monads
+
+Layered monads
+===============
+
+A layered monad is a computation that combines aspects of multiple monads. The paper uses
+asynchronous sequences as an example - such computation combines non-blocking execution
+of _asynchronous workflows_ with the ability to generate multiple results from _sequence_
+computations. In Haskell, layered computation types can be created using monad transformers
+(that add state, exceptions, etc.). F# does not support higher-kinded types, so monad transformers 
+cannot be encoded directly, but they still provide useful framework for documenting computations.
+
+The _asynchronous sequence_ computation (from the paper) can be expressed as an application 
+of the list monad transformer to the asynchronous workflow monad:  
+
+    [noload]
+    type ListT<'M, 'T> = 'M<ListTInner<'M, 'T>>
+    and ListTInner<'M, 'T> = Nil | Cons of 'T * ListT<'M, 'T>
+
+    type AsyncSeq<'T> = ListT<Async, 'T> 
+
+This sample is not valid F# (the type parameter `'M` would have a kind `* -> *`), but it demonstrates 
+the idea. In this article, we will not implement _asynchronous sequences_, because that would be
+too complex, but we use a simpler example. We show layering of monads using _lazy list_ which is 
+a similar concept. Using the above pseudo-code, it could be expressed as `LazyList<'T> = ListT<Lazy, 'T>`.
+
+Implementing lazy list computation
+----------------------------------
+
+The type that represents lazy list (or computation that generates a lazy list) can be defined 
+as follows:
+
+    type LazyList<'T> = L of Lazy<LazyListInner<'T>>
+    and LazyListInner<'T> = Nil | Cons of 'T * LazyList<'T>
+
+As already mentioned, F# does not support higher-kinded types, so we need to implement the operations
+of the composed monad by hand. In practice, this is not usually an issue, because layered 
+computations are not used that frequently in F# - they are certainly less frequent than in e.g. Haskell
+and so it is acceptable to repeat some parts of the code. 
+
+The following code sample defines the basic operations for composing lazy list computations:
+
+    /// Creates a lazy list containing a single element
+    let unit v = L (lazy Cons(v, L (lazy Nil)))
+    /// Creates a lazy list that is empty
+    let zero () = L (lazy Nil)
+
+    /// Concatenates the elements of two lazy lists 
+    let rec combine (L l1) (L l2) = L (Lazy.Create(fun () ->
+      match l1.Value with 
+      | Nil -> l2.Value
+      | Cons(x, xs) -> Cons(x, combine xs (L l2))))
+
+    /// For every input, generates a new lazy list using
+    /// the provided function and concatenates the results
+    let rec bind f (L l) = L (Lazy.Create(fun () ->
+      match l.Value with
+      | Nil -> Nil
+      | Cons(x, xs) -> 
+          let (L res) = combine (f x) (bind f xs)
+          res.Value))
+
+    /// Wraps a function with untracked effects into a lazy list
+    let delay (f:unit -> LazyList<_>) = L (Lazy.Create(fun () ->
+      let (L inner) = f () in inner.Value))
+
+The following code sampel adds a number of functions for converting between lists, lazy lists 
+and lazy values:
+
+    /// Turn a lazy value into a singleton list
+    let ofLazy (l:Lazy<_>) = delay (fun () -> unit (l.Value))
+    /// Turn a non-lazy list into a lazy list
+    let rec ofList l = delay (fun () -> 
+      match l with
+      | [] -> zero ()
+      | x::xs -> combine (unit x) (ofList xs))
+
+    /// Evaluate a lazy list and obtain a list
+    let rec toList (L inner) = 
+      match inner.Value with
+      | Nil -> []
+      | Cons(x, xs) -> x::(toList xs)
+
+### Defining the computation builder
+
+Using the operations defined above, it is easy to define a computation builder for
+generating lazy lists. The underlying monad (lazy) is wrapped into a list, which is 
+both monoidal and monadic computation (as discussed [earlier](additive.html). This
+means that we can define monoidal members such as `Yield` and `Combine` that are
+specific to list computations. The next part of the snippet is more interesting as 
+it defines multiple variants of monadic binding:
+
+    /// Computation builder for creating lazy lists
+    type LazyListBuilder() = 
+      // Operations from the monoidal structure
+      member x.Yield(v) = unit v
+      member x.YieldFrom(lv) = lv
+      member x.Combine(l1, l2) = combine l1 l2
+      member x.Zero() = zero()
+      member x.Delay(f) = delay f
+  
+      // Bind and lifted bind operators
+      member x.For(ll, f) = bind f ll
+      member x.For(l, f) = bind f (ofList (List.ofSeq l))
+      member x.Bind(lv, f) = bind f (ofLazy lv)
+
+    /// Single instance of the computation builder
+    let llist = LazyListBuilder()
+
+The last three operations of the computation builder represent various forms of binding. The 
+first `For` member is the standard binding of the composed monad (that is, lazy list). The 
+next two operations represent binding on one of the underlying monads. In the first case 
+(second `For` member), we can bind on a non-lazy list - the list is lifted to a lazy list and
+then used as normal. In the last case (the `Bind` member), we can bind on a lazy value - the
+value is converted to a singleton lazy list and then used as normal.
+
+The choice of `For` for normal binding and binding on a list is discussed in the paper.
+Briefly, these two represent computations that produce "multiple" values and so processing
+them using `for` intuitively feels more appropriate. 
+
+### Programming with lazy lists
+
+The design of the computation builder is motivated by the aim to get as readable syntax
+as possible when using the `llist { .. }` computation (the syntax is the same as the one
+for `asyncSeq { .. }` used in the paper).
+
+The following example creates a lazy value `lazyRandom`, representing a random number
+generator and then it generates two lazy lists:
+
+    /// Lazily constructed random generator
+    let lazyRandom = lazy System.Random()
+
+    /// Generate a lazy list with random numbers
+    let nums = 
+      llist { for x in 1 .. 5 do 
+                let! rnd = lazyRandom
+                yield rnd.Next(10) }
+
+    /// Generate a lazy list by using 'nunms' twice
+    let twiceNums = 
+      llist { yield! nums
+              for n in nums do
+                yield n * 10 }
+  
+    // Run this line to see the result
+    twiceNums |> toList
+
+The computation that creates `nums` uses `for` to _bind_ on a non-lazy list (although
+this construct can be also viewed as standard control-flow extension). Next, it uses
+the `let!` syntax to bind on a lazy value, which is initialized on the first access.
+Finally, it returns the next element of the list using `yield`.
+
+The second computation uses `yield!` to generate one part of the result. The second
+part of the result is generated using the last overloaded `for` - this time, the 
+argument is lazy list (and so the operation has the type of monadic _bind_).
+
+The translation of the above samples is standard - it follows the pattern that was
+shown in all previous examples and so we omit the details.
+
+Monad transformer laws
+----------------------
+
+    [hide] 
+    type LazyBuilder() = 
+      member x.Bind(l:Lazy<'T>, f:'T -> Lazy<'R>) : Lazy<'R> = failwith "!"
+      member x.Return(v:'T) : Lazy<'T> = failwith "!"
+      member x.ReturnFrom(m:Lazy<'T>) = m
+
+    let l = LazyBuilder()
+    let ll = llist
+    let shouldEqual a b = failwith "!"
+
+As discussed in the paper, when describing layered transformations in terms of monad
+transformers, they are associated with a set of laws that are required to hold. This
+section discusses the laws - we assume that `l` is the underlying monad (i.e. lazy) 
+and `ll` is the result of monad transformer application (i.e. lazy list).
+
+The computation expressions that correspond to the monad transformer laws (using the
+above sytnax) can be written as follows:
+
+    [noload]
+    /// Law that specifies lifting w.r.t. unit
+    let liftUnit v = 
+      let m1 = ll { let! x = l { return v } in yield x } 
+      let m2 = ll { yield v }
+      m1 |> shouldEqual m2
+
+    /// Law that specifies lifting w.r.t. bind
+    let liftBind m g f = 
+      let m1 = ll { let! y = l { let! x = m in return! f x } 
+                    yield! g y } 	
+      let m2 = ll { let! x = m in let! y = l { return! f x }
+                    yield! g y }
+      m1 |> shouldEqual m2
+
+
+<div class="navigation">
+
+Prev: [Additive computations](additive.html) | Next: [Applicative computations](applicative.html) | [Table of Contents](home.html)
+
+</div>

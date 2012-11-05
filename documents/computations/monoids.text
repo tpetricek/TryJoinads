@@ -1,0 +1,210 @@
+﻿> Computation expressions for monoids
+
+Monoidal computations
+====================
+
+In this article, we discuss how to use F# computation expressions to provide syntax for
+monoidal computations. Formally, a monoid is formed by an associative binary operation 
+and a unit element. In computation expressions, the binary operation is represented by
+the `Combine` operation. Importantly, it has a different type and purpose than for 
+monads. The unit element is defined as the `Zero` member.
+
+Natural numbers with multiplication
+-----------------------------------
+
+The monoidal structure can be defined for a number of computations. Most well known are
+lists (which are covered in [composed computations](composed.html)) and the Maybe data type
+(which we do not cover in this paper). In this section, we look at a simpler example -
+natural numbers with multiplication as the binary operation and 1 as the unit element.
+
+The basic computation builder for `mul { .. }` computation expressions can be defined
+as follows:
+
+    type M = M of int
+
+    type MulBuilder() =
+      /// Zero element of the monoid
+      member x.Zero() = M 1
+      /// Binary operation of the monoid
+      member x.Combine(M a, M b) = M (a * b)
+      
+      /// Used to create elements of the monoid
+      member x.Yield(v) = M v
+      /// Enables the 'yield!' syntax
+      member x.YieldFrom(M v) = M v
+
+      /// Perform all effects immediately
+      member x.Delay(f) = f()
+
+    let mul = MulBuilder()
+
+Aside from `Zero` and `Combine`, we also define `Yield`, which wraps a number into the 
+`M` type that represents the monoid and `YieldFrom` that is required to enable `yield!`.
+We also define `Delay`, because it is required by the translation - in the current implementation,
+it just runs the given function immediately to perform the effects (but we get back to this
+topic in the next section).
+
+Using the computation builder defined above, we can write a function `factorial` that
+multiplies numbers from the given number to a provided upper bound (this is a more
+complete example than the one in the paper):
+
+    /// When called with 'factorial 0 x' calculates 'x!'
+    let rec factorial n bound = 
+      mul { yield n
+            if n <= bound then 
+              yield! factorial (n + 1) bound } 
+  
+    // Calculate the factorial of 10
+    factorial 0 10
+
+The translation of the above function looks as follows:
+
+    [module=MulTranslation,load]
+    let rec factorial n bound = 
+      mul.Delay(fun () ->
+        mul.Combine
+          ( mul.Yield(n),
+            mul.Delay(fun () ->
+              if n <= bound then 
+                mul.YieldFrom(factorial (n + 1) bound)
+              else mul.Zero() )))
+
+Monoid laws
+-----------
+
+    [hide] 
+    let m = MulBuilder()
+    let shouldEqual a b = if not (a = b) then failwith "!"
+
+Every monoid is required to obey two laws. The binary operation has to be associative
+(meaning that _a * (b * c) = (a * b) * c_) and the unit element has to behave as unit
+(meaning that _a * 1 = a = 1 * a_). The laws can be expressed using the computation
+expression syntax as follows:
+
+
+    [noload]
+    /// The associativity monoid law 
+    let associativity n1 n2 n3 =
+      let m1 = m { yield! n1 
+                   yield! n2
+                   yield! n3 }
+      let m2 = m { yield! m { yield! n1 
+                              yield! n2 }
+                   yield! n3 }
+      
+      m1 |> shouldEqual m2
+
+    /// The unit monoid laws 
+    let unit n1 n2 =
+      let m1 = m { yield! n1
+                   if false then yield! n2 }
+      let m2 = m { if false then yield! n2
+                   yield! n1 }
+      let m3 = m { yield! n1 }
+
+      m1 |> shouldEqual m3
+      m2 |> shouldEqual m3
+
+Delayed monoidal computations
+-----------------------------
+
+In the previous example, the computation is eager. The `mul { .. }` computation evaluates
+all elements that are generated using `yield` and multiplies all of them. This also means
+that `Delay` does not need to actually _delay_ the effects, because they will be evaluated
+anyway. However, we could use other properties of multiplication - since _0 * x = 0_, the
+`Combine` member could check if the first argument is 0 and stop evaluating the rest of the
+computation. When using this alternative, the second argument of `Combine` needs to be
+a delayed computation - the following example uses the type `D = 1 -> M`:
+
+    type LazyMulBuilder() =
+      /// Zero element of the monoid
+      member x.Zero() = M 1
+      /// Binary operation of the monoid
+      member x.Combine(M a, f) = 
+        if a = 0 then M 0 else 
+          let (M b) = f() in M (a * b)
+      
+      /// Used to create elements of the monoid
+      member x.Yield(v) = M v
+      /// Enables the 'yield!' syntax
+      member x.YieldFrom(M v) = M v
+
+      /// Return the delayed computation
+      member x.Delay(f) = f
+      /// Evaluate a delayed computation
+      member x.Run(f) = f()
+
+    let lmul = LazyMulBuilder()
+
+The lazy `lmul` computation builder can be used to write the following code that multiplies
+an infinite sequence of randomly generated numbers in range 0 .. 10. The generator will eventually
+return 0 and then the computaiton stops:
+
+    /// Random number generator
+    let random = System.Random()
+
+    /// Multiply infinite sequence of random numbers
+    let rec inf () =
+      lmul { yield random.Next(10)
+             yield! inf () }
+
+If we wrote the same function using the `mul` computation builder described earlier, than the 
+computation would loop forever and would never terminate.
+
+Control flow constructs
+-----------------------
+
+Similarly to monadic computations, it is possible to extend a monoidal computation expression with
+standard F# control flow constructs including loops (`for` and `while`) and exception handlers.
+The following code sample extends the `LazyMulBuilder`:
+
+    type LazyMulBuilder with
+      /// The exception handling uses the delayed type directly
+      member m.TryWith(f, handler) = 
+        try f() 
+        with e -> handler e
+
+      /// The finalizer is defined similarly (but the body of the 
+      /// finalizer cannot be monoidal - just a `unit -> unit` function)
+      member m.TryFinally(f, finalizer) = 
+        try f()
+        finally finalizer()
+
+      /// The 'while' loop evaluates the condition and then either ends
+      /// (returning 'Zero'), or evaluates body once and then runs recursively
+      member m.While(cond, body) = 
+        if not (cond()) then m.Zero()
+        else m.Combine(m.Run(body), m.Delay(fun () -> m.While(cond, body)))
+
+      /// The 'for' loop can be defined using 'While' and 'Using'
+      member m.For(xs:seq<'T>, f) = 
+        let en = xs.GetEnumerator()
+        m.TryFinally
+          ( m.Delay(fun () ->
+              m.While( (fun () -> en.MoveNext()), m.Delay(fun () -> 
+                f en.Current) )),
+            fun () -> en.Dispose() )
+
+The definition of `TryWith` and `TryFinally` is the same as for _monadic containers_ in the 
+[previous](monads.html) section. As the delayed computation type is a function `unit -> M<'T>`, 
+the handling does not need to inspect the structure of the computation and can be implemented
+by wrapping the function call with a handler. For monoidal computations that have a built-in 
+notion of delayed computations (such as lazy lists), the operations have to be implemented
+differently.
+
+Unlike for monads, we do not provide the `Using` member (which corresponds to binding and so
+it is not appropriate). This means that the `For` member needs to use `TryFinally` explicitly
+(unlike in the previous section). However, otherwise the definition of `While` and `For` also
+follows the one dicussed for monads. The new definitions allow us to write the following:
+
+    [module=AnotherFactorial]
+    /// Calculate the factorial of a number
+    let factorial x =
+      lmul { for num in 1 .. x do 
+               yield num }
+
+<div class="navigation">
+
+Prev: [Monadic computations](monads.html) | Next: [Additive computations](additive.html) | [Table of Contents](home.html)
+
+</div>

@@ -1667,7 +1667,7 @@
 				VerticalAlignment="Stretch"  HorizontalAlignment="Stretch"
 				AcceptsReturn="True" 
 				FontFamily="Consolas, Courier New, Courier, monospace" 
-				HorizontalContentAlignment="Left" 
+        HorizontalContentAlignment="Left" 
 				TextWrapping="NoWrap"
 				HorizontalScrollBarVisibility="Visible"  VerticalScrollBarVisibility="Visible" Style="{StaticResource RichTextBoxStyle1}" BorderBrush="{x:Null}" BorderThickness="0" FontSize="13" Padding="3,1"
             >

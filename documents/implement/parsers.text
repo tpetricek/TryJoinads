@@ -1,0 +1,333 @@
+﻿> Writing parsers with joinads
+
+Implementing joinads for parsers
+================================
+
+In functional programming, parser combinators are a powerful way of writing parsers. 
+A parser is a function that, given some input, returns possible parsed values and 
+the rest of the input. Parsers can be written using combinators for composition, for
+example run two parsers in sequence or perform one parser any number of times.
+
+Parsers can also implement the monad structure. In some cases, this makes the parser
+less efficient, but it is an elegant way of composing parsers and we can also benefit
+from the syntactic support for monads. In this article, we implement a simple parser
+combinators for F# and we look what additional expressive power we can get from the
+_joinad_ structure and `match!` construct. This article is largely based on a
+previous article _"Fun with Parallel Monad Comprehensions"_, which can be found on the
+[publications](../pubs.html) page.
+
+Implmenting simple parsers
+--------------------------
+
+In the F# implementation, we define parser as a single-case discriminated union that
+contains a parsing function. When given a list of characters, the function returns
+a sequence with possible parsings of the input. The parsing consists of an obtained
+value `'T`, together with `int` and a list of unconsumed characters:
+
+    type Parser<'T> = Parser of (list<char> -> seq<'T * int * list<char>>)
+
+The `int` value in the result represents the number of characters consumed by the parser. 
+It is not usually included in the definition, but we'll use it in the definition of joinad
+operations. As a next step, we define a simple parser and a function to run the parser:
+
+    open System
+
+    let item = Parser (function
+      | [] -> seq []
+      | x::xs -> seq [(x, 1, xs)])
+  
+    let run (Parser p) input = 
+      seq { for (result, _, tail) in p (List.ofSeq input) do
+              if tail = [] then yield result }
+
+The `item` parser returns the first character from the input. When it succeeds, it consumes 
+a single character, so it returns 1 as the second element of the tuple. The `run` function 
+converts the `input` to a list (i.e. from a `string`) and then runs the parser. The condition
+`tail = []` specifies that only results that were parsed without any remaining characters should
+be returned.
+
+Providing the monad structure
+-----------------------------
+
+Parsers are _monads_ and so we can implement an F# computaion expression builder for
+constructing them. In additional, parsers can also be combined and have a _zero_ value 
+(parser that fails). In F#, this means we can also define `Zero` and `Combine` methods:
+
+    /// Parser that always succeeds without consuming any input
+    let unit v = Parser (fun input -> seq [(v, 0, input)])
+
+    /// Apply the first parser and then continue using 'f'
+    let bind f (Parser p1) = Parser (fun input ->
+      seq { for (a, n1, input') in p1 input do
+              let (Parser p2) = f a
+              for (result, n2, tail) in p2 input' do
+                yield result, n1 + n2, tail })
+
+    /// Parser that alwyas fails without consuming any input
+    let zero = Parser (fun _ -> seq [])
+
+    /// Combine the results of two parsers
+    let plus (Parser p1) (Parser p2) = Parser (fun input ->
+      Seq.concat [ p1 input; p2 input ])
+
+    /// Computation expression builder for creating parsers
+    type ParseBuilder() = (*[omit:(...)]*)
+      member x.Bind(v, f) = bind f v
+      member x.Return(v) = unit v
+      member x.ReturnFrom(v) = v
+
+      member x.Combine(a, f) = plus a (f())
+      member x.Zero() = zero
+
+      member x.Delay(f) = f
+      member x.Run(f) = f()
+    (*[/omit]*)
+    let parse = ParseBuilder()
+
+The `unit` operation returns a single result containing the specified value that doesn't 
+consume any input. The implementation of `bind` uses sequence comprehensions to run the 
+parsers in sequence. It returs the result of the second parser and consumes the sum of 
+characters consumed by the first and the second parser. The `zero` operation creates a 
+parser that always fails, and `plus` represents a nondeterministic choice between two parsers. 
+
+The computation builder also defines `ReturnFrom` member (to allow the `return!` syntax).
+It provides `Delay` and `Run` members - these will be used later by the _joinad_ definitions,
+but they change how `Combine` behaves. In particular, one way to define `Delay` is to simply
+return the function (of type `unit -> Parser<'T>`) that it gets as an argument. As a result,
+the second argument of `Combine` will also be a function and so it needs to be evaluated
+before calling `plus`. The `Run` member is used on a value obtained from `Delay`, so it simply
+runs the function.
+
+Using the `parser` computation builder, we can write a couple of basic parser combinators:
+
+    /// Apply function 'f' to the parsed value
+    let map f p = parse {
+      let! v = p
+      return f v }
+
+    /// Succeeds only when a character matches given predicate
+    let sat pred = parse {
+      let! ch = item
+      if pred ch then return ch }
+
+    /// Parse a specific character
+    let char ch = sat ((=) ch)
+    /// Parse a character other than the specified one
+    let notChar ch = sat ((<>) ch)
+
+    /// Parse one or more repetitions of parser 'p'
+    let rec some p = parse {
+      let! x = p
+      let! xs = many p
+      return x::xs }
+
+    /// Parse zero or more repetitions of parser 'p'
+    and many p = parse {
+      return! some p
+      return! unit [] }
+
+The definition of `map` uses only `Bind` and `Return`. The definition of `sat` also
+uses `Zero` (it is inserted automatically in place of the `else` branch). The `some`
+combinator calls two parsers in sequence and then returns, so it also does not need
+any primitives beyond `Bind` and `Return`. Finally, the `many` combinator uses 
+`Combine` to represent choice between the two parsers.
+
+### Parsing brackets
+
+As our initial example, we use the previous parser combinators and the `parse` 
+computation builder to write a parser that recognizes bracketed text. For example,
+given a text "(((hello)))" we would like to get just the string "hello". The following
+listing shows an initial attempt:
+
+    [load]
+    /// Parse any number of 'op' chars, followed by the
+    /// body and then the same number of 'cl' chars.
+    let rec brackets op cl body = parse {
+      let! _ = char op
+      let! inner = 
+        parse { return! brackets op cl body
+                return! body }
+      let! _ = char cl
+      return inner }
+
+    /// Returns the body of a bracketed string
+    let skipBrackets = brackets '(' ')' (many item)
+
+    /// Helper function that converts char list to string
+    let charsToString l = System.String(Array.ofSeq l)
+
+    // Run this line to see the results
+    run (map charsToString skipBrackets) "(((hello)))"
+
+If you run the last line of the listing, you get a list containing "hello", but also 
+"(hello)" and "((hello))". This is because the `many item` parser can also consume 
+brackets. To correct that, we need to write a parser that accepts any character except 
+opening and closing brace. As we will see shortly, this can be elegantly solved using 
+_joinads_ and the `merge` operation. The next section adds the required structure
+and finishes the example.
+
+Adding the joinad structure
+---------------------------
+
+In order to support the `match!` syntax, we need to add operation `Merge` of type
+`M<'T1> * M<'T2> -> M<'T1 * T2>` and an operation `Choose` of type `M<'T> * M<'T> -> M<'T>`.
+The first operation is sometimes also called _parallel composition_, so what could
+that mean for parsers? One possible implementation is to run two parsers specified
+as arguments at the _same_ input and return both of their results. The snippet below
+shows the source code.
+
+The second operation represents a _choice_ between two parsers. In order to obey
+laws about joinad operations (to keep the familiar behaviour of pattern matching),
+the operation cannot be implemented using `plus`. When called with `p` and `map f p`
+as arguments, it should behave as the parser specified as the first argument. This
+can be done by returning the result of a first parser that does not fail (i.e. 
+returns a non-empty sequence):
+
+    /// Apply both parsers on the same input 'in parallel'
+    let merge (Parser p1) (Parser p2) = Parser (fun input ->
+      seq { for (a, n1, tail1) in p1 input do
+              for (b, n2, tail2) in p2 input do
+                if n1 = n2 then yield (a, b), n1, tail1 })
+
+    /// Run both parsers and return the results of the first
+    /// one that does not return empty sequence.
+    let choose (Parser p1) (Parser p2) = Parser (fun input ->
+      match p1 input, p2 input with
+      | res, _  when not (Seq.isEmpty res) -> res
+      | _, res -> res )
+
+    /// Add operations to the F# computation builder
+    type ParseBuilder with (*[omit:...]*)
+      member x.Merge(a, b) = merge a b
+      member x.Choose(a, b) = choose a b(*[/omit]*)
+
+The parser created by `merge` independently parses the input string using both of the parsers. 
+It uses sequence comprehensions to find all combinations of results such that the number of 
+characters consumed by the two parsers was the same. For each matching combination, the parser 
+returns a tuple with the two parsing results. Requiring that the two parsers consume the same 
+number of characters is not an arbitrary decision. It means that the remaining unconsumed 
+strings `tail1` and `tail2` are the same and so we can return either of them. 
+
+### Parsing brackets, again
+
+Let's get back to the example with parsing brackets. The following snippet uses `match!` to 
+create a parser that consumes _all_ brackets. The trick is to write a parser `body` that 
+represent any character which is not opening or closing bracket:
+
+    [load]
+    let skipAllBrackets = 
+      let body = parse {
+        match! notChar '(', notChar ')' with
+        | c, _ -> return c }
+      brackets '(' ')' (many body)
+
+    run (map charsToString skipAllBrackets) "(((hello)))"
+
+When you run the last line of the sample, you can see that only "hello" is returned as the
+result. The parser `body` is constructed using the `match!` notation. It takes two `notChar`
+parsers as the arguments and runs them both on the same input. They boty read a single character
+and succeed when the character is not the specified symbol. This means that `body` succeds 
+only if the character is not '(' and ')'. Both parsers return the same character, so we return 
+the first one as the result and ignore the second (the `_` pattern means that the parser 
+must succeed, but we then ignore the value).
+
+Validating phone numbers
+------------------------
+
+Another example where the `match!` syntax for parsers is useful is validation of inputs. 
+For example, a valid Cambridge phone number consists of 10 symbols, contains only digits, 
+and starts with 1223. Using a couple of additional helper functions, we can directly
+encode these three rules using `match!`:
+
+    [load]
+    /// Run the parser 'p' specified number of times
+    let rec replicate n p = (*[omit:(...)]*)parse { 
+      let! x = p
+      if n = 1 then 
+        return [x]
+      else
+        let! xs = replicate (n - 1) p
+        return x::xs }
+    (*[/omit]*)
+    /// Parse string 'str' and then accept any further text
+    let rec startsWith str = (*[omit:(...)]*)parse {
+      if str = "" then 
+        return! many item
+      else
+        let! _ = char str.[0]
+        return! startsWith (str.Substring(1)) }(*[/omit]*)
+
+    /// Returns the input if it is valid Cambridge phone number
+    let cambridgePhone = parse {
+      match! many (sat Char.IsDigit), replicate 10 item, startsWith "1223" with
+      | n, _, _ -> return n }
+
+    // Run this line to test a number
+    run cambridgePhone "1223999999"
+    run cambridgePhone "1865999999"
+
+Each condition on the number is encoded as a single parser. The first one ensures
+that all characters of the input are digits. The second parser checks that the input
+consits of 10 symbols and the last parser ensures that the input starts with the prefix
+"1223". The single clause of the `match!` construct is translated to applications of
+the `Merge` operation, which runs all three parsers on the same input and returns
+the parsed values only when all three succeed - meaning that the input satisifies 
+all three conditions.
+
+If you run the parser on the two sample inputs, the first line should succeed 
+(the number is valid Cambridge phone number), but the second one fails. The 
+prefix "1865" is used in the Oxford area! 
+
+To support Oxford in our sample, we can utilize the `Choose` operation. The operation
+is used when `match!` consists of multiple clauses. When we add additional clauses,
+the result of the first parser that succeeds is returned. The following snippet
+shows an example:
+
+    [load]
+    /// Recognize phone number based on the prefix
+    let phone = parse {
+      match! many (sat Char.IsDigit), replicate 10 item, 
+             startsWith "1223", startsWith "1865" with
+      | n, _, _, ? -> return "Cambridge: " + string n
+      | n, _, ?, _ -> return "Oxford: " + string n 
+      | n, _, ?, ? -> return "Other: " + string n }
+
+    // Run the parser on sample inputs
+    run phone "1223999999"
+    run phone "1865999999"
+    run phone "1111999999"
+
+The `match!` construct now takes four arguments. The first two are parsers that 
+ensure that the input consists of just digits and has 10 characters, respectively.
+The next two parsers check for prefixes "1223" and "1865". The last two parsers will
+never both match on the same input, so a clause that would try to obtain a value from
+both of them would never succeed. However, we can write other useful clauses.
+
+All of the three clauses in the above sample require the first two parsers to succeed.
+If the third parser also succeeds, the first clause matches and the number is identified
+as a Cambridge number. The second line is similar and recognizes Oxford numbers.
+Finally, the last line ignores both of the `startsWith` parsers.
+
+One expected property of pattern matching is that only a single clause will be 
+executed. Joinad definitions that obey the laws also have this property. For parsers,
+the `choose` operation gives the required behaviour - when a number is identified
+as Cambridge or Oxford number, the parser does not return Other as a possible result,
+even though the parser would also succed. This is because `choose` returns only results
+of a single parser (unlike `plus` which combines all successful results).
+
+Summary
+-------
+
+This article shows that joinads and the `match!` construct have uses outside of the 
+concurrent and programming domains. In particular, it is possible to implement 
+_joinad_ operations for parsers. The `Merge` operation creates a parser that runs
+two parsers on the same input and the `Choose` operation creates a parser that 
+returns results of exactly one of the specified parsers (meaning a choice without
+backtracking). The `Merge` operation is particularly interesting, because it gives a
+way to write _intersection_ of languages recognized by two parsers.
+
+<div class="navigation">
+
+Next: [Joinads for asynchronous workflows](async.html) | [Table of contents](../toc.html)
+
+</div>

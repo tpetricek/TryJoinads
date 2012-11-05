@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Computation expressions for layered monads</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../../contentstyle.css" />
+    <script type="text/javascript" src="../../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Layered monads</h1>
+
+<p>A layered monad is a computation that combines aspects of multiple monads. The paper uses
+asynchronous sequences as an example - such computation combines non-blocking execution
+of <em>asynchronous workflows</em> with the ability to generate multiple results from <em>sequence</em>
+computations. In Haskell, layered computation types can be created using monad transformers
+(that add state, exceptions, etc.). F# does not support higher-kinded types, so monad transformers 
+cannot be encoded directly, but they still provide useful framework for documenting computations.</p>
+
+<p>The <em>asynchronous sequence</em> computation (from the paper) can be expressed as an application 
+of the list monad transformer to the asynchronous workflow monad:</p>
+
+<pre class="fssnip">
+<span class="k">type</span> <span class="i">ListT</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">M</span>, <span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span class="o">&#39;</span><span class="i">M</span><span class="o">&lt;</span><span class="i">ListTInner</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">M</span>, <span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="k">and</span> <span class="i">ListTInner</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">M</span>, <span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft1', 1)" onmouseover="showTip(event, 'ft1', 1)" class="i">Nil</span> | <span onmouseout="hideTip(event, 'ft2', 2)" onmouseover="showTip(event, 'ft2', 2)" class="i">Cons</span> <span class="k">of</span> <span class="o">&#39;</span><span class="i">T</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'ft3', 3)" onmouseover="showTip(event, 'ft3', 3)" class="i">ListT</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">M</span>, <span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>
+
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft4', 4)" onmouseover="showTip(event, 'ft4', 4)" class="i">AsyncSeq</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft3', 5)" onmouseover="showTip(event, 'ft3', 5)" class="i">ListT</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'ft5', 6)" onmouseover="showTip(event, 'ft5', 6)" class="i">Async</span>, <span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> </pre>
+
+
+<p>This sample is not valid F# (the type parameter <code>'M</code> would have a kind <code>* -&gt; *</code>), but it demonstrates 
+the idea. In this article, we will not implement <em>asynchronous sequences</em>, because that would be
+too complex, but we use a simpler example. We show layering of monads using <em>lazy list</em> which is 
+a similar concept. Using the above pseudo-code, it could be expressed as <code>LazyList&lt;'T&gt; = ListT&lt;Lazy, 'T&gt;</code>.</p>
+
+<h2>Implementing lazy list computation</h2>
+
+<p>The type that represents lazy list (or computation that generates a lazy list) can be defined 
+as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft6', 7)" onmouseover="showTip(event, 'ft6', 7)" class="i">LazyList</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft7', 8)" onmouseover="showTip(event, 'ft7', 8)" class="i">L</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'ft8', 9)" onmouseover="showTip(event, 'ft8', 9)" class="i">Lazy</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'ft9', 10)" onmouseover="showTip(event, 'ft9', 10)" class="i">LazyListInner</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="k">and</span> <span onmouseout="hideTip(event, 'ft9', 11)" onmouseover="showTip(event, 'ft9', 11)" class="i">LazyListInner</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft10', 12)" onmouseover="showTip(event, 'ft10', 12)" class="i">Nil</span> | <span onmouseout="hideTip(event, 'ft11', 13)" onmouseover="showTip(event, 'ft11', 13)" class="i">Cons</span> <span class="k">of</span> <span class="o">&#39;</span><span class="i">T</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'ft6', 14)" onmouseover="showTip(event, 'ft6', 14)" class="i">LazyList</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span><br /><button class="run" onclick='parent.runCode("type LazyList\u003c\u0027T\u003e = L of Lazy\u003cLazyListInner\u003c\u0027T\u003e\u003e\r\nand LazyListInner\u003c\u0027T\u003e = Nil | Cons of \u0027T * LazyList\u003c\u0027T\u003e");'></button></pre>
+
+
+<p>As already mentioned, F# does not support higher-kinded types, so we need to implement the operations
+of the composed monad by hand. In practice, this is not usually an issue, because layered 
+computations are not used that frequently in F# - they are certainly less frequent than in e.g. Haskell
+and so it is acceptable to repeat some parts of the code.</p>
+
+<p>The following code sample defines the basic operations for composing lazy list computations:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Creates a lazy list containing a single element</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft12', 15)" onmouseover="showTip(event, 'ft12', 15)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft13', 16)" onmouseover="showTip(event, 'ft13', 16)" class="i">v</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft7', 17)" onmouseover="showTip(event, 'ft7', 17)" class="i">L</span> (<span class="k">lazy</span> <span onmouseout="hideTip(event, 'ft11', 18)" onmouseover="showTip(event, 'ft11', 18)" class="i">Cons</span>(<span onmouseout="hideTip(event, 'ft13', 19)" onmouseover="showTip(event, 'ft13', 19)" class="i">v</span>, <span onmouseout="hideTip(event, 'ft7', 20)" onmouseover="showTip(event, 'ft7', 20)" class="i">L</span> (<span class="k">lazy</span> <span onmouseout="hideTip(event, 'ft10', 21)" onmouseover="showTip(event, 'ft10', 21)" class="i">Nil</span>)))
+<span class="c">/// Creates a lazy list that is empty</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft14', 22)" onmouseover="showTip(event, 'ft14', 22)" class="i">zero</span> () <span class="o">=</span> <span onmouseout="hideTip(event, 'ft7', 23)" onmouseover="showTip(event, 'ft7', 23)" class="i">L</span> (<span class="k">lazy</span> <span onmouseout="hideTip(event, 'ft10', 24)" onmouseover="showTip(event, 'ft10', 24)" class="i">Nil</span>)
+
+<span class="c">/// Concatenates the elements of two lazy lists </span>
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft15', 25)" onmouseover="showTip(event, 'ft15', 25)" class="i">combine</span> (<span onmouseout="hideTip(event, 'ft7', 26)" onmouseover="showTip(event, 'ft7', 26)" class="i">L</span> <span onmouseout="hideTip(event, 'ft16', 27)" onmouseover="showTip(event, 'ft16', 27)" class="i">l1</span>) (<span onmouseout="hideTip(event, 'ft7', 28)" onmouseover="showTip(event, 'ft7', 28)" class="i">L</span> <span onmouseout="hideTip(event, 'ft17', 29)" onmouseover="showTip(event, 'ft17', 29)" class="i">l2</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft7', 30)" onmouseover="showTip(event, 'ft7', 30)" class="i">L</span> (<span onmouseout="hideTip(event, 'ft8', 31)" onmouseover="showTip(event, 'ft8', 31)" class="i">Lazy</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft18', 32)" onmouseover="showTip(event, 'ft18', 32)" class="i">Create</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+  <span class="k">match</span> <span onmouseout="hideTip(event, 'ft16', 33)" onmouseover="showTip(event, 'ft16', 33)" class="i">l1</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft19', 34)" onmouseover="showTip(event, 'ft19', 34)" class="i">Value</span> <span class="k">with</span> 
+  | <span onmouseout="hideTip(event, 'ft10', 35)" onmouseover="showTip(event, 'ft10', 35)" class="i">Nil</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft17', 36)" onmouseover="showTip(event, 'ft17', 36)" class="i">l2</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft19', 37)" onmouseover="showTip(event, 'ft19', 37)" class="i">Value</span>
+  | <span onmouseout="hideTip(event, 'ft11', 38)" onmouseover="showTip(event, 'ft11', 38)" class="i">Cons</span>(<span onmouseout="hideTip(event, 'ft20', 39)" onmouseover="showTip(event, 'ft20', 39)" class="i">x</span>, <span onmouseout="hideTip(event, 'ft21', 40)" onmouseover="showTip(event, 'ft21', 40)" class="i">xs</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft11', 41)" onmouseover="showTip(event, 'ft11', 41)" class="i">Cons</span>(<span onmouseout="hideTip(event, 'ft20', 42)" onmouseover="showTip(event, 'ft20', 42)" class="i">x</span>, <span onmouseout="hideTip(event, 'ft15', 43)" onmouseover="showTip(event, 'ft15', 43)" class="i">combine</span> <span onmouseout="hideTip(event, 'ft21', 44)" onmouseover="showTip(event, 'ft21', 44)" class="i">xs</span> (<span onmouseout="hideTip(event, 'ft7', 45)" onmouseover="showTip(event, 'ft7', 45)" class="i">L</span> <span onmouseout="hideTip(event, 'ft17', 46)" onmouseover="showTip(event, 'ft17', 46)" class="i">l2</span>))))
+
+<span class="c">/// For every input, generates a new lazy list using</span>
+<span class="c">/// the provided function and concatenates the results</span>
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft22', 47)" onmouseover="showTip(event, 'ft22', 47)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft23', 48)" onmouseover="showTip(event, 'ft23', 48)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft7', 49)" onmouseover="showTip(event, 'ft7', 49)" class="i">L</span> <span onmouseout="hideTip(event, 'ft24', 50)" onmouseover="showTip(event, 'ft24', 50)" class="i">l</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft7', 51)" onmouseover="showTip(event, 'ft7', 51)" class="i">L</span> (<span onmouseout="hideTip(event, 'ft8', 52)" onmouseover="showTip(event, 'ft8', 52)" class="i">Lazy</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft18', 53)" onmouseover="showTip(event, 'ft18', 53)" class="i">Create</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+  <span class="k">match</span> <span onmouseout="hideTip(event, 'ft24', 54)" onmouseover="showTip(event, 'ft24', 54)" class="i">l</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft19', 55)" onmouseover="showTip(event, 'ft19', 55)" class="i">Value</span> <span class="k">with</span>
+  | <span onmouseout="hideTip(event, 'ft10', 56)" onmouseover="showTip(event, 'ft10', 56)" class="i">Nil</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft10', 57)" onmouseover="showTip(event, 'ft10', 57)" class="i">Nil</span>
+  | <span onmouseout="hideTip(event, 'ft11', 58)" onmouseover="showTip(event, 'ft11', 58)" class="i">Cons</span>(<span onmouseout="hideTip(event, 'ft20', 59)" onmouseover="showTip(event, 'ft20', 59)" class="i">x</span>, <span onmouseout="hideTip(event, 'ft21', 60)" onmouseover="showTip(event, 'ft21', 60)" class="i">xs</span>) <span class="k">-&gt;</span> 
+      <span class="k">let</span> (<span onmouseout="hideTip(event, 'ft7', 61)" onmouseover="showTip(event, 'ft7', 61)" class="i">L</span> <span onmouseout="hideTip(event, 'ft25', 62)" onmouseover="showTip(event, 'ft25', 62)" class="i">res</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft15', 63)" onmouseover="showTip(event, 'ft15', 63)" class="i">combine</span> (<span onmouseout="hideTip(event, 'ft23', 64)" onmouseover="showTip(event, 'ft23', 64)" class="i">f</span> <span onmouseout="hideTip(event, 'ft20', 65)" onmouseover="showTip(event, 'ft20', 65)" class="i">x</span>) (<span onmouseout="hideTip(event, 'ft22', 66)" onmouseover="showTip(event, 'ft22', 66)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft23', 67)" onmouseover="showTip(event, 'ft23', 67)" class="i">f</span> <span onmouseout="hideTip(event, 'ft21', 68)" onmouseover="showTip(event, 'ft21', 68)" class="i">xs</span>)
+      <span onmouseout="hideTip(event, 'ft25', 69)" onmouseover="showTip(event, 'ft25', 69)" class="i">res</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft26', 70)" onmouseover="showTip(event, 'ft26', 70)" class="i">Value</span>))
+
+<span class="c">/// Wraps a function with untracked effects into a lazy list</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft27', 71)" onmouseover="showTip(event, 'ft27', 71)" class="i">delay</span> (<span onmouseout="hideTip(event, 'ft28', 72)" onmouseover="showTip(event, 'ft28', 72)" class="i">f</span><span class="o">:</span><span onmouseout="hideTip(event, 'ft12', 73)" onmouseover="showTip(event, 'ft12', 73)" class="i">unit</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft6', 74)" onmouseover="showTip(event, 'ft6', 74)" class="i">LazyList</span><span class="o">&lt;</span>_<span class="o">&gt;</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft7', 75)" onmouseover="showTip(event, 'ft7', 75)" class="i">L</span> (<span onmouseout="hideTip(event, 'ft8', 76)" onmouseover="showTip(event, 'ft8', 76)" class="i">Lazy</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft18', 77)" onmouseover="showTip(event, 'ft18', 77)" class="i">Create</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+  <span class="k">let</span> (<span onmouseout="hideTip(event, 'ft7', 78)" onmouseover="showTip(event, 'ft7', 78)" class="i">L</span> <span onmouseout="hideTip(event, 'ft29', 79)" onmouseover="showTip(event, 'ft29', 79)" class="i">inner</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft28', 80)" onmouseover="showTip(event, 'ft28', 80)" class="i">f</span> () <span class="k">in</span> <span onmouseout="hideTip(event, 'ft29', 81)" onmouseover="showTip(event, 'ft29', 81)" class="i">inner</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft19', 82)" onmouseover="showTip(event, 'ft19', 82)" class="i">Value</span>))<br /><button class="run" onclick='parent.runCode("/// Creates a lazy list containing a single element\r\nlet unit v = L (lazy Cons(v, L (lazy Nil)))\r\n/// Creates a lazy list that is empty\r\nlet zero () = L (lazy Nil)\r\n\r\n/// Concatenates the elements of two lazy lists \r\nlet rec combine (L l1) (L l2) = L (Lazy.Create(fun () -\u003e\r\n  match l1.Value with \r\n  | Nil -\u003e l2.Value\r\n  | Cons(x, xs) -\u003e Cons(x, combine xs (L l2))))\r\n\r\n/// For every input, generates a new lazy list using\r\n/// the provided function and concatenates the results\r\nlet rec bind f (L l) = L (Lazy.Create(fun () -\u003e\r\n  match l.Value with\r\n  | Nil -\u003e Nil\r\n  | Cons(x, xs) -\u003e \r\n      let (L res) = combine (f x) (bind f xs)\r\n      res.Value))\r\n\r\n/// Wraps a function with untracked effects into a lazy list\r\nlet delay (f:unit -\u003e LazyList\u003c_\u003e) = L (Lazy.Create(fun () -\u003e\r\n  let (L inner) = f () in inner.Value))");'></button></pre>
+
+
+<p>The following code sampel adds a number of functions for converting between lists, lazy lists 
+and lazy values:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Turn a lazy value into a singleton list</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft30', 83)" onmouseover="showTip(event, 'ft30', 83)" class="i">ofLazy</span> (<span onmouseout="hideTip(event, 'ft31', 84)" onmouseover="showTip(event, 'ft31', 84)" class="i">l</span><span class="o">:</span><span onmouseout="hideTip(event, 'ft8', 85)" onmouseover="showTip(event, 'ft8', 85)" class="i">Lazy</span><span class="o">&lt;</span>_<span class="o">&gt;</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft27', 86)" onmouseover="showTip(event, 'ft27', 86)" class="i">delay</span> (<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft12', 87)" onmouseover="showTip(event, 'ft12', 87)" class="i">unit</span> (<span onmouseout="hideTip(event, 'ft31', 88)" onmouseover="showTip(event, 'ft31', 88)" class="i">l</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft32', 89)" onmouseover="showTip(event, 'ft32', 89)" class="i">Value</span>))
+<span class="c">/// Turn a non-lazy list into a lazy list</span>
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft33', 90)" onmouseover="showTip(event, 'ft33', 90)" class="i">ofList</span> <span onmouseout="hideTip(event, 'ft34', 91)" onmouseover="showTip(event, 'ft34', 91)" class="i">l</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft27', 92)" onmouseover="showTip(event, 'ft27', 92)" class="i">delay</span> (<span class="k">fun</span> () <span class="k">-&gt;</span> 
+  <span class="k">match</span> <span onmouseout="hideTip(event, 'ft34', 93)" onmouseover="showTip(event, 'ft34', 93)" class="i">l</span> <span class="k">with</span>
+  | [] <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft14', 94)" onmouseover="showTip(event, 'ft14', 94)" class="i">zero</span> ()
+  | <span onmouseout="hideTip(event, 'ft20', 95)" onmouseover="showTip(event, 'ft20', 95)" class="i">x</span><span class="o">::</span><span onmouseout="hideTip(event, 'ft35', 96)" onmouseover="showTip(event, 'ft35', 96)" class="i">xs</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft15', 97)" onmouseover="showTip(event, 'ft15', 97)" class="i">combine</span> (<span onmouseout="hideTip(event, 'ft12', 98)" onmouseover="showTip(event, 'ft12', 98)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft20', 99)" onmouseover="showTip(event, 'ft20', 99)" class="i">x</span>) (<span onmouseout="hideTip(event, 'ft33', 100)" onmouseover="showTip(event, 'ft33', 100)" class="i">ofList</span> <span onmouseout="hideTip(event, 'ft35', 101)" onmouseover="showTip(event, 'ft35', 101)" class="i">xs</span>))
+
+<span class="c">/// Evaluate a lazy list and obtain a list</span>
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft36', 102)" onmouseover="showTip(event, 'ft36', 102)" class="i">toList</span> (<span onmouseout="hideTip(event, 'ft7', 103)" onmouseover="showTip(event, 'ft7', 103)" class="i">L</span> <span onmouseout="hideTip(event, 'ft29', 104)" onmouseover="showTip(event, 'ft29', 104)" class="i">inner</span>) <span class="o">=</span> 
+  <span class="k">match</span> <span class="i">inner</span><span class="o">.</span><span class="i">Value</span> <span class="k">with</span>
+  | <span onmouseout="hideTip(event, 'ft10', 105)" onmouseover="showTip(event, 'ft10', 105)" class="i">Nil</span> <span class="k">-&gt;</span> []
+  | <span onmouseout="hideTip(event, 'ft11', 106)" onmouseover="showTip(event, 'ft11', 106)" class="i">Cons</span>(<span onmouseout="hideTip(event, 'ft20', 107)" onmouseover="showTip(event, 'ft20', 107)" class="i">x</span>, <span onmouseout="hideTip(event, 'ft21', 108)" onmouseover="showTip(event, 'ft21', 108)" class="i">xs</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft20', 109)" onmouseover="showTip(event, 'ft20', 109)" class="i">x</span><span class="o">::</span>(<span onmouseout="hideTip(event, 'ft36', 110)" onmouseover="showTip(event, 'ft36', 110)" class="i">toList</span> <span onmouseout="hideTip(event, 'ft21', 111)" onmouseover="showTip(event, 'ft21', 111)" class="i">xs</span>)<br /><button class="run" onclick='parent.runCode("/// Turn a lazy value into a singleton list\r\nlet ofLazy (l:Lazy\u003c_\u003e) = delay (fun () -\u003e unit (l.Value))\r\n/// Turn a non-lazy list into a lazy list\r\nlet rec ofList l = delay (fun () -\u003e \r\n  match l with\r\n  | [] -\u003e zero ()\r\n  | x::xs -\u003e combine (unit x) (ofList xs))\r\n\r\n/// Evaluate a lazy list and obtain a list\r\nlet rec toList (L inner) = \r\n  match inner.Value with\r\n  | Nil -\u003e []\r\n  | Cons(x, xs) -\u003e x::(toList xs)");'></button></pre>
+
+
+<h3>Defining the computation builder</h3>
+
+<p>Using the operations defined above, it is easy to define a computation builder for
+generating lazy lists. The underlying monad (lazy) is wrapped into a list, which is 
+both monoidal and monadic computation (as discussed <a href="additive.html">earlier</a>. This
+means that we can define monoidal members such as <code>Yield</code> and <code>Combine</code> that are
+specific to list computations. The next part of the snippet is more interesting as 
+it defines multiple variants of monadic binding:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Computation builder for creating lazy lists</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft37', 112)" onmouseover="showTip(event, 'ft37', 112)" class="i">LazyListBuilder</span>() <span class="o">=</span> 
+  <span class="c">// Operations from the monoidal structure</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 113)" onmouseover="showTip(event, 'ft38', 113)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft39', 114)" onmouseover="showTip(event, 'ft39', 114)" class="i">Yield</span>(<span onmouseout="hideTip(event, 'ft40', 115)" onmouseover="showTip(event, 'ft40', 115)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft12', 116)" onmouseover="showTip(event, 'ft12', 116)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft40', 117)" onmouseover="showTip(event, 'ft40', 117)" class="i">v</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 118)" onmouseover="showTip(event, 'ft38', 118)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft41', 119)" onmouseover="showTip(event, 'ft41', 119)" class="i">YieldFrom</span>(<span onmouseout="hideTip(event, 'ft42', 120)" onmouseover="showTip(event, 'ft42', 120)" class="i">lv</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft42', 121)" onmouseover="showTip(event, 'ft42', 121)" class="i">lv</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 122)" onmouseover="showTip(event, 'ft38', 122)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft43', 123)" onmouseover="showTip(event, 'ft43', 123)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft44', 124)" onmouseover="showTip(event, 'ft44', 124)" class="i">l1</span>, <span onmouseout="hideTip(event, 'ft45', 125)" onmouseover="showTip(event, 'ft45', 125)" class="i">l2</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft15', 126)" onmouseover="showTip(event, 'ft15', 126)" class="i">combine</span> <span onmouseout="hideTip(event, 'ft44', 127)" onmouseover="showTip(event, 'ft44', 127)" class="i">l1</span> <span onmouseout="hideTip(event, 'ft45', 128)" onmouseover="showTip(event, 'ft45', 128)" class="i">l2</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 129)" onmouseover="showTip(event, 'ft38', 129)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft46', 130)" onmouseover="showTip(event, 'ft46', 130)" class="i">Zero</span>() <span class="o">=</span> <span onmouseout="hideTip(event, 'ft14', 131)" onmouseover="showTip(event, 'ft14', 131)" class="i">zero</span>()
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 132)" onmouseover="showTip(event, 'ft38', 132)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft47', 133)" onmouseover="showTip(event, 'ft47', 133)" class="i">Delay</span>(<span onmouseout="hideTip(event, 'ft48', 134)" onmouseover="showTip(event, 'ft48', 134)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft27', 135)" onmouseover="showTip(event, 'ft27', 135)" class="i">delay</span> <span onmouseout="hideTip(event, 'ft48', 136)" onmouseover="showTip(event, 'ft48', 136)" class="i">f</span>
+
+  <span class="c">// Bind and lifted bind operators</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 137)" onmouseover="showTip(event, 'ft38', 137)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft49', 138)" onmouseover="showTip(event, 'ft49', 138)" class="i">For</span>(<span onmouseout="hideTip(event, 'ft50', 139)" onmouseover="showTip(event, 'ft50', 139)" class="i">ll</span>, <span onmouseout="hideTip(event, 'ft51', 140)" onmouseover="showTip(event, 'ft51', 140)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft22', 141)" onmouseover="showTip(event, 'ft22', 141)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft51', 142)" onmouseover="showTip(event, 'ft51', 142)" class="i">f</span> <span onmouseout="hideTip(event, 'ft50', 143)" onmouseover="showTip(event, 'ft50', 143)" class="i">ll</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 144)" onmouseover="showTip(event, 'ft38', 144)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft52', 145)" onmouseover="showTip(event, 'ft52', 145)" class="i">For</span>(<span onmouseout="hideTip(event, 'ft53', 146)" onmouseover="showTip(event, 'ft53', 146)" class="i">l</span>, <span onmouseout="hideTip(event, 'ft54', 147)" onmouseover="showTip(event, 'ft54', 147)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft22', 148)" onmouseover="showTip(event, 'ft22', 148)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft54', 149)" onmouseover="showTip(event, 'ft54', 149)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft33', 150)" onmouseover="showTip(event, 'ft33', 150)" class="i">ofList</span> (<span onmouseout="hideTip(event, 'ft55', 151)" onmouseover="showTip(event, 'ft55', 151)" class="i">List</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft56', 152)" onmouseover="showTip(event, 'ft56', 152)" class="i">ofSeq</span> <span onmouseout="hideTip(event, 'ft53', 153)" onmouseover="showTip(event, 'ft53', 153)" class="i">l</span>))
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft38', 154)" onmouseover="showTip(event, 'ft38', 154)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft57', 155)" onmouseover="showTip(event, 'ft57', 155)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft58', 156)" onmouseover="showTip(event, 'ft58', 156)" class="i">lv</span>, <span onmouseout="hideTip(event, 'ft23', 157)" onmouseover="showTip(event, 'ft23', 157)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft22', 158)" onmouseover="showTip(event, 'ft22', 158)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft23', 159)" onmouseover="showTip(event, 'ft23', 159)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft30', 160)" onmouseover="showTip(event, 'ft30', 160)" class="i">ofLazy</span> <span onmouseout="hideTip(event, 'ft58', 161)" onmouseover="showTip(event, 'ft58', 161)" class="i">lv</span>)
+
+<span class="c">/// Single instance of the computation builder</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft59', 162)" onmouseover="showTip(event, 'ft59', 162)" class="i">llist</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft37', 163)" onmouseover="showTip(event, 'ft37', 163)" class="i">LazyListBuilder</span>()<br /><button class="run" onclick='parent.runCode("/// Computation builder for creating lazy lists\r\ntype LazyListBuilder() = \r\n  // Operations from the monoidal structure\r\n  member x.Yield(v) = unit v\r\n  member x.YieldFrom(lv) = lv\r\n  member x.Combine(l1, l2) = combine l1 l2\r\n  member x.Zero() = zero()\r\n  member x.Delay(f) = delay f\r\n\r\n  // Bind and lifted bind operators\r\n  member x.For(ll, f) = bind f ll\r\n  member x.For(l, f) = bind f (ofList (List.ofSeq l))\r\n  member x.Bind(lv, f) = bind f (ofLazy lv)\r\n\r\n/// Single instance of the computation builder\r\nlet llist = LazyListBuilder()");'></button></pre>
+
+
+<p>The last three operations of the computation builder represent various forms of binding. The 
+first <code>For</code> member is the standard binding of the composed monad (that is, lazy list). The 
+next two operations represent binding on one of the underlying monads. In the first case 
+(second <code>For</code> member), we can bind on a non-lazy list - the list is lifted to a lazy list and
+then used as normal. In the last case (the <code>Bind</code> member), we can bind on a lazy value - the
+value is converted to a singleton lazy list and then used as normal.</p>
+
+<p>The choice of <code>For</code> for normal binding and binding on a list is discussed in the paper.
+Briefly, these two represent computations that produce "multiple" values and so processing
+them using <code>for</code> intuitively feels more appropriate.</p>
+
+<h3>Programming with lazy lists</h3>
+
+<p>The design of the computation builder is motivated by the aim to get as readable syntax
+as possible when using the <code>llist { .. }</code> computation (the syntax is the same as the one
+for <code>asyncSeq { .. }</code> used in the paper).</p>
+
+<p>The following example creates a lazy value <code>lazyRandom</code>, representing a random number
+generator and then it generates two lazy lists:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Lazily constructed random generator</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft60', 164)" onmouseover="showTip(event, 'ft60', 164)" class="i">lazyRandom</span> <span class="o">=</span> <span class="k">lazy</span> <span onmouseout="hideTip(event, 'ft61', 165)" onmouseover="showTip(event, 'ft61', 165)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft62', 166)" onmouseover="showTip(event, 'ft62', 166)" class="i">Random</span>()
+
+<span class="c">/// Generate a lazy list with random numbers</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft63', 167)" onmouseover="showTip(event, 'ft63', 167)" class="i">nums</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft59', 168)" onmouseover="showTip(event, 'ft59', 168)" class="i">llist</span> { <span class="k">for</span> <span onmouseout="hideTip(event, 'ft64', 169)" onmouseover="showTip(event, 'ft64', 169)" class="i">x</span> <span class="k">in</span> <span class="n">1</span> <span class="o">..</span> <span class="n">5</span> <span class="k">do</span> 
+            <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft65', 170)" onmouseover="showTip(event, 'ft65', 170)" class="i">rnd</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft60', 171)" onmouseover="showTip(event, 'ft60', 171)" class="i">lazyRandom</span>
+            <span class="k">yield</span> <span class="i">rnd</span><span class="o">.</span><span class="i">Next</span>(<span class="n">10</span>) }
+
+<span class="c">/// Generate a lazy list by using &#39;nunms&#39; twice</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft66', 172)" onmouseover="showTip(event, 'ft66', 172)" class="i">twiceNums</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft59', 173)" onmouseover="showTip(event, 'ft59', 173)" class="i">llist</span> { <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft63', 174)" onmouseover="showTip(event, 'ft63', 174)" class="i">nums</span>
+          <span class="k">for</span> <span onmouseout="hideTip(event, 'ft67', 175)" onmouseover="showTip(event, 'ft67', 175)" class="i">n</span> <span class="k">in</span> <span onmouseout="hideTip(event, 'ft63', 176)" onmouseover="showTip(event, 'ft63', 176)" class="i">nums</span> <span class="k">do</span>
+            <span class="k">yield</span> <span onmouseout="hideTip(event, 'ft67', 177)" onmouseover="showTip(event, 'ft67', 177)" class="i">n</span> <span class="o">*</span> <span class="n">10</span> }
+
+<span class="c">// Run this line to see the result</span>
+<span onmouseout="hideTip(event, 'ft66', 178)" onmouseover="showTip(event, 'ft66', 178)" class="i">twiceNums</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft36', 179)" onmouseover="showTip(event, 'ft36', 179)" class="i">toList</span><br /><button class="run" onclick='parent.runCode("/// Lazily constructed random generator\r\nlet lazyRandom = lazy System.Random()\r\n\r\n/// Generate a lazy list with random numbers\r\nlet nums = \r\n  llist { for x in 1 .. 5 do \r\n            let! rnd = lazyRandom\r\n            yield rnd.Next(10) }\r\n\r\n/// Generate a lazy list by using \u0027nunms\u0027 twice\r\nlet twiceNums = \r\n  llist { yield! nums\r\n          for n in nums do\r\n            yield n * 10 }\r\n\r\n// Run this line to see the result\r\ntwiceNums |\u003e toList");'></button></pre>
+
+
+<p>The computation that creates <code>nums</code> uses <code>for</code> to <em>bind</em> on a non-lazy list (although
+this construct can be also viewed as standard control-flow extension). Next, it uses
+the <code>let!</code> syntax to bind on a lazy value, which is initialized on the first access.
+Finally, it returns the next element of the list using <code>yield</code>.</p>
+
+<p>The second computation uses <code>yield!</code> to generate one part of the result. The second
+part of the result is generated using the last overloaded <code>for</code> - this time, the 
+argument is lazy list (and so the operation has the type of monadic <em>bind</em>).</p>
+
+<p>The translation of the above samples is standard - it follows the pattern that was
+shown in all previous examples and so we omit the details.</p>
+
+<h2>Monad transformer laws</h2>
+
+<p>As discussed in the paper, when describing layered transformations in terms of monad
+transformers, they are associated with a set of laws that are required to hold. This
+section discusses the laws - we assume that <code>l</code> is the underlying monad (i.e. lazy) 
+and <code>ll</code> is the result of monad transformer application (i.e. lazy list).</p>
+
+<p>The computation expressions that correspond to the monad transformer laws (using the
+above sytnax) can be written as follows:</p>
+
+<pre class="fssnip">
+<span class="c">/// Law that specifies lifting w.r.t. unit</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft83', 207)" onmouseover="showTip(event, 'ft83', 207)" class="i">liftUnit</span> <span onmouseout="hideTip(event, 'ft13', 208)" onmouseover="showTip(event, 'ft13', 208)" class="i">v</span> <span class="o">=</span> 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft84', 209)" onmouseover="showTip(event, 'ft84', 209)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft79', 210)" onmouseover="showTip(event, 'ft79', 210)" class="i">ll</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft20', 211)" onmouseover="showTip(event, 'ft20', 211)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft78', 212)" onmouseover="showTip(event, 'ft78', 212)" class="i">l</span> { <span class="k">return</span> <span onmouseout="hideTip(event, 'ft13', 213)" onmouseover="showTip(event, 'ft13', 213)" class="i">v</span> } <span class="k">in</span> <span class="k">yield</span> <span onmouseout="hideTip(event, 'ft20', 214)" onmouseover="showTip(event, 'ft20', 214)" class="i">x</span> } 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft85', 215)" onmouseover="showTip(event, 'ft85', 215)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft79', 216)" onmouseover="showTip(event, 'ft79', 216)" class="i">ll</span> { <span class="k">yield</span> <span onmouseout="hideTip(event, 'ft13', 217)" onmouseover="showTip(event, 'ft13', 217)" class="i">v</span> }
+  <span onmouseout="hideTip(event, 'ft84', 218)" onmouseover="showTip(event, 'ft84', 218)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft80', 219)" onmouseover="showTip(event, 'ft80', 219)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft85', 220)" onmouseover="showTip(event, 'ft85', 220)" class="i">m2</span>
+
+<span class="c">/// Law that specifies lifting w.r.t. bind</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft86', 221)" onmouseover="showTip(event, 'ft86', 221)" class="i">liftBind</span> <span onmouseout="hideTip(event, 'ft87', 222)" onmouseover="showTip(event, 'ft87', 222)" class="i">m</span> <span onmouseout="hideTip(event, 'ft88', 223)" onmouseover="showTip(event, 'ft88', 223)" class="i">g</span> <span onmouseout="hideTip(event, 'ft89', 224)" onmouseover="showTip(event, 'ft89', 224)" class="i">f</span> <span class="o">=</span> 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft90', 225)" onmouseover="showTip(event, 'ft90', 225)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft79', 226)" onmouseover="showTip(event, 'ft79', 226)" class="i">ll</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft91', 227)" onmouseover="showTip(event, 'ft91', 227)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft78', 228)" onmouseover="showTip(event, 'ft78', 228)" class="i">l</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft20', 229)" onmouseover="showTip(event, 'ft20', 229)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft87', 230)" onmouseover="showTip(event, 'ft87', 230)" class="i">m</span> <span class="k">in</span> <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft89', 231)" onmouseover="showTip(event, 'ft89', 231)" class="i">f</span> <span onmouseout="hideTip(event, 'ft20', 232)" onmouseover="showTip(event, 'ft20', 232)" class="i">x</span> } 
+                <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft88', 233)" onmouseover="showTip(event, 'ft88', 233)" class="i">g</span> <span onmouseout="hideTip(event, 'ft91', 234)" onmouseover="showTip(event, 'ft91', 234)" class="i">y</span> }    
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft92', 235)" onmouseover="showTip(event, 'ft92', 235)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft79', 236)" onmouseover="showTip(event, 'ft79', 236)" class="i">ll</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft20', 237)" onmouseover="showTip(event, 'ft20', 237)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft87', 238)" onmouseover="showTip(event, 'ft87', 238)" class="i">m</span> <span class="k">in</span> <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft91', 239)" onmouseover="showTip(event, 'ft91', 239)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft78', 240)" onmouseover="showTip(event, 'ft78', 240)" class="i">l</span> { <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft89', 241)" onmouseover="showTip(event, 'ft89', 241)" class="i">f</span> <span onmouseout="hideTip(event, 'ft20', 242)" onmouseover="showTip(event, 'ft20', 242)" class="i">x</span> }
+                <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft88', 243)" onmouseover="showTip(event, 'ft88', 243)" class="i">g</span> <span onmouseout="hideTip(event, 'ft91', 244)" onmouseover="showTip(event, 'ft91', 244)" class="i">y</span> }
+  <span onmouseout="hideTip(event, 'ft90', 245)" onmouseover="showTip(event, 'ft90', 245)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft80', 246)" onmouseover="showTip(event, 'ft80', 246)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft92', 247)" onmouseover="showTip(event, 'ft92', 247)" class="i">m2</span></pre>
+
+
+<div class="navigation">
+
+<p>Prev: <a href="additive.html">Additive computations</a> | Next: <a href="applicative.html">Applicative computations</a> | <a href="home.html">Table of Contents</a></p>
+
+</div>
+
+
+    <!-- HTML for Tool Tips -->
+    <div class="tip" id="ft1">union case ListTInner.Nil: ListTInner&lt;&#39;M,&#39;T&gt;</div>
+<div class="tip" id="ft2">union case ListTInner.Cons: &#39;T * ListT&lt;&#39;M,&#39;T&gt; -&gt; ListTInner&lt;&#39;M,&#39;T&gt;</div>
+<div class="tip" id="ft3">type ListT&lt;&#39;M,&#39;T&gt; = &#39;?221124<br /><br />Full name: TryJoinads.ListT&lt;_,_&gt;</div>
+<div class="tip" id="ft4">type AsyncSeq&lt;&#39;T&gt; = ListT&lt;Async,&#39;T&gt;<br /><br />Full name: TryJoinads.AsyncSeq&lt;_&gt;</div>
+<div class="tip" id="ft5">Multiple items<br />type Async&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Control.Async&lt;_&gt;<br /><br />--------------------<br />type Async<br />with<br />&#160;&#160;static member AsBeginEnd : computation:(&#39;Arg -&gt; Async&lt;&#39;T&gt;) -&gt; (&#39;Arg * System.AsyncCallback * obj -&gt; System.IAsyncResult) * (System.IAsyncResult -&gt; &#39;T) * (System.IAsyncResult -&gt; unit)<br />&#160;&#160;static member AwaitEvent : event:IEvent&lt;&#39;Del,&#39;T&gt; * ?cancelAction:(unit -&gt; unit) -&gt; Async&lt;&#39;T&gt; (requires delegate and &#39;Del :&gt; System.Delegate)<br />&#160;&#160;static member AwaitIAsyncResult : iar:System.IAsyncResult * ?millisecondsTimeout:int -&gt; Async&lt;bool&gt;<br />&#160;&#160;static member AwaitWaitHandle : waitHandle:System.Threading.WaitHandle * ?millisecondsTimeout:int -&gt; Async&lt;bool&gt;<br />&#160;&#160;static member CancelDefaultToken : unit -&gt; unit<br />&#160;&#160;static member Catch : computation:Async&lt;&#39;T&gt; -&gt; Async&lt;Choice&lt;&#39;T,exn&gt;&gt;<br />&#160;&#160;static member FromBeginEnd : beginAction:(System.AsyncCallback * obj -&gt; System.IAsyncResult) * endAction:(System.IAsyncResult -&gt; &#39;T) * ?cancelAction:(unit -&gt; unit) -&gt; Async&lt;&#39;T&gt;<br />&#160;&#160;static member FromBeginEnd : arg:&#39;Arg1 * beginAction:(&#39;Arg1 * System.AsyncCallback * obj -&gt; System.IAsyncResult) * endAction:(System.IAsyncResult -&gt; &#39;T) * ?cancelAction:(unit -&gt; unit) -&gt; Async&lt;&#39;T&gt;<br />&#160;&#160;static member FromBeginEnd : arg1:&#39;Arg1 * arg2:&#39;Arg2 * beginAction:(&#39;Arg1 * &#39;Arg2 * System.AsyncCallback * obj -&gt; System.IAsyncResult) * endAction:(System.IAsyncResult -&gt; &#39;T) * ?cancelAction:(unit -&gt; unit) -&gt; Async&lt;&#39;T&gt;<br />&#160;&#160;static member FromBeginEnd : arg1:&#39;Arg1 * arg2:&#39;Arg2 * arg3:&#39;Arg3 * beginAction:(&#39;Arg1 * &#39;Arg2 * &#39;Arg3 * System.AsyncCallback * obj -&gt; System.IAsyncResult) * endAction:(System.IAsyncResult -&gt; &#39;T) * ?cancelAction:(unit -&gt; unit) -&gt; Async&lt;&#39;T&gt;<br />&#160;&#160;static member FromContinuations : callback:((&#39;T -&gt; unit) * (exn -&gt; unit) * (System.OperationCanceledException -&gt; unit) -&gt; unit) -&gt; Async&lt;&#39;T&gt;<br />&#160;&#160;static member Ignore : computation:Async&lt;&#39;T&gt; -&gt; Async&lt;unit&gt;<br />&#160;&#160;static member OnCancel : interruption:(unit -&gt; unit) -&gt; Async&lt;System.IDisposable&gt;<br />&#160;&#160;static member Parallel : computations:seq&lt;Async&lt;&#39;T&gt;&gt; -&gt; Async&lt;&#39;T []&gt;<br />&#160;&#160;static member RunSynchronously : computation:Async&lt;&#39;T&gt; * ?timeout:int * ?cancellationToken:System.Threading.CancellationToken -&gt; &#39;T<br />&#160;&#160;static member Sleep : millisecondsDueTime:int -&gt; Async&lt;unit&gt;<br />&#160;&#160;static member Start : computation:Async&lt;unit&gt; * ?cancellationToken:System.Threading.CancellationToken -&gt; unit<br />&#160;&#160;static member StartChild : computation:Async&lt;&#39;T&gt; * ?millisecondsTimeout:int -&gt; Async&lt;Async&lt;&#39;T&gt;&gt;<br />&#160;&#160;static member StartImmediate : computation:Async&lt;unit&gt; * ?cancellationToken:System.Threading.CancellationToken -&gt; unit<br />&#160;&#160;static member StartWithContinuations : computation:Async&lt;&#39;T&gt; * continuation:(&#39;T -&gt; unit) * exceptionContinuation:(exn -&gt; unit) * cancellationContinuation:(System.OperationCanceledException -&gt; unit) * ?cancellationToken:System.Threading.CancellationToken -&gt; unit<br />&#160;&#160;static member SwitchToContext : syncContext:System.Threading.SynchronizationContext -&gt; Async&lt;unit&gt;<br />&#160;&#160;static member SwitchToNewThread : unit -&gt; Async&lt;unit&gt;<br />&#160;&#160;static member SwitchToThreadPool : unit -&gt; Async&lt;unit&gt;<br />&#160;&#160;static member TryCancelled : computation:Async&lt;&#39;T&gt; * compensation:(System.OperationCanceledException -&gt; unit) -&gt; Async&lt;&#39;T&gt;<br />&#160;&#160;static member CancellationToken : Async&lt;System.Threading.CancellationToken&gt;<br />&#160;&#160;static member DefaultCancellationToken : System.Threading.CancellationToken<br />end<br /><br />Full name: Microsoft.FSharp.Control.Async</div>
+<div class="tip" id="ft6">type LazyList&lt;&#39;T&gt; = | L of Lazy&lt;LazyListInner&lt;&#39;T&gt;&gt;<br /><br />Full name: TryJoinads.LazyList&lt;_&gt;<br />&#160;&#160;type: LazyList&lt;&#39;T&gt;<br /></div>
+<div class="tip" id="ft7">union case LazyList.L: Lazy&lt;LazyListInner&lt;&#39;T&gt;&gt; -&gt; LazyList&lt;&#39;T&gt;</div>
+<div class="tip" id="ft8">Multiple items<br />active recognizer Lazy: Lazy&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.( |Lazy| )<br /><br />--------------------<br />type Lazy&lt;&#39;T&gt; = System.Lazy&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Control.Lazy&lt;_&gt;</div>
+<div class="tip" id="ft9">type LazyListInner&lt;&#39;T&gt; =<br />&#160;&#160;| Nil<br />&#160;&#160;| Cons of &#39;T * LazyList&lt;&#39;T&gt;<br /><br />Full name: TryJoinads.LazyListInner&lt;_&gt;<br />&#160;&#160;type: LazyListInner&lt;&#39;T&gt;<br /></div>
+<div class="tip" id="ft10">union case LazyListInner.Nil: LazyListInner&lt;&#39;T&gt;</div>
+<div class="tip" id="ft11">union case LazyListInner.Cons: &#39;T * LazyList&lt;&#39;T&gt; -&gt; LazyListInner&lt;&#39;T&gt;</div>
+<div class="tip" id="ft12">Multiple items<br />val unit : &#39;a -&gt; LazyList&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.unit<br /><em><br /><br />&#160;Creates a lazy list containing a single element</em><br /><br />--------------------<br />type unit = Unit<br /><br />Full name: Microsoft.FSharp.Core.unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft13">val v : &#39;a</div>
+<div class="tip" id="ft14">val zero : unit -&gt; LazyList&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.zero<br /><em><br /><br />&#160;Creates a lazy list that is empty</em></div>
+<div class="tip" id="ft15">val combine : LazyList&lt;&#39;a&gt; -&gt; LazyList&lt;&#39;a&gt; -&gt; LazyList&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.combine<br /><em><br /><br />&#160;Concatenates the elements of two lazy lists </em></div>
+<div class="tip" id="ft16">val l1 : Lazy&lt;LazyListInner&lt;&#39;a&gt;&gt;</div>
+<div class="tip" id="ft17">val l2 : Lazy&lt;LazyListInner&lt;&#39;a&gt;&gt;</div>
+<div class="tip" id="ft18">static member System.Lazy.Create : creator:(unit -&gt; &#39;T) -&gt; System.Lazy&lt;&#39;T&gt;</div>
+<div class="tip" id="ft19">property System.Lazy.Value: LazyListInner&lt;&#39;a&gt;</div>
+<div class="tip" id="ft20">val x : &#39;a</div>
+<div class="tip" id="ft21">val xs : LazyList&lt;&#39;a&gt;<br />&#160;&#160;type: LazyList&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft22">val bind : (&#39;a -&gt; LazyList&lt;&#39;b&gt;) -&gt; LazyList&lt;&#39;a&gt; -&gt; LazyList&lt;&#39;b&gt;<br /><br />Full name: TryJoinads.bind<br /><em><br /><br />&#160;For every input, generates a new lazy list using<br />&#160;the provided function and concatenates the results</em></div>
+<div class="tip" id="ft23">val f : (&#39;a -&gt; LazyList&lt;&#39;b&gt;)</div>
+<div class="tip" id="ft24">val l : Lazy&lt;LazyListInner&lt;&#39;a&gt;&gt;</div>
+<div class="tip" id="ft25">val res : Lazy&lt;LazyListInner&lt;&#39;b&gt;&gt;</div>
+<div class="tip" id="ft26">property System.Lazy.Value: LazyListInner&lt;&#39;b&gt;</div>
+<div class="tip" id="ft27">val delay : (unit -&gt; LazyList&lt;&#39;a&gt;) -&gt; LazyList&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.delay<br /><em><br /><br />&#160;Wraps a function with untracked effects into a lazy list</em></div>
+<div class="tip" id="ft28">val f : (unit -&gt; LazyList&lt;&#39;a&gt;)</div>
+<div class="tip" id="ft29">val inner : Lazy&lt;LazyListInner&lt;&#39;a&gt;&gt;</div>
+<div class="tip" id="ft30">val ofLazy : Lazy&lt;&#39;a&gt; -&gt; LazyList&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.ofLazy<br /><em><br /><br />&#160;Turn a lazy value into a singleton list</em></div>
+<div class="tip" id="ft31">val l : Lazy&lt;&#39;a&gt;</div>
+<div class="tip" id="ft32">property System.Lazy.Value: &#39;a</div>
+<div class="tip" id="ft33">val ofList : &#39;a list -&gt; LazyList&lt;&#39;a&gt;<br /><br />Full name: TryJoinads.ofList<br /><em><br /><br />&#160;Turn a non-lazy list into a lazy list</em></div>
+<div class="tip" id="ft34">val l : &#39;a list<br />&#160;&#160;type: &#39;a list<br /></div>
+<div class="tip" id="ft35">val xs : &#39;a list<br />&#160;&#160;type: &#39;a list<br /></div>
+<div class="tip" id="ft36">val toList : LazyList&lt;&#39;a&gt; -&gt; &#39;a list<br /><br />Full name: TryJoinads.toList<br /><em><br /><br />&#160;Evaluate a lazy list and obtain a list</em></div>
+<div class="tip" id="ft37">type LazyListBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; LazyListBuilder<br />&#160;&#160;&#160;&#160;member Bind : lv:Lazy&lt;&#39;a&gt; * f:(&#39;a -&gt; LazyList&lt;&#39;b&gt;) -&gt; LazyList&lt;&#39;b&gt;<br />&#160;&#160;&#160;&#160;member Combine : l1:LazyList&lt;&#39;i&gt; * l2:LazyList&lt;&#39;i&gt; -&gt; LazyList&lt;&#39;i&gt;<br />&#160;&#160;&#160;&#160;member Delay : f:(unit -&gt; LazyList&lt;&#39;g&gt;) -&gt; LazyList&lt;&#39;g&gt;<br />&#160;&#160;&#160;&#160;member For : ll:LazyList&lt;&#39;e&gt; * f:(&#39;e -&gt; LazyList&lt;&#39;f&gt;) -&gt; LazyList&lt;&#39;f&gt;<br />&#160;&#160;&#160;&#160;member For : l:seq&lt;&#39;c&gt; * f:(&#39;c -&gt; LazyList&lt;&#39;d&gt;) -&gt; LazyList&lt;&#39;d&gt;<br />&#160;&#160;&#160;&#160;member Yield : v:&#39;k -&gt; LazyList&lt;&#39;k&gt;<br />&#160;&#160;&#160;&#160;member YieldFrom : lv:&#39;j -&gt; &#39;j<br />&#160;&#160;&#160;&#160;member Zero : unit -&gt; LazyList&lt;&#39;h&gt;<br />&#160;&#160;end<br /><br />Full name: TryJoinads.LazyListBuilder<br /><em><br /><br />&#160;Computation builder for creating lazy lists</em></div>
+<div class="tip" id="ft38">val x : LazyListBuilder</div>
+<div class="tip" id="ft39">member LazyListBuilder.Yield : v:&#39;k -&gt; LazyList&lt;&#39;k&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.Yield</div>
+<div class="tip" id="ft40">val v : &#39;k</div>
+<div class="tip" id="ft41">member LazyListBuilder.YieldFrom : lv:&#39;j -&gt; &#39;j<br /><br />Full name: TryJoinads.LazyListBuilder.YieldFrom</div>
+<div class="tip" id="ft42">val lv : &#39;j</div>
+<div class="tip" id="ft43">member LazyListBuilder.Combine : l1:LazyList&lt;&#39;i&gt; * l2:LazyList&lt;&#39;i&gt; -&gt; LazyList&lt;&#39;i&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.Combine</div>
+<div class="tip" id="ft44">val l1 : LazyList&lt;&#39;i&gt;<br />&#160;&#160;type: LazyList&lt;&#39;i&gt;<br /></div>
+<div class="tip" id="ft45">val l2 : LazyList&lt;&#39;i&gt;<br />&#160;&#160;type: LazyList&lt;&#39;i&gt;<br /></div>
+<div class="tip" id="ft46">member LazyListBuilder.Zero : unit -&gt; LazyList&lt;&#39;h&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.Zero</div>
+<div class="tip" id="ft47">member LazyListBuilder.Delay : f:(unit -&gt; LazyList&lt;&#39;g&gt;) -&gt; LazyList&lt;&#39;g&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.Delay</div>
+<div class="tip" id="ft48">val f : (unit -&gt; LazyList&lt;&#39;g&gt;)</div>
+<div class="tip" id="ft49">member LazyListBuilder.For : ll:LazyList&lt;&#39;e&gt; * f:(&#39;e -&gt; LazyList&lt;&#39;f&gt;) -&gt; LazyList&lt;&#39;f&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.For</div>
+<div class="tip" id="ft50">val ll : LazyList&lt;&#39;e&gt;<br />&#160;&#160;type: LazyList&lt;&#39;e&gt;<br /></div>
+<div class="tip" id="ft51">val f : (&#39;e -&gt; LazyList&lt;&#39;f&gt;)</div>
+<div class="tip" id="ft52">member LazyListBuilder.For : l:seq&lt;&#39;c&gt; * f:(&#39;c -&gt; LazyList&lt;&#39;d&gt;) -&gt; LazyList&lt;&#39;d&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.For</div>
+<div class="tip" id="ft53">val l : seq&lt;&#39;c&gt;<br />&#160;&#160;type: seq&lt;&#39;c&gt;<br />&#160;&#160;inherits: System.Collections.IEnumerable<br /></div>
+<div class="tip" id="ft54">val f : (&#39;c -&gt; LazyList&lt;&#39;d&gt;)</div>
+<div class="tip" id="ft55">Multiple items<br />module List<br /><br />from Microsoft.FSharp.Collections<br /><br />--------------------<br />type List&lt;&#39;T&gt; =<br />&#160;&#160;| ( [] )<br />&#160;&#160;| ( :: ) of &#39;T * &#39;T list<br />&#160;&#160;with<br />&#160;&#160;&#160;&#160;interface System.Collections.IEnumerable<br />&#160;&#160;&#160;&#160;interface System.Collections.Generic.IEnumerable&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;member Head : &#39;T<br />&#160;&#160;&#160;&#160;member IsEmpty : bool<br />&#160;&#160;&#160;&#160;member Item : index:int -&gt; &#39;T with get<br />&#160;&#160;&#160;&#160;member Length : int<br />&#160;&#160;&#160;&#160;member Tail : &#39;T list<br />&#160;&#160;&#160;&#160;static member Cons : head:&#39;T * tail:&#39;T list -&gt; &#39;T list<br />&#160;&#160;&#160;&#160;static member Empty : &#39;T list<br />&#160;&#160;end<br /><br />Full name: Microsoft.FSharp.Collections.List&lt;_&gt;<br />&#160;&#160;type: List&lt;&#39;T&gt;<br /></div>
+<div class="tip" id="ft56">val ofSeq : seq&lt;&#39;T&gt; -&gt; &#39;T list<br /><br />Full name: Microsoft.FSharp.Collections.List.ofSeq</div>
+<div class="tip" id="ft57">member LazyListBuilder.Bind : lv:Lazy&lt;&#39;a&gt; * f:(&#39;a -&gt; LazyList&lt;&#39;b&gt;) -&gt; LazyList&lt;&#39;b&gt;<br /><br />Full name: TryJoinads.LazyListBuilder.Bind</div>
+<div class="tip" id="ft58">val lv : Lazy&lt;&#39;a&gt;</div>
+<div class="tip" id="ft59">val llist : LazyListBuilder<br /><br />Full name: TryJoinads.llist<br /><em><br /><br />&#160;Single instance of the computation builder</em></div>
+<div class="tip" id="ft60">val lazyRandom : Lazy&lt;System.Random&gt;<br /><br />Full name: TryJoinads.lazyRandom<br /><em><br /><br />&#160;Lazily constructed random generator</em></div>
+<div class="tip" id="ft61">namespace System</div>
+<div class="tip" id="ft62">type Random =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; System.Random<br />&#160;&#160;&#160;&#160;new : int -&gt; System.Random<br />&#160;&#160;&#160;&#160;member Next : unit -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int * int -&gt; int<br />&#160;&#160;&#160;&#160;member NextBytes : System.Byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;member NextDouble : unit -&gt; float<br />&#160;&#160;end<br /><br />Full name: System.Random</div>
+<div class="tip" id="ft63">val nums : LazyList&lt;int&gt;<br /><br />Full name: TryJoinads.nums<br />&#160;&#160;type: LazyList&lt;int&gt;<br /><br /><em><br /><br />&#160;Generate a lazy list with random numbers</em></div>
+<div class="tip" id="ft64">val x : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft65">val rnd : System.Random</div>
+<div class="tip" id="ft66">val twiceNums : LazyList&lt;int&gt;<br /><br />Full name: TryJoinads.twiceNums<br />&#160;&#160;type: LazyList&lt;int&gt;<br /><br /><em><br /><br />&#160;Generate a lazy list by using &#39;nunms&#39; twice</em></div>
+<div class="tip" id="ft67">val n : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft68">type LazyBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; LazyBuilder<br />&#160;&#160;&#160;&#160;member Bind : l:Lazy&lt;&#39;T&gt; * f:(&#39;T -&gt; Lazy&lt;&#39;R&gt;) -&gt; Lazy&lt;&#39;R&gt;<br />&#160;&#160;&#160;&#160;member Return : v:&#39;T -&gt; Lazy&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;member ReturnFrom : m:Lazy&lt;&#39;T&gt; -&gt; Lazy&lt;&#39;T&gt;<br />&#160;&#160;end<br /><br />Full name: TryJoinads.LazyBuilder</div>
+<div class="tip" id="ft69">val x : LazyBuilder</div>
+<div class="tip" id="ft70">member LazyBuilder.Bind : l:Lazy&lt;&#39;T&gt; * f:(&#39;T -&gt; Lazy&lt;&#39;R&gt;) -&gt; Lazy&lt;&#39;R&gt;<br /><br />Full name: TryJoinads.LazyBuilder.Bind</div>
+<div class="tip" id="ft71">val l : Lazy&lt;&#39;T&gt;</div>
+<div class="tip" id="ft72">val f : (&#39;T -&gt; Lazy&lt;&#39;R&gt;)</div>
+<div class="tip" id="ft73">val failwith : string -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.Operators.failwith</div>
+<div class="tip" id="ft74">member LazyBuilder.Return : v:&#39;T -&gt; Lazy&lt;&#39;T&gt;<br /><br />Full name: TryJoinads.LazyBuilder.Return</div>
+<div class="tip" id="ft75">val v : &#39;T</div>
+<div class="tip" id="ft76">member LazyBuilder.ReturnFrom : m:Lazy&lt;&#39;T&gt; -&gt; Lazy&lt;&#39;T&gt;<br /><br />Full name: TryJoinads.LazyBuilder.ReturnFrom</div>
+<div class="tip" id="ft77">val m : Lazy&lt;&#39;T&gt;</div>
+<div class="tip" id="ft78">val l : LazyBuilder<br /><br />Full name: TryJoinads.l</div>
+<div class="tip" id="ft79">val ll : LazyListBuilder<br /><br />Full name: TryJoinads.ll</div>
+<div class="tip" id="ft80">val shouldEqual : &#39;a -&gt; &#39;b -&gt; &#39;c<br /><br />Full name: TryJoinads.shouldEqual</div>
+<div class="tip" id="ft81">val a : &#39;a</div>
+<div class="tip" id="ft82">val b : &#39;b</div>
+<div class="tip" id="ft83">val liftUnit : &#39;a -&gt; &#39;b<br /><br />Full name: TryJoinads.liftUnit<br /><em><br /><br />&#160;Law that specifies lifting w.r.t. unit</em></div>
+<div class="tip" id="ft84">val m1 : LazyList&lt;&#39;a&gt;<br />&#160;&#160;type: LazyList&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft85">val m2 : LazyList&lt;&#39;a&gt;<br />&#160;&#160;type: LazyList&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft86">val liftBind : Lazy&lt;&#39;a&gt; -&gt; (&#39;b -&gt; LazyList&lt;&#39;c&gt;) -&gt; (&#39;a -&gt; #Lazy&lt;&#39;b&gt;) -&gt; &#39;e<br /><br />Full name: TryJoinads.liftBind<br /><em><br /><br />&#160;Law that specifies lifting w.r.t. bind</em></div>
+<div class="tip" id="ft87">val m : Lazy&lt;&#39;a&gt;</div>
+<div class="tip" id="ft88">val g : (&#39;b -&gt; LazyList&lt;&#39;c&gt;)</div>
+<div class="tip" id="ft89">val f : (&#39;a -&gt; #Lazy&lt;&#39;b&gt;)</div>
+<div class="tip" id="ft90">val m1 : LazyList&lt;&#39;c&gt;<br />&#160;&#160;type: LazyList&lt;&#39;c&gt;<br /></div>
+<div class="tip" id="ft91">val y : &#39;b</div>
+<div class="tip" id="ft92">val m2 : LazyList&lt;&#39;c&gt;<br />&#160;&#160;type: LazyList&lt;&#39;c&gt;<br /></div>
+
+  </body>
+  </html>

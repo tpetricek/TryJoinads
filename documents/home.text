@@ -52,9 +52,34 @@ in standard joinads library.
    shows how to use joinads in asynchronous programming. Applications include asynchronously waiting
    for multiple computations or waiting for the first computation that produces certain value.
 
-### More content comming soon!
+ * [**Task-based parallelism**](use/tasks.html)
+   has been already demonstrated in the [introduction](intro.html). This tutorial
+   shows a more complete example that uses joinads for recursive tree processing with
+   short-circuiting.
 
-More articles will be added to this web site as I publish them on [my blog](http://tomasp.net/blog).
-If you're interested in using joinads for task-based parallelism (using `Task<'T>`), for programming
-with agents (`MailboxProcessor<'T>` in F#), for implementing join calculus or for writing
-parsers, please check back soon!
+ * [**Agent-based programming**](use/agents.html)
+   can benefit from the notation used by joinads when implementing agent (`MailboxProcessor`) that
+   uses the `Scan` method. This tutorial shows several examples.
+
+ * [**Concurrent programming using joins**](use/joins.html) 
+   shows a library that uses joinads to embed _join calculus_ in F#. The library can be used for
+   writing concurrent primitives, such as blocking collection and others.
+
+### Implementing joinads
+
+The following articles briefly explain how to implement joinads for several standard types
+of computations including `option` values and F# asynchronous workflows.
+
+ * [**Programming with option values**](implement/options.html)
+   shows the implementation of joinad computation builder for the `option<'T>` type. The sample
+   uses parallel _composition_ and _choice_.
+
+ * [**Writing parsers with joinads**](implement/parsers.html)
+   shows that joinads are useful in areas other than just concurrent and parallel programming.
+   For parsers, joinads make it possible to express the _intersection of languages_.
+
+ * [**Joinads for asynchronous workflows**](implement/async.html)
+   explains how to add joinad operations to the `Async<'T>` type. The sample also provides more
+   details on how aliasing is used in joinads.
+
+<span></span>

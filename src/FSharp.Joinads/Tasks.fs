@@ -43,6 +43,8 @@ module TaskExtensions =
 type FutureBuilder() = 
   member x.Bind(t:Task<'T>, f:'T -> Task<'R>) =
     t.ContinueWith(fun (t:Task<_>) -> f t.Result).Unwrap()
+  member x.Bind(t:Task, f:unit -> Task<'R>) =
+    t.ContinueWith(fun (t:Task) -> f ()).Unwrap()
   member x.Return(v:'T) = Task.Factory.StartNew(fun () -> v)
   member x.ReturnFrom(t:Task<'T>) = t
 

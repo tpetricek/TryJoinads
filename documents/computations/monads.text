@@ -1,0 +1,433 @@
+﻿> Computation expressions for monads
+
+Monadic computations
+====================
+
+In this article, we discuss how to use F# computation expressions to provide syntax for
+monadic computations. We start by defining a simple computation using _bind_ and _return_
+and then add the support for sequencing and additional control flow constructs.
+We show code for two examples - one demonstrating _monadic container_ and the other
+demonstrating _monadic computations_. The difference is that monadic computation can
+capture (untracked) F# effects in the type `M<'T>` while monadic containers can not
+(because they represent fully evaluated values).
+
+Functional monads
+-----------------
+
+We use the Maybe monad (represented as `option<'T>`) as an example of _monadic container_ and 
+the Reader monad (represented as `'TState -> 'T`) as an example of _monadic computation_. The
+following snippet shows standard definitions of _bind_ and _return_ for these types (we
+use the name `unit` for _return_, because `return` is a reserved keyword):
+
+    module Maybe = 
+      /// The unit function of the Maybe monad
+      let unit value = Some(value)
+      /// The bind operation of the Maybe monad 
+      let bind f = function
+        | None -> None
+        | Some(value) -> f value
+
+    module Reader = 
+      /// Represents a computation that depends on 'TState
+      type Reader<'TState, 'T> = R of ('TState -> 'T)
+
+      /// The unit function of the Reader monad
+      let unit value = R (fun _ -> value)
+      /// The bind operation of the Reader monad
+      let bind f (R comp1) = R (fun state ->
+        let (R comp2) = f (comp1 state)
+        comp2 state)
+
+### Computation builder definitions
+
+Now that we have the _bind_ and _return_ operations, we can define two F# computation builders
+for writing monadic computations. The following snippet starts by defining just binding and
+return (which allows the `let!` and the `return` constructs). We also define `ReturnFrom`
+member to allow the `return!` keyword:
+
+    /// Computation builder for the Maybe monad
+    type MaybeBuilder() = 
+      member x.Bind(v, f) = Maybe.bind f v
+      member x.Return(v) = Maybe.unit v
+      member x.ReturnFrom(m) = m
+
+    /// Computation builder for the Reader monad
+    type ReaderBuilder() = 
+      member x.Bind(v, f) = Reader.bind f v
+      member x.Return(v) = Reader.unit v
+      member x.ReturnFrom(m) = m
+
+    /// Objects representing computaiton builder instances
+    let maybe = MaybeBuilder()
+    let reader = ReaderBuilder()
+
+The definitions above allows us to write a number of basic monadic computations.
+The following snippet demonstrates the syntax using the Maybe monad:
+
+    /// Random number generator
+    let random = System.Random()
+
+    /// Either fails or returns some unit
+    let maybeFail() =
+      maybe { if random.Next(2) = 0 then 
+                return ()
+              else 
+                return! None }
+
+    /// Computation that either fails or returns a random number
+    let maybeDice() = 
+      maybe { do! maybeFail()
+              return random.Next(6) }
+
+    /// Computation that adds two dices (fails in 3/4 of cases)
+    let maybeTwice = 
+      maybe { let! n1 = maybeDice()
+              let! n2 = maybeDice()
+              return n1 + n2 }
+
+The `maybeFail` computation uses `return ()` to successfully return the unit value and 
+`return! None` to fail. In the first case, the argument is a value that will be wrapped
+in the monadic type `option<unit>`, while in the second case, the argument is the 
+computation to return - `None` is of type `Maybe<unit>`. The code samples are translated 
+to the following code:
+
+    [module=MaybeTranslations1,load]
+    let maybeFail() =
+      if random.Next(2) = 0 then maybe.Return( () )
+      else maybe.ReturnFrom(None)
+
+    let maybeDice() = 
+      maybe.Bind(maybeFail(), fun () ->
+        maybe.Return(6))
+
+    let maybeTwice = 
+      maybe.Bind(maybeDice(), fun n1 ->
+        maybe.Bind(maybeDice(), fun n2 ->
+          maybe.Return(n1 + n2)))
+
+### Monad laws
+
+    [hide] 
+    type M<'T> = M of 'T
+    type MBuilder() = 
+      member x.Bind(m:M<'T>, f:'T -> M<'R>) : M<'R> = failwith "!"
+      member x.Return(v:'T) : M<'T> = failwith "!"
+      member x.ReturnFrom(m:M<'T>) = m
+
+    let m = MBuilder()
+    let shouldEqual a b = if not (a = b) then failwith "!"
+
+As discussed in the paper, the well-known monad laws can be expressed in the computation 
+expression syntax. The examples are very similar to the code that can be written using the
+`do` notation in Haskell. Assuming `m` is some computation builder that supports `Bind`
+and `Return`, we can write:
+
+    [noload]
+    /// The left identity monad law
+    let leftIdentity x f = 
+      let m1 = m { let! v = m { return x }
+                   return! f v } 
+      let m2 = m { return! f x }
+      m1 |> shouldEqual m2
+
+    /// The right identity monad law 
+    let rightIdentity n =
+      let m1 = m { let! x = n 
+                   return x }
+      let m2 = m { return! n }
+      m1 |> shouldEqual m2
+      
+    /// The associativity monad law 
+    let associativity n f g =
+      let m1 = m { let! y = m { let! x = n
+                                return! f x }
+                   return! g y }
+      let m2 = m { let! x = n
+                   return! m { let! y = f x
+                               return! g x } }
+      let m3 = m { let! x = n
+                   let! y = f x
+                   return! g x }
+      m1 |> shouldEqual m2
+      m1 |> shouldEqual m3
+
+
+
+
+<a name="seq">Sequencing for monads</a>
+---------------------
+
+As discussed in the paper, sequencing of effectfull monadic computation is done by adding members
+`Delay`, `Zero`, `Run` and, most importantly, `Combine`. There are two possible definitions, 
+depending on whether the computation type `M<'T>` can accomodate untracked F# effects (in other
+words, whether the occurrence of `'T` is in a result of some function type. We refer to types
+that can accomodate effects _monadic computations_ and types that cannot _monadic containers_.
+
+### Monadic computations
+
+The Reader monad is an example of monadic computation, because it is represented as a function 
+`'TState -> 'T`. For such monads, the computation builders that allow sequencing can be 
+defined as follows (place the mouse pointer over a member name to see the type):
+
+    // Extend the ReaderBuilder with additional members
+    type ReaderBuilder with
+      /// Creates a monadic unit computation
+      member m.Zero() = 
+        m.Return( () )
+      /// Wraps the effects in the computation type
+      member m.Delay(f) = 
+        m.Bind(m.Zero(), fun _ -> f())
+      /// Compose effectful and another computation
+      member m.Combine(m1, m2) = 
+        m.Bind(m1, fun () -> m2)
+      /// Return a computation without affecting it
+      /// (Run is not used in this case and can be omitted)
+      member m.Run(m1) = m1
+
+All members are defined in terms of the existing. The `Combine` member is implemented by 
+`Bind` with the restriction that the first computation must return `unit` (This is similar
+to the difference between function composition and sequencing using the semicolon operator.)
+The `Delay` member is implemented by taking an empty computation (`Zero`) and binding.
+
+The above definitions enable a number of constructs (refer to the F# specification for full
+details). The most notable ones are `if` without the `else` branch (where `Zero` is used instead
+of the `else` branch). The `if` can also be followed by other computations (in which case, 
+`Combine` is used to combine them). The following example defines two of helpers and
+then demonstrates a computation that requires the above members:
+
+    /// Reads the state from the Reader monad
+    let readState() = (*[omit:(...)]*)Reader.R (fun state -> state)(*[/omit]*)
+    /// Runs the Reader monad with a given state
+    let runReader state m = (*[omit:(...)]*)let (Reader.R f) = m in f state(*[/omit]*)
+
+    /// Prints given message and optionally also the state
+    let printLog detailed message =
+      reader { if detailed then 
+                 let! state = readState()
+                 printfn "State: %s" state
+               printfn "Message: %s" message }
+               
+    // Select & run to execute the sample
+    printLog true "Testing #1" |> runReader "State #1"
+    printLog false "Testing #2" |> runReader "State #2"
+
+The `printLog` function first prints the state (if `detailed = true`) and then prints the
+given message. It is translated to the following expression:
+
+    [module=ReaderTranslation2,load]
+    let printLog detailed message =
+      reader.Run(reader.Delay(fun () ->
+        reader.Combine
+          ( ( if detailed then 
+                reader.Bind(readState(), fun state ->
+                  printfn "State: %s" state
+                  reader.Zero())
+              else reader.Zero() ),
+            ( reader.Delay(fun () ->
+                printfn "Message: %s" message
+                reader.Zero() )) )))
+
+### Monadic containers
+
+The Maybe monad is an example of the second case - monadic container. For such monads, 
+the `Bind` operation performs all effects immediately and so it is not possible to 
+implement `Delay` that would return `M<'T>` computation without evaluating the function
+given as an argument. For this reason, we use a different type (called `D<'T>` in the
+paper) to represent a _delayed monadic computation_. For monadic containers, `D<'T> = unit -> M<'T>`.
+The computation builder can be defined as follows:
+
+    // Extend the MaybeBuilder with additional members
+    type MaybeBuilder with
+      /// Creates a monadic unit computation
+      member m.Zero() = 
+        m.Return( () )
+      /// Return the function as a delayed computation type
+      member m.Delay(f) = f
+      /// Compose computation and a delayed computation
+      member m.Combine(m1, d2) = 
+        m.Bind(m1, fun () -> d2 ())
+      /// Run the effects of a delayed computation
+      member m.Run(d1) = d1()
+
+Note that the Maybe monad is perhaps not the best example of _monadic computation_, because
+it also provides monoidal structure (with `None` as the zero and left-biased choice as the
+binary operator). This means that there are two ways to implement the computation builder - 
+one that uses the monadic structure (above) and another that would use the monoidal structure
+(using `None` for `Zero` and a different `Combine`). The second approach is very similar to 
+[imperative computation builder][imper] described elsewhere.
+
+  [imper]: http://tomasp.net/blog/imperative-i-return.aspx "Imperative computation in F# (I.) - Returning results from a function"
+
+Using the _monadic_ implementation of Maybe, we can write the following code. 
+
+    // Generates a number, but may fail if 'canFail' is true
+    let maybeNumber canFail = 
+      maybe { if canFail then
+                do! maybeFail ()
+              return random.Next(6) }
+
+If the parameter `canFail` is true, then the computation uses `maybeFail` to fail with a 
+50% chance. Otherwise, it always succeeds, returning a random number from 0 to 5. The structure
+of the computation is very similar to the previous Reader monad example and so is the translation:
+
+    [module=MaybeTranslation2,load]
+    let maybeNumber canFail =
+      maybe.Run(maybe.Delay(fun () ->
+        maybe.Combine
+          ( ( if canFail then 
+                maybe.Bind(maybeFail(), fun () ->
+                  maybe.Zero())
+              else maybe.Zero() ),
+            ( maybe.Delay(fun () ->
+                maybe.Return(random.Next(6)) )) )))
+
+<a name="control">Monadic control flow</a>
+--------------------
+
+The final addition that can be made to a monadic computation expression builder is the support for
+F# control flow constructs that are available in the computation block. These include two looping
+constructs (`for` and `while`) and also exception handling constructs (`try .. with` and 
+`try .. finally`). The definition differs slightly for monadic computations and monadic containers.
+In particular, the `While` member and the exception handling constructs take one of the arguments
+as a delayed computation, which is either `M<'T>` or `unit -> M<'T>`.
+
+### Monadic computations
+
+The `ReaderBuilder` (a monadic computation) can be extended as follows:
+
+    type ReaderBuilder with 
+      /// The exception handling needs to be lifted into the monadic 
+      /// computation type, so we need to use the computation structure
+      member m.TryWith(Reader.R body, handler) = Reader.R (fun state ->
+        try body state 
+        with e -> 
+          let (Reader.R handlerBody) = handler e 
+          handlerBody state) 
+
+      /// The finalizer is defined similarly (but the body of the 
+      /// finalizer cannot be monadic - just a `unit -> unit` function      
+      member m.TryFinally(Reader.R body, finalizer) = Reader.R (fun state ->
+        try body state
+        finally finalizer() )
+
+      /// Similar to 'Bind', but it disposes of the resource (a way to do 
+      /// deterministic finalization in .NET) after it gets out of scope
+      member m.Using(res, f) =
+        m.Bind(res, fun disposableRes ->
+          m.TryFinally(m.Delay(fun () -> f disposableRes), fun () ->
+            (disposableRes :> System.IDisposable).Dispose() ))
+
+      /// The 'while' loop evaluates the condition and then either ends
+      /// (returning 'Zero'), or evaluates body once and then runs recursively
+      member m.While(cond, body) = 
+        if not (cond()) then m.Zero()
+        else m.Combine(m.Run(body), m.Delay(fun () -> m.While(cond, body)))
+
+      /// The 'for' loop can be defined using 'While' and 'Using'
+      member m.For(xs:seq<'T>, f) = 
+        m.Using(m.Return(xs.GetEnumerator()), fun en ->
+          m.While( (fun () -> en.MoveNext()), m.Delay(fun () -> 
+            f en.Current) ) )
+
+
+For monadic computations that encapsulate untracked F# effects, the members `TryWith` and
+`TryFinally` cannot be implemented in terms of other operations. They need to understand the
+structure of the computation, in order to wrap the appropriate call that actually runs the
+effects with `try .. with` or `try .. finally`. For the Reader monad, this is quite easy.
+We just need to wrap the call that runs the underlying function when the initial state is 
+provided. However, it requires more structure than just monadic _bind_ and _return_.
+
+The `Using` member is not discussed in the paper (see F# specification for details), but
+we include it for completeness. It has the same type signature as `Bind`, except that the
+value produced by the first computation implements the `IDisposable` interface. The member
+guarantees that it will deterministically free the resource after it gets out of scope, whic
+can be implemented using `TryFinally`. The member enables the `use! x = foo` syntax in the
+computation builder.
+
+Finally, the `For` and `While` members can be implemented in terms of the 
+other operations. In general, the `for` loop iterates over an F# sequence, which is an 
+imperative object that needs to be disposed of at the end. This can be done using the 
+`Using` member.
+
+### Monadic containers
+
+The definitions for the Maybe monad are similar, but the exception handling members are 
+implemented differently. In case of monadic containers that use `unit -> M<'T>` to represent
+delayed computation, we do not need to know anything about the `M<'T>` type:
+
+    type MaybeBuilder with 
+      /// The exception handling uses the delayed type directly
+      member m.TryWith(f, handler) = 
+        try f() 
+        with e -> handler e
+
+      /// The finalizer is defined similarly (but the body of the 
+      /// finalizer cannot be monadic - just a `unit -> unit` function)      
+      member m.TryFinally(f, finalizer) = 
+        try f()
+        finally finalizer()
+
+      (*[omit:(Other members are the same as for computations)]*)
+      /// Similar to 'Bind', but it disposes of the resource (a way to do 
+      /// deterministic finalization in .NET) after it gets out of scope
+      member m.Using(res, f) =
+        m.Bind(res, fun disposableRes ->
+          m.TryFinally(m.Delay(fun () -> f disposableRes), fun () ->
+            (disposableRes :> System.IDisposable).Dispose() ))
+
+      /// The 'while' loop evaluates the condition and then either ends
+      /// (returning 'Zero'), or evaluates body once and then runs recursively
+      member m.While(cond, body) = 
+        if not (cond()) then m.Zero()
+        else m.Combine(m.Run(body), m.Delay(fun () -> m.While(cond, body)))
+
+      /// The 'for' loop can be defined using 'While' and 'Using'
+      member m.For(xs:seq<'T>, f) = 
+        m.Using(m.Return(xs.GetEnumerator()), fun en ->
+          m.While( (fun () -> en.MoveNext()), m.Delay(fun () -> 
+            f en.Current) ) )(*[/omit]*)
+
+As an example, consider the following two examples. The first one implements safe modulo 
+(division remainder) using the Maybe monad. The second tests whether a given number is 
+divisible by all specified numbers and fails if that is not the case (otherwise it succeeds,
+returning `Some()`).
+
+    /// Safe modulo using the Maybe monad
+    let safeMod a b =
+      maybe { try 
+                return a % b
+              with _ -> 
+                return! None }
+
+    /// Fail if the number is divisible by any divisor
+    let failDivisible num divisors =
+      maybe { for divisor in divisors do
+                let! res = safeMod num divisor    
+                if res = 0 then return! None }
+
+    // Test whether 43 is a prime number
+    failDivisible 43 [ 2 .. 7 ]
+    // ... but fail when the input contains 0
+    failDivisible 43 [ 0 .. 7 ]
+
+The two functions defined above are transalted using the new computation builder members
+as follows (we omit the wrapping of the entire computation in `Run` and `Delay`, because
+it has no effect in this example and it makes the translation harder to follow):
+
+    [module=MaybeTranslation3,load]
+    let safeMod a b =
+      maybe.TryWith
+       ( maybe.Delay(fun () -> maybe.Return(a % b)),
+         fun _ -> maybe.ReturnFrom(None) )
+
+    let failDivisible num divisors =
+      maybe.For(divisors, fun divisor ->
+        maybe.Bind(safeMod num divisor, fun res ->
+          if res = 0 then maybe.ReturnFrom(None)
+          else maybe.Zero() ))
+
+<div class="navigation">
+
+Next: [Monoidal computations](monoids.html) | [Table of Contents](home.html)
+
+</div>

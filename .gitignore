@@ -2,3 +2,6 @@ console/bin
 console/obj
 *.suo
 *.xap
+*.html.fs
+src/*/bin/*
+src/*/obj/*
