@@ -47,7 +47,7 @@ let template =
   </body>
   </html>"  
 
-let fsharpCompiler = @"C:\tomas\Binary\FSharp.Extensions\Debug\cli\4.0\bin\FSharp.Compiler.dll"
+let fsharpCompiler = @"C:\Tomas\binary\FSharp.Research\Debug\net40\bin\FSharp.Compiler.dll"
 let asm = System.Reflection.Assembly.LoadFile(fsharpCompiler)
 let formatAgent = CodeFormat.CreateAgent(asm)
 
@@ -121,54 +121,61 @@ let rec build (unnest:string) subdir =
 
     // Extract all CodeBlocks and pass them to F# snippets
     let codes = paragraphs |> Seq.collect collectCodes |> Array.ofSeq
-    let pars, tipHtml = 
-      if codes.Length = 0 then paragraphs, ""
+    let parsTips = 
+      if codes.Length = 0 then Some(paragraphs, "")
       else
-        // Process all F# snippets using a tool
-        let fsharpSource = 
-          codes
-          |> Seq.mapi (fun index (modul, code) ->
-              match modul with
-              | Some modul ->
-                  // generate module & add indentation
-                  "module " + modul + " =\n" +
-                  "// [snippet:" + (string index) + "]\n" +
-                  "    " + code.Replace("\n", "\n    ") + "\n" +
-                  "// [/snippet]"
-              | None ->
-                  "// [snippet:" + (string index) + "]\n" +
-                  code + "\n" +
-                  "// [/snippet]" )
-          |> String.concat "\n\n"
-        // Write to Temp
-        File.WriteAllText(target + ".fs", fsharpSource)
-        let args = 
-          "--noframework --nowarn:26" + 
-          @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\console\compiler\FSharp.Core.dll""" +
-          @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\console\bin\Debug\FSharp.Console.dll""" +
-          @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\src\FSharp.Joinads.Silverlight\bin\Debug\FSharp.Joinads.Silverlight.dll""" +
-          //@" -r:""C:\Program Files (x86)\Microsoft Reactive Extensions SDK\v1.1.10621\Binaries\Silverlight\v5.0\System.Reactive.dll""" +
-          @" -r:""C:\Tomas\Research\TryJoinads\src\FSharp.Joinads.Silverlight\bin\Debug\System.Reactive.dll""" +
-          @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\mscorlib.dll""" + 
-          @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.dll""" +
-          @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.Net.dll""" +
-          @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.Windows.dll"""
-        let snippets, errors = formatAgent.ParseSource("C:\\temp\\TryJoinads.fsx", fsharpSource, args)
-        let formatted = CodeFormat.FormatHtml(snippets, "ft", false, false)
-        let snippetLookup = Array.zip (Array.map snd codes) [| for fs in formatted.SnippetsHtml -> fs.Html |] |> dict
+        try
+          // Process all F# snippets using a tool
+          let fsharpSource = 
+            codes
+            |> Seq.mapi (fun index (modul, code) ->
+                match modul with
+                | Some modul ->
+                    // generate module & add indentation
+                    "module " + modul + " =\n" +
+                    "// [snippet:" + (string index) + "]\n" +
+                    "    " + code.Replace("\n", "\n    ") + "\n" +
+                    "// [/snippet]"
+                | None ->
+                    "// [snippet:" + (string index) + "]\n" +
+                    code + "\n" +
+                    "// [/snippet]" )
+            |> String.concat "\n\n"
+          // Write to Temp
+          File.WriteAllText(target + ".fs", fsharpSource)
+          let args = 
+            "--noframework --nowarn:26" + 
+            @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\console\compiler\FSharp.Core.dll""" +
+            @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\console\bin\Debug\FSharp.Console.dll""" +
+            @" -r:""" + __SOURCE_DIRECTORY__ + @"\..\src\FSharp.Joinads.Silverlight\bin\Debug\FSharp.Joinads.Silverlight.dll""" +
+            //@" -r:""C:\Program Files (x86)\Microsoft Reactive Extensions SDK\v1.1.10621\Binaries\Silverlight\v5.0\System.Reactive.dll""" +
+            @" -r:""C:\Tomas\Research\TryJoinads\src\FSharp.Joinads.Silverlight\bin\Debug\System.Reactive.dll""" +
+            @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\mscorlib.dll""" + 
+            @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.dll""" +
+            @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.Net.dll""" +
+            @" -r:""C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\System.Windows.dll"""
+          let snippets, errors = formatAgent.ParseSource("C:\\temp\\TryJoinads.fsx", fsharpSource, args)
+          let formatted = CodeFormat.FormatHtml(snippets, "ft", false, false)
+          let snippetLookup = Array.zip (Array.map snd codes) [| for fs in formatted.SnippetsHtml -> fs.Html |] |> dict
         
-        // Print errors
-        for (SourceError((sl, sc), (el, ec), kind, msg)) in errors do
-          printfn "   * (%d:%d)-(%d:%d) (%A): %s" sl sc el ec kind msg
-        if errors.Length > 0 then printfn ""
+          // Print errors
+          for (SourceError((sl, sc), (el, ec), kind, msg)) in errors do
+            printfn "   * (%d:%d)-(%d:%d) (%A): %s" sl sc el ec kind msg
+          if errors.Length > 0 then printfn ""
 
-        // Replace CodeBlocks with formatted code    
-        List.choose (replaceCodes snippetLookup) paragraphs, formatted.ToolTipHtml
+          // Replace CodeBlocks with formatted code    
+          Some(List.choose (replaceCodes snippetLookup) paragraphs, formatted.ToolTipHtml)
+        with e -> 
+          printfn "Failed generating %s (%s)" source e.Message
+          None
 
     // Construct new Markdown document and write it
-    let newDoc = MarkdownDocument(pars, doc.DefinedLinks)
-    let proc = Markdown.WriteHtml(newDoc)
-    File.WriteAllText(target, String.Format(template, title, proc, unnest, tipHtml))
+    match parsTips with
+    | Some(pars, tipHtml) ->
+        let newDoc = MarkdownDocument(pars, doc.DefinedLinks)
+        let proc = Markdown.WriteHtml(newDoc)
+        File.WriteAllText(target, String.Format(template, title, proc, unnest, tipHtml))
+    | _ -> ()
 
 let make() = build "../" docs
 
