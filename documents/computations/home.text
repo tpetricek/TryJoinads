@@ -1,9 +1,9 @@
-﻿> Syntax Matters: Writing abstract computations in F# 
+﻿> The F# Computation Expression Zoo
 
-Syntax Matters: Writing abstract computations in F# 
-=======================
+The F# Computation Expression Zoo
+=================================
 
-This web site is an online appendix for a paper [Syntax Matters: Writing abstract computations in F#][paper].
+This web site is an online appendix for a paper [The F# Computation Expression Zoo][paper].
 It complements the theory discussed in the paper, with a complete source code for all sample computations that
 are used in the paper. 
 
@@ -12,7 +12,7 @@ possible to run the code samples using an Interactive F# console based on the [T
 console is based on [Silverlight][sl], which is currently available for Windows and Mac. On Linux, it is 
 possible to run the samples using Mono.
 
-  [paper]: http://www.cl.cam.ac.uk/~tp322/papers/notations.html "Syntax Matters"
+  [paper]: http://www.cl.cam.ac.uk/~tp322/papers/computation-zoo/ "The F# Computation Expression Zoo"
   [tryfs]: http://www.tryfsharp.org "Try F#"
   [sl]: http://www.silverlight.net/ "Silverlight homepage"
 
