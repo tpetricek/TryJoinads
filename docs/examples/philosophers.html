@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Dining Philosophers</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../../contentstyle.css" />
+    <script type="text/javascript" src="../../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Dining philosophers using join calculus</h1>
+
+<p>This example shows an implementation of the <a href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>
+implemented using joinads. The sample has been written by Nick Palladinos (see <a href="http://fssnip.net/aL">F# Snippets</a>).
+The description of the dining philosophers problem from <a href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">WikiPedia</a> looks like this:</p>
+
+<blockquote>
+<ul>
+<li>  <p>Five silent philosophers sit at a table around a bowl of spaghetti. A fork is placed between each pair of adjacent philosophers.</p></li>
+<li>  <p>Each philosopher must alternately think and eat. Eating is not limited by the amount of spaghetti left: assume an infinite supply. However, a philosopher can only eat while holding both the fork to the left and the fork to the right (an alternative problem formulation uses rice and chopsticks instead of spaghetti and forks).</p></li>
+<li>  <p>Each philosopher can pick up an adjacent fork, when available, and put it down, when holding it. These are separate actions: forks must be picked up and put down one by one.</p></li>
+<li>The problem is how to design a discipline of behavior (a concurrent algorithm) such that each philosopher won't starve, i.e. can forever continue to alternate between eating and thinking.</li>
+</ul>
+</blockquote>
+
+<p>The solution using joinads represents each philosopher and a fork (or a chopstick) using
+a single channel. The initialization code looks like this:</p>
+
+<pre class="fssnip runnable">
+<span class="k">open</span> <span onmouseout="hideTip(event, 'ft1', 1)" onmouseover="showTip(event, 'ft1', 1)" class="i">System</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'ft2', 2)" onmouseover="showTip(event, 'ft2', 2)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft3', 3)" onmouseover="showTip(event, 'ft3', 3)" class="i">Extensions</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft4', 4)" onmouseover="showTip(event, 'ft4', 4)" class="i">Joinads</span>
+
+<span class="c">// Initialize channel for every philosopher and every chopstick</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft5', 5)" onmouseover="showTip(event, 'ft5', 5)" class="i">n</span> <span class="o">=</span> <span class="n">5</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft6', 6)" onmouseover="showTip(event, 'ft6', 6)" class="i">chopsticks</span> <span class="o">=</span> [| <span class="k">for</span> <span onmouseout="hideTip(event, 'ft7', 7)" onmouseover="showTip(event, 'ft7', 7)" class="i">i</span> <span class="o">=</span> <span class="n">1</span> <span class="k">to</span> <span onmouseout="hideTip(event, 'ft5', 8)" onmouseover="showTip(event, 'ft5', 8)" class="i">n</span> <span class="k">do</span> <span class="k">yield</span> <span class="k">new</span> <span onmouseout="hideTip(event, 'ft8', 9)" onmouseover="showTip(event, 'ft8', 9)" class="i">Channel</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'ft9', 10)" onmouseover="showTip(event, 'ft9', 10)" class="i">unit</span><span class="o">&gt;</span>() |]
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft10', 11)" onmouseover="showTip(event, 'ft10', 11)" class="i">hungry</span> <span class="o">=</span> [| <span class="k">for</span> <span onmouseout="hideTip(event, 'ft7', 12)" onmouseover="showTip(event, 'ft7', 12)" class="i">i</span> <span class="o">=</span> <span class="n">1</span> <span class="k">to</span> <span onmouseout="hideTip(event, 'ft5', 13)" onmouseover="showTip(event, 'ft5', 13)" class="i">n</span> <span class="k">do</span> <span class="k">yield</span> <span class="k">new</span> <span onmouseout="hideTip(event, 'ft8', 14)" onmouseover="showTip(event, 'ft8', 14)" class="i">Channel</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'ft9', 15)" onmouseover="showTip(event, 'ft9', 15)" class="i">unit</span><span class="o">&gt;</span>() |]
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft11', 16)" onmouseover="showTip(event, 'ft11', 16)" class="i">philosophers</span> <span class="o">=</span> [| <span class="s">&quot;</span><span class="s">Plato</span><span class="s">&quot;</span>; <span class="s">&quot;</span><span class="s">Konfuzius</span><span class="s">&quot;</span>; <span class="s">&quot;</span><span class="s">Socrates</span><span class="s">&quot;</span>; <span class="s">&quot;</span><span class="s">Voltaire</span><span class="s">&quot;</span>; <span class="s">&quot;</span><span class="s">Descartes</span><span class="s">&quot;</span> |]
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft12', 17)" onmouseover="showTip(event, 'ft12', 17)" class="i">randomDelay</span> (<span onmouseout="hideTip(event, 'ft13', 18)" onmouseover="showTip(event, 'ft13', 18)" class="i">r</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'ft14', 19)" onmouseover="showTip(event, 'ft14', 19)" class="i">Random</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft1', 20)" onmouseover="showTip(event, 'ft1', 20)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft15', 21)" onmouseover="showTip(event, 'ft15', 21)" class="i">Threading</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft16', 22)" onmouseover="showTip(event, 'ft16', 22)" class="i">Thread</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft17', 23)" onmouseover="showTip(event, 'ft17', 23)" class="i">Sleep</span>(<span onmouseout="hideTip(event, 'ft13', 24)" onmouseover="showTip(event, 'ft13', 24)" class="i">r</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft18', 25)" onmouseover="showTip(event, 'ft18', 25)" class="i">Next</span>(<span class="n">1</span>, <span class="n">10</span>) <span class="o">*</span> <span class="n">1000</span>)<br /><button class="run" onclick='parent.runCode("open System\r\nopen FSharp.Extensions.Joinads\r\n\r\n// Initialize channel for every philosopher and every chopstick\r\nlet n = 5\r\nlet chopsticks = [| for i = 1 to n do yield new Channel\u003cunit\u003e() |]\r\nlet hungry = [| for i = 1 to n do yield new Channel\u003cunit\u003e() |]\r\nlet philosophers = [| \"Plato\"; \"Konfuzius\"; \"Socrates\"; \"Voltaire\"; \"Descartes\" |]\r\n\r\nlet randomDelay (r : Random) = System.Threading.Thread.Sleep(r.Next(1, 10) * 1000)");'></button></pre>
+
+
+<p>The situation when a philosopher can start eating is captured by
+a join pattern that matches on channels representing the philosopher and a fork on
+the left and on the right:</p>
+
+<pre class="fssnip runnable">
+<span class="c">// Start join patterns that enable philosophers to eat</span>
+<span class="k">for</span> <span onmouseout="hideTip(event, 'ft7', 26)" onmouseover="showTip(event, 'ft7', 26)" class="i">i</span> <span class="o">=</span> <span class="n">0</span> <span class="k">to</span> <span onmouseout="hideTip(event, 'ft5', 27)" onmouseover="showTip(event, 'ft5', 27)" class="i">n</span> <span class="o">-</span> <span class="n">1</span> <span class="k">do</span>
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'ft19', 28)" onmouseover="showTip(event, 'ft19', 28)" class="i">left</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft6', 29)" onmouseover="showTip(event, 'ft6', 29)" class="i">chopsticks</span><span class="o">.</span>[<span onmouseout="hideTip(event, 'ft7', 30)" onmouseover="showTip(event, 'ft7', 30)" class="i">i</span>]
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'ft20', 31)" onmouseover="showTip(event, 'ft20', 31)" class="i">right</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft6', 32)" onmouseover="showTip(event, 'ft6', 32)" class="i">chopsticks</span><span class="o">.</span>[(<span onmouseout="hideTip(event, 'ft7', 33)" onmouseover="showTip(event, 'ft7', 33)" class="i">i</span><span class="o">+</span><span class="n">1</span>) <span class="o">%</span> <span onmouseout="hideTip(event, 'ft5', 34)" onmouseover="showTip(event, 'ft5', 34)" class="i">n</span>]
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'ft21', 35)" onmouseover="showTip(event, 'ft21', 35)" class="i">random</span> <span class="o">=</span> <span class="k">new</span> <span onmouseout="hideTip(event, 'ft14', 36)" onmouseover="showTip(event, 'ft14', 36)" class="i">Random</span>()
+    <span onmouseout="hideTip(event, 'ft22', 37)" onmouseover="showTip(event, 'ft22', 37)" class="i">join</span> {
+        <span class="k">match!</span> <span onmouseout="hideTip(event, 'ft10', 38)" onmouseover="showTip(event, 'ft10', 38)" class="i">hungry</span><span class="o">.</span>[<span onmouseout="hideTip(event, 'ft7', 39)" onmouseover="showTip(event, 'ft7', 39)" class="i">i</span>], <span onmouseout="hideTip(event, 'ft19', 40)" onmouseover="showTip(event, 'ft19', 40)" class="i">left</span>, <span onmouseout="hideTip(event, 'ft20', 41)" onmouseover="showTip(event, 'ft20', 41)" class="i">right</span> <span class="k">with</span>
+        | _, _, _ <span class="k">-&gt;</span>
+            <span onmouseout="hideTip(event, 'ft23', 42)" onmouseover="showTip(event, 'ft23', 42)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">%</span><span class="s">s</span><span class="s"> </span><span class="s">is</span><span class="s"> </span><span class="s">eating</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'ft11', 43)" onmouseover="showTip(event, 'ft11', 43)" class="i">philosophers</span><span class="o">.</span>[<span onmouseout="hideTip(event, 'ft7', 44)" onmouseover="showTip(event, 'ft7', 44)" class="i">i</span>] 
+            <span onmouseout="hideTip(event, 'ft12', 45)" onmouseover="showTip(event, 'ft12', 45)" class="i">randomDelay</span> <span onmouseout="hideTip(event, 'ft21', 46)" onmouseover="showTip(event, 'ft21', 46)" class="i">random</span>
+            <span onmouseout="hideTip(event, 'ft19', 47)" onmouseover="showTip(event, 'ft19', 47)" class="i">left</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft24', 48)" onmouseover="showTip(event, 'ft24', 48)" class="i">Call</span>(); <span onmouseout="hideTip(event, 'ft20', 49)" onmouseover="showTip(event, 'ft20', 49)" class="i">right</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft24', 50)" onmouseover="showTip(event, 'ft24', 50)" class="i">Call</span>()
+            <span onmouseout="hideTip(event, 'ft23', 51)" onmouseover="showTip(event, 'ft23', 51)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">%</span><span class="s">s</span><span class="s"> </span><span class="s">is</span><span class="s"> </span><span class="s">thinking</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'ft11', 52)" onmouseover="showTip(event, 'ft11', 52)" class="i">philosophers</span><span class="o">.</span>[<span onmouseout="hideTip(event, 'ft7', 53)" onmouseover="showTip(event, 'ft7', 53)" class="i">i</span>] 
+    }<br /><button class="run" onclick='parent.runCode("// Start join patterns that enable philosophers to eat\r\nfor i = 0 to n - 1 do\r\n    let left = chopsticks.[i]\r\n    let right = chopsticks.[(i+1) % n]\r\n    let random = new Random()\r\n    join {\r\n        match! hungry.[i], left, right with\r\n        | _, _, _ -\u003e\r\n            printfn \"%s is eating\" philosophers.[i] \r\n            randomDelay random\r\n            left.Call(); right.Call()\r\n            printfn \"%s is thinking\" philosophers.[i] \r\n    }");'></button></pre>
+
+
+<p>Now we can start the code by making all chopsticks (initially) available and by running
+a loop that makes random philosophers hungry:</p>
+
+<pre class="fssnip runnable">
+<span class="c">// Run</span>
+<span class="k">for</span> <span onmouseout="hideTip(event, 'ft25', 54)" onmouseover="showTip(event, 'ft25', 54)" class="i">chopstick</span> <span class="k">in</span> <span onmouseout="hideTip(event, 'ft6', 55)" onmouseover="showTip(event, 'ft6', 55)" class="i">chopsticks</span> <span class="k">do</span>
+    <span onmouseout="hideTip(event, 'ft25', 56)" onmouseover="showTip(event, 'ft25', 56)" class="i">chopstick</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft24', 57)" onmouseover="showTip(event, 'ft24', 57)" class="i">Call</span>()
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft26', 58)" onmouseover="showTip(event, 'ft26', 58)" class="i">random</span> <span class="o">=</span> <span class="k">new</span> <span onmouseout="hideTip(event, 'ft14', 59)" onmouseover="showTip(event, 'ft14', 59)" class="i">Random</span>()    
+<span class="k">for</span> <span onmouseout="hideTip(event, 'ft27', 60)" onmouseover="showTip(event, 'ft27', 60)" class="i">i</span> <span class="k">in</span> <span class="n">0</span> <span class="o">..</span> <span class="n">10</span> <span class="k">do</span>
+    <span onmouseout="hideTip(event, 'ft10', 61)" onmouseover="showTip(event, 'ft10', 61)" class="i">hungry</span><span class="o">.</span>[<span onmouseout="hideTip(event, 'ft26', 62)" onmouseover="showTip(event, 'ft26', 62)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft18', 63)" onmouseover="showTip(event, 'ft18', 63)" class="i">Next</span>(<span class="n">0</span>, <span onmouseout="hideTip(event, 'ft5', 64)" onmouseover="showTip(event, 'ft5', 64)" class="i">n</span>)]<span class="o">.</span><span class="i">Call</span>()
+    <span onmouseout="hideTip(event, 'ft12', 65)" onmouseover="showTip(event, 'ft12', 65)" class="i">randomDelay</span> <span onmouseout="hideTip(event, 'ft26', 66)" onmouseover="showTip(event, 'ft26', 66)" class="i">random</span><br /><button class="run" onclick='parent.runCode("// Run\r\nfor chopstick in chopsticks do\r\n    chopstick.Call()\r\n\r\nlet random = new Random()    \r\nfor i in 0 .. 10 do\r\n    hungry.[random.Next(0, n)].Call()\r\n    randomDelay random");'></button></pre>
+
+
+<div class="navigation">
+
+<p>Next: <a href="../toc.html">Table of contents</a></p>
+
+</div
+
+
+    <!-- HTML for Tool Tips -->
+    <div class="tip" id="ft1">namespace System</div>
+<div class="tip" id="ft2">namespace FSharp</div>
+<div class="tip" id="ft3">namespace FSharp.Extensions</div>
+<div class="tip" id="ft4">namespace FSharp.Extensions.Joinads</div>
+<div class="tip" id="ft5">val n : int<br /><br />Full name: TryJoinads.n<br />&#160;&#160;type: int<br />&#160;&#160;inherits: ValueType<br /></div>
+<div class="tip" id="ft6">val chopsticks : Channel&lt;unit&gt; []<br /><br />Full name: TryJoinads.chopsticks<br />&#160;&#160;type: Channel&lt;unit&gt; []<br />&#160;&#160;inherits: Array<br /></div>
+<div class="tip" id="ft7">val i : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: ValueType<br /></div>
+<div class="tip" id="ft8">Multiple items<br />module Channel<br /><br />from FSharp.Extensions.Joinads<br /><br />--------------------<br />type Channel&lt;&#39;T&gt; =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;interface IChannel&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;new : unit -&gt; Channel&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;member Call : message:&#39;T -&gt; unit<br />&#160;&#160;&#160;&#160;member Put : message:&#39;T -&gt; unit<br />&#160;&#160;end<br /><br />Full name: FSharp.Extensions.Joinads.Channel&lt;_&gt;<br />&#160;&#160;type: Channel&lt;&#39;T&gt;<br /></div>
+<div class="tip" id="ft9">type unit = Unit<br /><br />Full name: Microsoft.FSharp.Core.unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft10">val hungry : Channel&lt;unit&gt; []<br /><br />Full name: TryJoinads.hungry<br />&#160;&#160;type: Channel&lt;unit&gt; []<br />&#160;&#160;inherits: Array<br /></div>
+<div class="tip" id="ft11">val philosophers : string []<br /><br />Full name: TryJoinads.philosophers<br />&#160;&#160;type: string []<br />&#160;&#160;inherits: Array<br /></div>
+<div class="tip" id="ft12">val randomDelay : Random -&gt; unit<br /><br />Full name: TryJoinads.randomDelay</div>
+<div class="tip" id="ft13">val r : Random</div>
+<div class="tip" id="ft14">type Random =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; System.Random<br />&#160;&#160;&#160;&#160;new : int -&gt; System.Random<br />&#160;&#160;&#160;&#160;member Next : unit -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int * int -&gt; int<br />&#160;&#160;&#160;&#160;member NextBytes : System.Byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;member NextDouble : unit -&gt; float<br />&#160;&#160;end<br /><br />Full name: System.Random</div>
+<div class="tip" id="ft15">namespace System.Threading</div>
+<div class="tip" id="ft16">type Thread =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;inherit System.Runtime.ConstrainedExecution.CriticalFinalizerObject<br />&#160;&#160;&#160;&#160;new : System.Threading.ThreadStart -&gt; System.Threading.Thread<br />&#160;&#160;&#160;&#160;new : System.Threading.ParameterizedThreadStart -&gt; System.Threading.Thread<br />&#160;&#160;&#160;&#160;member Abort : unit -&gt; unit<br />&#160;&#160;&#160;&#160;member CurrentCulture : System.Globalization.CultureInfo with get, set<br />&#160;&#160;&#160;&#160;member CurrentUICulture : System.Globalization.CultureInfo with get, set<br />&#160;&#160;&#160;&#160;member GetHashCode : unit -&gt; int<br />&#160;&#160;&#160;&#160;member IsAlive : bool<br />&#160;&#160;&#160;&#160;member IsBackground : bool with get, set<br />&#160;&#160;&#160;&#160;member Join : unit -&gt; unit<br />&#160;&#160;&#160;&#160;member Join : int -&gt; bool<br />&#160;&#160;&#160;&#160;member ManagedThreadId : int<br />&#160;&#160;&#160;&#160;member Name : string with get, set<br />&#160;&#160;&#160;&#160;member Start : unit -&gt; unit<br />&#160;&#160;&#160;&#160;member Start : obj -&gt; unit<br />&#160;&#160;&#160;&#160;member ThreadState : System.Threading.ThreadState<br />&#160;&#160;&#160;&#160;static member CurrentThread : System.Threading.Thread<br />&#160;&#160;&#160;&#160;static member GetDomain : unit -&gt; System.AppDomain<br />&#160;&#160;&#160;&#160;static member MemoryBarrier : unit -&gt; unit<br />&#160;&#160;&#160;&#160;static member Sleep : int -&gt; unit<br />&#160;&#160;&#160;&#160;static member Sleep : System.TimeSpan -&gt; unit<br />&#160;&#160;&#160;&#160;static member SpinWait : int -&gt; unit<br />&#160;&#160;end<br /><br />Full name: System.Threading.Thread<br />&#160;&#160;type: Threading.Thread<br />&#160;&#160;inherits: Runtime.ConstrainedExecution.CriticalFinalizerObject<br /></div>
+<div class="tip" id="ft17">Threading.Thread.Sleep(timeout: TimeSpan) : unit<br />Threading.Thread.Sleep(millisecondsTimeout: int) : unit</div>
+<div class="tip" id="ft18">Random.Next() : int<br />Random.Next(maxValue: int) : int<br />Random.Next(minValue: int, maxValue: int) : int</div>
+<div class="tip" id="ft19">val left : Channel&lt;unit&gt;<br />&#160;&#160;type: Channel&lt;unit&gt;<br /></div>
+<div class="tip" id="ft20">val right : Channel&lt;unit&gt;<br />&#160;&#160;type: Channel&lt;unit&gt;<br /></div>
+<div class="tip" id="ft21">val random : Random</div>
+<div class="tip" id="ft22">val join : JoinBuilder<br /><br />Full name: FSharp.Extensions.Joinads.Builders.join</div>
+<div class="tip" id="ft23">val printfn : Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="ft24">member Channel.Call : message:&#39;T -&gt; unit</div>
+<div class="tip" id="ft25">val chopstick : Channel&lt;unit&gt;<br />&#160;&#160;type: Channel&lt;unit&gt;<br /></div>
+<div class="tip" id="ft26">val random : Random<br /><br />Full name: TryJoinads.random</div>
+<div class="tip" id="ft27">val i : int32<br />&#160;&#160;type: int32<br />&#160;&#160;inherits: ValueType<br /></div>
+
+  </body>
+  </html>

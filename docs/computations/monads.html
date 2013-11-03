@@ -1,0 +1,621 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Computation expressions for monads</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../../contentstyle.css" />
+    <script type="text/javascript" src="../../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Monadic computations</h1>
+
+<p>In this article, we discuss how to use F# computation expressions to provide syntax for
+monadic computations. We start by defining a simple computation using <em>bind</em> and <em>return</em>
+and then add the support for sequencing and additional control flow constructs.
+We show code for two examples - one demonstrating <em>monadic container</em> and the other
+demonstrating <em>monadic computations</em>. The difference is that monadic computation can
+capture (untracked) F# effects in the type <code>M&lt;'T&gt;</code> while monadic containers can not
+(because they represent fully evaluated values).</p>
+
+<h2>Functional monads</h2>
+
+<p>We use the Maybe monad (represented as <code>option&lt;'T&gt;</code>) as an example of <em>monadic container</em> and 
+the Reader monad (represented as <code>'TState -&gt; 'T</code>) as an example of <em>monadic computation</em>. The
+following snippet shows standard definitions of <em>bind</em> and <em>return</em> for these types (we
+use the name <code>unit</code> for <em>return</em>, because <code>return</code> is a reserved keyword):</p>
+
+<pre class="fssnip runnable">
+<span class="k">module</span> <span class="i">Maybe</span> <span class="o">=</span> 
+  <span class="c">/// The unit function of the Maybe monad</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft1', 1)" onmouseover="showTip(event, 'ft1', 1)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft2', 2)" onmouseover="showTip(event, 'ft2', 2)" class="i">value</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft3', 3)" onmouseover="showTip(event, 'ft3', 3)" class="i">Some</span>(<span onmouseout="hideTip(event, 'ft2', 4)" onmouseover="showTip(event, 'ft2', 4)" class="i">value</span>)
+  <span class="c">/// The bind operation of the Maybe monad </span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft4', 5)" onmouseover="showTip(event, 'ft4', 5)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft5', 6)" onmouseover="showTip(event, 'ft5', 6)" class="i">f</span> <span class="o">=</span> <span class="k">function</span>
+    | <span onmouseout="hideTip(event, 'ft6', 7)" onmouseover="showTip(event, 'ft6', 7)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft6', 8)" onmouseover="showTip(event, 'ft6', 8)" class="i">None</span>
+    | <span onmouseout="hideTip(event, 'ft3', 9)" onmouseover="showTip(event, 'ft3', 9)" class="i">Some</span>(<span onmouseout="hideTip(event, 'ft2', 10)" onmouseover="showTip(event, 'ft2', 10)" class="i">value</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft5', 11)" onmouseover="showTip(event, 'ft5', 11)" class="i">f</span> <span onmouseout="hideTip(event, 'ft2', 12)" onmouseover="showTip(event, 'ft2', 12)" class="i">value</span>
+
+<span class="k">module</span> <span class="i">Reader</span> <span class="o">=</span> 
+  <span class="c">/// Represents a computation that depends on &#39;TState</span>
+  <span class="k">type</span> <span onmouseout="hideTip(event, 'ft7', 13)" onmouseover="showTip(event, 'ft7', 13)" class="i">Reader</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">TState</span>, <span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft8', 14)" onmouseover="showTip(event, 'ft8', 14)" class="i">R</span> <span class="k">of</span> (<span class="o">&#39;</span><span class="i">TState</span> <span class="k">-&gt;</span> <span class="o">&#39;</span><span class="i">T</span>)
+
+  <span class="c">/// The unit function of the Reader monad</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft9', 15)" onmouseover="showTip(event, 'ft9', 15)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft2', 16)" onmouseover="showTip(event, 'ft2', 16)" class="i">value</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft8', 17)" onmouseover="showTip(event, 'ft8', 17)" class="i">R</span> (<span class="k">fun</span> _ <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft2', 18)" onmouseover="showTip(event, 'ft2', 18)" class="i">value</span>)
+  <span class="c">/// The bind operation of the Reader monad</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft10', 19)" onmouseover="showTip(event, 'ft10', 19)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft11', 20)" onmouseover="showTip(event, 'ft11', 20)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft8', 21)" onmouseover="showTip(event, 'ft8', 21)" class="i">R</span> <span onmouseout="hideTip(event, 'ft12', 22)" onmouseover="showTip(event, 'ft12', 22)" class="i">comp1</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft8', 23)" onmouseover="showTip(event, 'ft8', 23)" class="i">R</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'ft13', 24)" onmouseover="showTip(event, 'ft13', 24)" class="i">state</span> <span class="k">-&gt;</span>
+    <span class="k">let</span> (<span onmouseout="hideTip(event, 'ft8', 25)" onmouseover="showTip(event, 'ft8', 25)" class="i">R</span> <span onmouseout="hideTip(event, 'ft14', 26)" onmouseover="showTip(event, 'ft14', 26)" class="i">comp2</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft11', 27)" onmouseover="showTip(event, 'ft11', 27)" class="i">f</span> (<span onmouseout="hideTip(event, 'ft12', 28)" onmouseover="showTip(event, 'ft12', 28)" class="i">comp1</span> <span onmouseout="hideTip(event, 'ft13', 29)" onmouseover="showTip(event, 'ft13', 29)" class="i">state</span>)
+    <span onmouseout="hideTip(event, 'ft14', 30)" onmouseover="showTip(event, 'ft14', 30)" class="i">comp2</span> <span onmouseout="hideTip(event, 'ft13', 31)" onmouseover="showTip(event, 'ft13', 31)" class="i">state</span>)<br /><button class="run" onclick='parent.runCode("module Maybe = \r\n  /// The unit function of the Maybe monad\r\n  let unit value = Some(value)\r\n  /// The bind operation of the Maybe monad \r\n  let bind f = function\r\n    | None -\u003e None\r\n    | Some(value) -\u003e f value\r\n\r\nmodule Reader = \r\n  /// Represents a computation that depends on \u0027TState\r\n  type Reader\u003c\u0027TState, \u0027T\u003e = R of (\u0027TState -\u003e \u0027T)\r\n\r\n  /// The unit function of the Reader monad\r\n  let unit value = R (fun _ -\u003e value)\r\n  /// The bind operation of the Reader monad\r\n  let bind f (R comp1) = R (fun state -\u003e\r\n    let (R comp2) = f (comp1 state)\r\n    comp2 state)");'></button></pre>
+
+
+<h3>Computation builder definitions</h3>
+
+<p>Now that we have the <em>bind</em> and <em>return</em> operations, we can define two F# computation builders
+for writing monadic computations. The following snippet starts by defining just binding and
+return (which allows the <code>let!</code> and the <code>return</code> constructs). We also define <code>ReturnFrom</code>
+member to allow the <code>return!</code> keyword:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Computation builder for the Maybe monad</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft15', 32)" onmouseover="showTip(event, 'ft15', 32)" class="i">MaybeBuilder</span>() <span class="o">=</span> 
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft16', 33)" onmouseover="showTip(event, 'ft16', 33)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft17', 34)" onmouseover="showTip(event, 'ft17', 34)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft18', 35)" onmouseover="showTip(event, 'ft18', 35)" class="i">v</span>, <span onmouseout="hideTip(event, 'ft19', 36)" onmouseover="showTip(event, 'ft19', 36)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft20', 37)" onmouseover="showTip(event, 'ft20', 37)" class="i">Maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft4', 38)" onmouseover="showTip(event, 'ft4', 38)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft19', 39)" onmouseover="showTip(event, 'ft19', 39)" class="i">f</span> <span onmouseout="hideTip(event, 'ft18', 40)" onmouseover="showTip(event, 'ft18', 40)" class="i">v</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft16', 41)" onmouseover="showTip(event, 'ft16', 41)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft21', 42)" onmouseover="showTip(event, 'ft21', 42)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft22', 43)" onmouseover="showTip(event, 'ft22', 43)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft20', 44)" onmouseover="showTip(event, 'ft20', 44)" class="i">Maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft23', 45)" onmouseover="showTip(event, 'ft23', 45)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft22', 46)" onmouseover="showTip(event, 'ft22', 46)" class="i">v</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft16', 47)" onmouseover="showTip(event, 'ft16', 47)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft24', 48)" onmouseover="showTip(event, 'ft24', 48)" class="i">ReturnFrom</span>(<span onmouseout="hideTip(event, 'ft25', 49)" onmouseover="showTip(event, 'ft25', 49)" class="i">m</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 50)" onmouseover="showTip(event, 'ft25', 50)" class="i">m</span>
+
+<span class="c">/// Computation builder for the Reader monad</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft26', 51)" onmouseover="showTip(event, 'ft26', 51)" class="i">ReaderBuilder</span>() <span class="o">=</span> 
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft27', 52)" onmouseover="showTip(event, 'ft27', 52)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft28', 53)" onmouseover="showTip(event, 'ft28', 53)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft29', 54)" onmouseover="showTip(event, 'ft29', 54)" class="i">v</span>, <span onmouseout="hideTip(event, 'ft30', 55)" onmouseover="showTip(event, 'ft30', 55)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft31', 56)" onmouseover="showTip(event, 'ft31', 56)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft32', 57)" onmouseover="showTip(event, 'ft32', 57)" class="i">bind</span> <span onmouseout="hideTip(event, 'ft30', 58)" onmouseover="showTip(event, 'ft30', 58)" class="i">f</span> <span onmouseout="hideTip(event, 'ft29', 59)" onmouseover="showTip(event, 'ft29', 59)" class="i">v</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft27', 60)" onmouseover="showTip(event, 'ft27', 60)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft33', 61)" onmouseover="showTip(event, 'ft33', 61)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft22', 62)" onmouseover="showTip(event, 'ft22', 62)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft31', 63)" onmouseover="showTip(event, 'ft31', 63)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft34', 64)" onmouseover="showTip(event, 'ft34', 64)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft22', 65)" onmouseover="showTip(event, 'ft22', 65)" class="i">v</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft27', 66)" onmouseover="showTip(event, 'ft27', 66)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft35', 67)" onmouseover="showTip(event, 'ft35', 67)" class="i">ReturnFrom</span>(<span onmouseout="hideTip(event, 'ft25', 68)" onmouseover="showTip(event, 'ft25', 68)" class="i">m</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 69)" onmouseover="showTip(event, 'ft25', 69)" class="i">m</span>
+
+<span class="c">/// Objects representing computaiton builder instances</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft36', 70)" onmouseover="showTip(event, 'ft36', 70)" class="i">maybe</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft15', 71)" onmouseover="showTip(event, 'ft15', 71)" class="i">MaybeBuilder</span>()
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft37', 72)" onmouseover="showTip(event, 'ft37', 72)" class="i">reader</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft26', 73)" onmouseover="showTip(event, 'ft26', 73)" class="i">ReaderBuilder</span>()<br /><button class="run" onclick='parent.runCode("/// Computation builder for the Maybe monad\r\ntype MaybeBuilder() = \r\n  member x.Bind(v, f) = Maybe.bind f v\r\n  member x.Return(v) = Maybe.unit v\r\n  member x.ReturnFrom(m) = m\r\n\r\n/// Computation builder for the Reader monad\r\ntype ReaderBuilder() = \r\n  member x.Bind(v, f) = Reader.bind f v\r\n  member x.Return(v) = Reader.unit v\r\n  member x.ReturnFrom(m) = m\r\n\r\n/// Objects representing computaiton builder instances\r\nlet maybe = MaybeBuilder()\r\nlet reader = ReaderBuilder()");'></button></pre>
+
+
+<p>The definitions above allows us to write a number of basic monadic computations.
+The following snippet demonstrates the syntax using the Maybe monad:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Random number generator</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft38', 74)" onmouseover="showTip(event, 'ft38', 74)" class="i">random</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft39', 75)" onmouseover="showTip(event, 'ft39', 75)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft40', 76)" onmouseover="showTip(event, 'ft40', 76)" class="i">Random</span>()
+
+<span class="c">/// Either fails or returns some unit</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft41', 77)" onmouseover="showTip(event, 'ft41', 77)" class="i">maybeFail</span>() <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft36', 78)" onmouseover="showTip(event, 'ft36', 78)" class="i">maybe</span> { <span class="k">if</span> <span onmouseout="hideTip(event, 'ft38', 79)" onmouseover="showTip(event, 'ft38', 79)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft42', 80)" onmouseover="showTip(event, 'ft42', 80)" class="i">Next</span>(<span class="n">2</span>) <span class="o">=</span> <span class="n">0</span> <span class="k">then</span> 
+            <span class="k">return</span> ()
+          <span class="k">else</span> 
+            <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft6', 81)" onmouseover="showTip(event, 'ft6', 81)" class="i">None</span> }
+
+<span class="c">/// Computation that either fails or returns a random number</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft43', 82)" onmouseover="showTip(event, 'ft43', 82)" class="i">maybeDice</span>() <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 83)" onmouseover="showTip(event, 'ft36', 83)" class="i">maybe</span> { <span class="k">do!</span> <span onmouseout="hideTip(event, 'ft41', 84)" onmouseover="showTip(event, 'ft41', 84)" class="i">maybeFail</span>()
+          <span class="k">return</span> <span onmouseout="hideTip(event, 'ft38', 85)" onmouseover="showTip(event, 'ft38', 85)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft42', 86)" onmouseover="showTip(event, 'ft42', 86)" class="i">Next</span>(<span class="n">6</span>) }
+
+<span class="c">/// Computation that adds two dices (fails in 3/4 of cases)</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft44', 87)" onmouseover="showTip(event, 'ft44', 87)" class="i">maybeTwice</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 88)" onmouseover="showTip(event, 'ft36', 88)" class="i">maybe</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft45', 89)" onmouseover="showTip(event, 'ft45', 89)" class="i">n1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft43', 90)" onmouseover="showTip(event, 'ft43', 90)" class="i">maybeDice</span>()
+          <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft46', 91)" onmouseover="showTip(event, 'ft46', 91)" class="i">n2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft43', 92)" onmouseover="showTip(event, 'ft43', 92)" class="i">maybeDice</span>()
+          <span class="k">return</span> <span onmouseout="hideTip(event, 'ft45', 93)" onmouseover="showTip(event, 'ft45', 93)" class="i">n1</span> <span class="o">+</span> <span class="i">n2</span> }<br /><button class="run" onclick='parent.runCode("/// Random number generator\r\nlet random = System.Random()\r\n\r\n/// Either fails or returns some unit\r\nlet maybeFail() =\r\n  maybe { if random.Next(2) = 0 then \r\n            return ()\r\n          else \r\n            return! None }\r\n\r\n/// Computation that either fails or returns a random number\r\nlet maybeDice() = \r\n  maybe { do! maybeFail()\r\n          return random.Next(6) }\r\n\r\n/// Computation that adds two dices (fails in 3/4 of cases)\r\nlet maybeTwice = \r\n  maybe { let! n1 = maybeDice()\r\n          let! n2 = maybeDice()\r\n          return n1 + n2 }");'></button></pre>
+
+
+<p>The <code>maybeFail</code> computation uses <code>return ()</code> to successfully return the unit value and 
+<code>return! None</code> to fail. In the first case, the argument is a value that will be wrapped
+in the monadic type <code>option&lt;unit&gt;</code>, while in the second case, the argument is the 
+computation to return - <code>None</code> is of type <code>Maybe&lt;unit&gt;</code>. The code samples are translated 
+to the following code:</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft47', 94)" onmouseover="showTip(event, 'ft47', 94)" class="i">maybeFail</span>() <span class="o">=</span>
+  <span class="k">if</span> <span onmouseout="hideTip(event, 'ft38', 95)" onmouseover="showTip(event, 'ft38', 95)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft42', 96)" onmouseover="showTip(event, 'ft42', 96)" class="i">Next</span>(<span class="n">2</span>) <span class="o">=</span> <span class="n">0</span> <span class="k">then</span> <span onmouseout="hideTip(event, 'ft36', 97)" onmouseover="showTip(event, 'ft36', 97)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 98)" onmouseover="showTip(event, 'ft48', 98)" class="i">Return</span>( () )
+  <span class="k">else</span> <span onmouseout="hideTip(event, 'ft36', 99)" onmouseover="showTip(event, 'ft36', 99)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft49', 100)" onmouseover="showTip(event, 'ft49', 100)" class="i">ReturnFrom</span>(<span onmouseout="hideTip(event, 'ft6', 101)" onmouseover="showTip(event, 'ft6', 101)" class="i">None</span>)
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft50', 102)" onmouseover="showTip(event, 'ft50', 102)" class="i">maybeDice</span>() <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 103)" onmouseover="showTip(event, 'ft36', 103)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft51', 104)" onmouseover="showTip(event, 'ft51', 104)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft47', 105)" onmouseover="showTip(event, 'ft47', 105)" class="i">maybeFail</span>(), <span class="k">fun</span> () <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'ft36', 106)" onmouseover="showTip(event, 'ft36', 106)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 107)" onmouseover="showTip(event, 'ft48', 107)" class="i">Return</span>(<span class="n">6</span>))
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft52', 108)" onmouseover="showTip(event, 'ft52', 108)" class="i">maybeTwice</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 109)" onmouseover="showTip(event, 'ft36', 109)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft51', 110)" onmouseover="showTip(event, 'ft51', 110)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft50', 111)" onmouseover="showTip(event, 'ft50', 111)" class="i">maybeDice</span>(), <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft45', 112)" onmouseover="showTip(event, 'ft45', 112)" class="i">n1</span> <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'ft36', 113)" onmouseover="showTip(event, 'ft36', 113)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft51', 114)" onmouseover="showTip(event, 'ft51', 114)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft50', 115)" onmouseover="showTip(event, 'ft50', 115)" class="i">maybeDice</span>(), <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft46', 116)" onmouseover="showTip(event, 'ft46', 116)" class="i">n2</span> <span class="k">-&gt;</span>
+      <span onmouseout="hideTip(event, 'ft36', 117)" onmouseover="showTip(event, 'ft36', 117)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 118)" onmouseover="showTip(event, 'ft48', 118)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft45', 119)" onmouseover="showTip(event, 'ft45', 119)" class="i">n1</span> <span class="o">+</span> <span onmouseout="hideTip(event, 'ft46', 120)" onmouseover="showTip(event, 'ft46', 120)" class="i">n2</span>)))<br /><button class="load" onclick='parent.loadCode("let maybeFail() =\r\n  if random.Next(2) = 0 then maybe.Return( () )\r\n  else maybe.ReturnFrom(None)\r\n\r\nlet maybeDice() = \r\n  maybe.Bind(maybeFail(), fun () -\u003e\r\n    maybe.Return(6))\r\n\r\nlet maybeTwice = \r\n  maybe.Bind(maybeDice(), fun n1 -\u003e\r\n    maybe.Bind(maybeDice(), fun n2 -\u003e\r\n      maybe.Return(n1 + n2)))");'></button></pre>
+
+
+<h3>Monad laws</h3>
+
+<p>As discussed in the paper, the well-known monad laws can be expressed in the computation 
+expression syntax. The examples are very similar to the code that can be written using the
+<code>do</code> notation in Haskell. Assuming <code>m</code> is some computation builder that supports <code>Bind</code>
+and <code>Return</code>, we can write:</p>
+
+<pre class="fssnip">
+<span class="c">/// The left identity monad law</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft69', 151)" onmouseover="showTip(event, 'ft69', 151)" class="i">leftIdentity</span> <span onmouseout="hideTip(event, 'ft70', 152)" onmouseover="showTip(event, 'ft70', 152)" class="i">x</span> <span onmouseout="hideTip(event, 'ft71', 153)" onmouseover="showTip(event, 'ft71', 153)" class="i">f</span> <span class="o">=</span> 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft72', 154)" onmouseover="showTip(event, 'ft72', 154)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 155)" onmouseover="showTip(event, 'ft64', 155)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft73', 156)" onmouseover="showTip(event, 'ft73', 156)" class="i">v</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 157)" onmouseover="showTip(event, 'ft64', 157)" class="i">m</span> { <span class="k">return</span> <span onmouseout="hideTip(event, 'ft70', 158)" onmouseover="showTip(event, 'ft70', 158)" class="i">x</span> }
+               <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft71', 159)" onmouseover="showTip(event, 'ft71', 159)" class="i">f</span> <span onmouseout="hideTip(event, 'ft73', 160)" onmouseover="showTip(event, 'ft73', 160)" class="i">v</span> } 
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft74', 161)" onmouseover="showTip(event, 'ft74', 161)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 162)" onmouseover="showTip(event, 'ft64', 162)" class="i">m</span> { <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft71', 163)" onmouseover="showTip(event, 'ft71', 163)" class="i">f</span> <span onmouseout="hideTip(event, 'ft70', 164)" onmouseover="showTip(event, 'ft70', 164)" class="i">x</span> }
+  <span onmouseout="hideTip(event, 'ft72', 165)" onmouseover="showTip(event, 'ft72', 165)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft65', 166)" onmouseover="showTip(event, 'ft65', 166)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft74', 167)" onmouseover="showTip(event, 'ft74', 167)" class="i">m2</span>
+
+<span class="c">/// The right identity monad law </span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft75', 168)" onmouseover="showTip(event, 'ft75', 168)" class="i">rightIdentity</span> <span onmouseout="hideTip(event, 'ft76', 169)" onmouseover="showTip(event, 'ft76', 169)" class="i">n</span> <span class="o">=</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft77', 170)" onmouseover="showTip(event, 'ft77', 170)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 171)" onmouseover="showTip(event, 'ft64', 171)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft78', 172)" onmouseover="showTip(event, 'ft78', 172)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft76', 173)" onmouseover="showTip(event, 'ft76', 173)" class="i">n</span> 
+               <span class="k">return</span> <span onmouseout="hideTip(event, 'ft78', 174)" onmouseover="showTip(event, 'ft78', 174)" class="i">x</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft79', 175)" onmouseover="showTip(event, 'ft79', 175)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 176)" onmouseover="showTip(event, 'ft64', 176)" class="i">m</span> { <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft76', 177)" onmouseover="showTip(event, 'ft76', 177)" class="i">n</span> }
+  <span onmouseout="hideTip(event, 'ft77', 178)" onmouseover="showTip(event, 'ft77', 178)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft65', 179)" onmouseover="showTip(event, 'ft65', 179)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft79', 180)" onmouseover="showTip(event, 'ft79', 180)" class="i">m2</span>
+
+<span class="c">/// The associativity monad law </span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft80', 181)" onmouseover="showTip(event, 'ft80', 181)" class="i">associativity</span> <span onmouseout="hideTip(event, 'ft81', 182)" onmouseover="showTip(event, 'ft81', 182)" class="i">n</span> <span onmouseout="hideTip(event, 'ft82', 183)" onmouseover="showTip(event, 'ft82', 183)" class="i">f</span> <span onmouseout="hideTip(event, 'ft83', 184)" onmouseover="showTip(event, 'ft83', 184)" class="i">g</span> <span class="o">=</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft72', 185)" onmouseover="showTip(event, 'ft72', 185)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 186)" onmouseover="showTip(event, 'ft64', 186)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft84', 187)" onmouseover="showTip(event, 'ft84', 187)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 188)" onmouseover="showTip(event, 'ft64', 188)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft70', 189)" onmouseover="showTip(event, 'ft70', 189)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft81', 190)" onmouseover="showTip(event, 'ft81', 190)" class="i">n</span>
+                            <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft82', 191)" onmouseover="showTip(event, 'ft82', 191)" class="i">f</span> <span onmouseout="hideTip(event, 'ft70', 192)" onmouseover="showTip(event, 'ft70', 192)" class="i">x</span> }
+               <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft83', 193)" onmouseover="showTip(event, 'ft83', 193)" class="i">g</span> <span onmouseout="hideTip(event, 'ft84', 194)" onmouseover="showTip(event, 'ft84', 194)" class="i">y</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft74', 195)" onmouseover="showTip(event, 'ft74', 195)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 196)" onmouseover="showTip(event, 'ft64', 196)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft70', 197)" onmouseover="showTip(event, 'ft70', 197)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft81', 198)" onmouseover="showTip(event, 'ft81', 198)" class="i">n</span>
+               <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft64', 199)" onmouseover="showTip(event, 'ft64', 199)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft84', 200)" onmouseover="showTip(event, 'ft84', 200)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft82', 201)" onmouseover="showTip(event, 'ft82', 201)" class="i">f</span> <span onmouseout="hideTip(event, 'ft70', 202)" onmouseover="showTip(event, 'ft70', 202)" class="i">x</span>
+                           <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft83', 203)" onmouseover="showTip(event, 'ft83', 203)" class="i">g</span> <span onmouseout="hideTip(event, 'ft70', 204)" onmouseover="showTip(event, 'ft70', 204)" class="i">x</span> } }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft85', 205)" onmouseover="showTip(event, 'ft85', 205)" class="i">m3</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft64', 206)" onmouseover="showTip(event, 'ft64', 206)" class="i">m</span> { <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft70', 207)" onmouseover="showTip(event, 'ft70', 207)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft81', 208)" onmouseover="showTip(event, 'ft81', 208)" class="i">n</span>
+               <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft84', 209)" onmouseover="showTip(event, 'ft84', 209)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft82', 210)" onmouseover="showTip(event, 'ft82', 210)" class="i">f</span> <span onmouseout="hideTip(event, 'ft70', 211)" onmouseover="showTip(event, 'ft70', 211)" class="i">x</span>
+               <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft83', 212)" onmouseover="showTip(event, 'ft83', 212)" class="i">g</span> <span onmouseout="hideTip(event, 'ft70', 213)" onmouseover="showTip(event, 'ft70', 213)" class="i">x</span> }
+  <span onmouseout="hideTip(event, 'ft72', 214)" onmouseover="showTip(event, 'ft72', 214)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft65', 215)" onmouseover="showTip(event, 'ft65', 215)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft74', 216)" onmouseover="showTip(event, 'ft74', 216)" class="i">m2</span>
+  <span onmouseout="hideTip(event, 'ft72', 217)" onmouseover="showTip(event, 'ft72', 217)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft65', 218)" onmouseover="showTip(event, 'ft65', 218)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft85', 219)" onmouseover="showTip(event, 'ft85', 219)" class="i">m3</span></pre>
+
+
+<h2><a name="seq">Sequencing for monads</a></h2>
+
+<p>As discussed in the paper, sequencing of effectfull monadic computation is done by adding members
+<code>Delay</code>, <code>Zero</code>, <code>Run</code> and, most importantly, <code>Combine</code>. There are two possible definitions, 
+depending on whether the computation type <code>M&lt;'T&gt;</code> can accomodate untracked F# effects (in other
+words, whether the occurrence of <code>'T</code> is in a result of some function type. We refer to types
+that can accomodate effects <em>monadic computations</em> and types that cannot <em>monadic containers</em>.</p>
+
+<h3>Monadic computations</h3>
+
+<p>The Reader monad is an example of monadic computation, because it is represented as a function 
+<code>'TState -&gt; 'T</code>. For such monads, the computation builders that allow sequencing can be 
+defined as follows (place the mouse pointer over a member name to see the type):</p>
+
+<pre class="fssnip runnable">
+<span class="c">// Extend the ReaderBuilder with additional members</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft26', 220)" onmouseover="showTip(event, 'ft26', 220)" class="i">ReaderBuilder</span> <span class="k">with</span>
+  <span class="c">/// Creates a monadic unit computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 221)" onmouseover="showTip(event, 'ft86', 221)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft87', 222)" onmouseover="showTip(event, 'ft87', 222)" class="i">Zero</span>() <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'ft86', 223)" onmouseover="showTip(event, 'ft86', 223)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft88', 224)" onmouseover="showTip(event, 'ft88', 224)" class="i">Return</span>( () )
+  <span class="c">/// Wraps the effects in the computation type</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 225)" onmouseover="showTip(event, 'ft86', 225)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft89', 226)" onmouseover="showTip(event, 'ft89', 226)" class="i">Delay</span>(<span onmouseout="hideTip(event, 'ft90', 227)" onmouseover="showTip(event, 'ft90', 227)" class="i">f</span>) <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'ft86', 228)" onmouseover="showTip(event, 'ft86', 228)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft91', 229)" onmouseover="showTip(event, 'ft91', 229)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft86', 230)" onmouseover="showTip(event, 'ft86', 230)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft92', 231)" onmouseover="showTip(event, 'ft92', 231)" class="i">Zero</span>(), <span class="k">fun</span> _ <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft90', 232)" onmouseover="showTip(event, 'ft90', 232)" class="i">f</span>())
+  <span class="c">/// Compose effectful and another computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 233)" onmouseover="showTip(event, 'ft86', 233)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft93', 234)" onmouseover="showTip(event, 'ft93', 234)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft94', 235)" onmouseover="showTip(event, 'ft94', 235)" class="i">m1</span>, <span onmouseout="hideTip(event, 'ft95', 236)" onmouseover="showTip(event, 'ft95', 236)" class="i">m2</span>) <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'ft86', 237)" onmouseover="showTip(event, 'ft86', 237)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft91', 238)" onmouseover="showTip(event, 'ft91', 238)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft94', 239)" onmouseover="showTip(event, 'ft94', 239)" class="i">m1</span>, <span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft95', 240)" onmouseover="showTip(event, 'ft95', 240)" class="i">m2</span>)
+  <span class="c">/// Return a computation without affecting it</span>
+  <span class="c">/// (Run is not used in this case and can be omitted)</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 241)" onmouseover="showTip(event, 'ft86', 241)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft96', 242)" onmouseover="showTip(event, 'ft96', 242)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft97', 243)" onmouseover="showTip(event, 'ft97', 243)" class="i">m1</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft97', 244)" onmouseover="showTip(event, 'ft97', 244)" class="i">m1</span><br /><button class="run" onclick='parent.runCode("// Extend the ReaderBuilder with additional members\r\ntype ReaderBuilder with\r\n  /// Creates a monadic unit computation\r\n  member m.Zero() = \r\n    m.Return( () )\r\n  /// Wraps the effects in the computation type\r\n  member m.Delay(f) = \r\n    m.Bind(m.Zero(), fun _ -\u003e f())\r\n  /// Compose effectful and another computation\r\n  member m.Combine(m1, m2) = \r\n    m.Bind(m1, fun () -\u003e m2)\r\n  /// Return a computation without affecting it\r\n  /// (Run is not used in this case and can be omitted)\r\n  member m.Run(m1) = m1");'></button></pre>
+
+
+<p>All members are defined in terms of the existing. The <code>Combine</code> member is implemented by 
+<code>Bind</code> with the restriction that the first computation must return <code>unit</code> (This is similar
+to the difference between function composition and sequencing using the semicolon operator.)
+The <code>Delay</code> member is implemented by taking an empty computation (<code>Zero</code>) and binding.</p>
+
+<p>The above definitions enable a number of constructs (refer to the F# specification for full
+details). The most notable ones are <code>if</code> without the <code>else</code> branch (where <code>Zero</code> is used instead
+of the <code>else</code> branch). The <code>if</code> can also be followed by other computations (in which case, 
+<code>Combine</code> is used to combine them). The following example defines two of helpers and
+then demonstrates a computation that requires the above members:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Reads the state from the Reader monad</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft98', 245)" onmouseover="showTip(event, 'ft98', 245)" class="i">readState</span>() <span class="o">=</span> <span id="ftt99" onmouseout="hideTip(event, 'ft99', 246)" onmouseover="showTip(event, 'ft99', 246, document.getElementById('ftt99'))" class="omitted">(...)</span>
+<span class="c">/// Runs the Reader monad with a given state</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft100', 247)" onmouseover="showTip(event, 'ft100', 247)" class="i">runReader</span> <span onmouseout="hideTip(event, 'ft101', 248)" onmouseover="showTip(event, 'ft101', 248)" class="i">state</span> <span onmouseout="hideTip(event, 'ft102', 249)" onmouseover="showTip(event, 'ft102', 249)" class="i">m</span> <span class="o">=</span> <span id="ftt103" onmouseout="hideTip(event, 'ft103', 250)" onmouseover="showTip(event, 'ft103', 250, document.getElementById('ftt103'))" class="omitted">(...)</span>
+
+<span class="c">/// Prints given message and optionally also the state</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft104', 251)" onmouseover="showTip(event, 'ft104', 251)" class="i">printLog</span> <span onmouseout="hideTip(event, 'ft105', 252)" onmouseover="showTip(event, 'ft105', 252)" class="i">detailed</span> <span onmouseout="hideTip(event, 'ft106', 253)" onmouseover="showTip(event, 'ft106', 253)" class="i">message</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft37', 254)" onmouseover="showTip(event, 'ft37', 254)" class="i">reader</span> { <span class="k">if</span> <span onmouseout="hideTip(event, 'ft105', 255)" onmouseover="showTip(event, 'ft105', 255)" class="i">detailed</span> <span class="k">then</span> 
+             <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft107', 256)" onmouseover="showTip(event, 'ft107', 256)" class="i">state</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft98', 257)" onmouseover="showTip(event, 'ft98', 257)" class="i">readState</span>()
+             <span onmouseout="hideTip(event, 'ft108', 258)" onmouseover="showTip(event, 'ft108', 258)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">State</span><span class="s">:</span><span class="s"> </span><span class="s">%</span><span class="s">s</span><span class="s">&quot;</span> <span class="i">state</span>
+           <span onmouseout="hideTip(event, 'ft108', 259)" onmouseover="showTip(event, 'ft108', 259)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">Message</span><span class="s">:</span><span class="s"> </span><span class="s">%</span><span class="s">s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'ft106', 260)" onmouseover="showTip(event, 'ft106', 260)" class="i">message</span> }
+
+<span class="c">// Select &amp; run to execute the sample</span>
+<span onmouseout="hideTip(event, 'ft104', 261)" onmouseover="showTip(event, 'ft104', 261)" class="i">printLog</span> <span class="k">true</span> <span class="s">&quot;</span><span class="s">Testing</span><span class="s"> </span><span class="s">#</span><span class="s">1</span><span class="s">&quot;</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft100', 262)" onmouseover="showTip(event, 'ft100', 262)" class="i">runReader</span> <span class="s">&quot;</span><span class="s">State</span><span class="s"> </span><span class="s">#</span><span class="s">1</span><span class="s">&quot;</span>
+<span onmouseout="hideTip(event, 'ft104', 263)" onmouseover="showTip(event, 'ft104', 263)" class="i">printLog</span> <span class="k">false</span> <span class="s">&quot;</span><span class="s">Testing</span><span class="s"> </span><span class="s">#</span><span class="s">2</span><span class="s">&quot;</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft100', 264)" onmouseover="showTip(event, 'ft100', 264)" class="i">runReader</span> <span class="s">&quot;</span><span class="s">State</span><span class="s"> </span><span class="s">#</span><span class="s">2</span><span class="s">&quot;</span><br /><button class="run" onclick='parent.runCode("/// Reads the state from the Reader monad\r\nlet readState() = (*[omit:(...)]*)Reader.R (fun state -\u003e state)(*[/omit]*)\r\n/// Runs the Reader monad with a given state\r\nlet runReader state m = (*[omit:(...)]*)let (Reader.R f) = m in f state(*[/omit]*)\r\n\r\n/// Prints given message and optionally also the state\r\nlet printLog detailed message =\r\n  reader { if detailed then \r\n             let! state = readState()\r\n             printfn \"State: %s\" state\r\n           printfn \"Message: %s\" message }\r\n\r\n// Select \u0026 run to execute the sample\r\nprintLog true \"Testing #1\" |\u003e runReader \"State #1\"\r\nprintLog false \"Testing #2\" |\u003e runReader \"State #2\"");'></button></pre>
+
+
+<p>The <code>printLog</code> function first prints the state (if <code>detailed = true</code>) and then prints the
+given message. It is translated to the following expression:</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft109', 265)" onmouseover="showTip(event, 'ft109', 265)" class="i">printLog</span> <span onmouseout="hideTip(event, 'ft105', 266)" onmouseover="showTip(event, 'ft105', 266)" class="i">detailed</span> <span onmouseout="hideTip(event, 'ft106', 267)" onmouseover="showTip(event, 'ft106', 267)" class="i">message</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft37', 268)" onmouseover="showTip(event, 'ft37', 268)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft110', 269)" onmouseover="showTip(event, 'ft110', 269)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft37', 270)" onmouseover="showTip(event, 'ft37', 270)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft111', 271)" onmouseover="showTip(event, 'ft111', 271)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'ft37', 272)" onmouseover="showTip(event, 'ft37', 272)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft112', 273)" onmouseover="showTip(event, 'ft112', 273)" class="i">Combine</span>
+      ( ( <span class="k">if</span> <span onmouseout="hideTip(event, 'ft105', 274)" onmouseover="showTip(event, 'ft105', 274)" class="i">detailed</span> <span class="k">then</span> 
+            <span onmouseout="hideTip(event, 'ft37', 275)" onmouseover="showTip(event, 'ft37', 275)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft91', 276)" onmouseover="showTip(event, 'ft91', 276)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft98', 277)" onmouseover="showTip(event, 'ft98', 277)" class="i">readState</span>(), <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft107', 278)" onmouseover="showTip(event, 'ft107', 278)" class="i">state</span> <span class="k">-&gt;</span>
+              <span onmouseout="hideTip(event, 'ft108', 279)" onmouseover="showTip(event, 'ft108', 279)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">State</span><span class="s">:</span><span class="s"> </span><span class="s">%</span><span class="s">s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'ft107', 280)" onmouseover="showTip(event, 'ft107', 280)" class="i">state</span>
+              <span onmouseout="hideTip(event, 'ft37', 281)" onmouseover="showTip(event, 'ft37', 281)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft92', 282)" onmouseover="showTip(event, 'ft92', 282)" class="i">Zero</span>())
+          <span class="k">else</span> <span onmouseout="hideTip(event, 'ft37', 283)" onmouseover="showTip(event, 'ft37', 283)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft92', 284)" onmouseover="showTip(event, 'ft92', 284)" class="i">Zero</span>() ),
+        ( <span onmouseout="hideTip(event, 'ft37', 285)" onmouseover="showTip(event, 'ft37', 285)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft111', 286)" onmouseover="showTip(event, 'ft111', 286)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+            <span onmouseout="hideTip(event, 'ft108', 287)" onmouseover="showTip(event, 'ft108', 287)" class="i">printfn</span> <span class="s">&quot;</span><span class="s">Message</span><span class="s">:</span><span class="s"> </span><span class="s">%</span><span class="s">s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'ft106', 288)" onmouseover="showTip(event, 'ft106', 288)" class="i">message</span>
+            <span onmouseout="hideTip(event, 'ft37', 289)" onmouseover="showTip(event, 'ft37', 289)" class="i">reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft92', 290)" onmouseover="showTip(event, 'ft92', 290)" class="i">Zero</span>() )) )))<br /><button class="load" onclick='parent.loadCode("let printLog detailed message =\r\n  reader.Run(reader.Delay(fun () -\u003e\r\n    reader.Combine\r\n      ( ( if detailed then \r\n            reader.Bind(readState(), fun state -\u003e\r\n              printfn \"State: %s\" state\r\n              reader.Zero())\r\n          else reader.Zero() ),\r\n        ( reader.Delay(fun () -\u003e\r\n            printfn \"Message: %s\" message\r\n            reader.Zero() )) )))");'></button></pre>
+
+
+<h3>Monadic containers</h3>
+
+<p>The Maybe monad is an example of the second case - monadic container. For such monads, 
+the <code>Bind</code> operation performs all effects immediately and so it is not possible to 
+implement <code>Delay</code> that would return <code>M&lt;'T&gt;</code> computation without evaluating the function
+given as an argument. For this reason, we use a different type (called <code>D&lt;'T&gt;</code> in the
+paper) to represent a <em>delayed monadic computation</em>. For monadic containers, <code>D&lt;'T&gt; = unit -&gt; M&lt;'T&gt;</code>.
+The computation builder can be defined as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="c">// Extend the MaybeBuilder with additional members</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft15', 291)" onmouseover="showTip(event, 'ft15', 291)" class="i">MaybeBuilder</span> <span class="k">with</span>
+  <span class="c">/// Creates a monadic unit computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft113', 292)" onmouseover="showTip(event, 'ft113', 292)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft114', 293)" onmouseover="showTip(event, 'ft114', 293)" class="i">Zero</span>() <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'ft113', 294)" onmouseover="showTip(event, 'ft113', 294)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 295)" onmouseover="showTip(event, 'ft48', 295)" class="i">Return</span>( () )
+  <span class="c">/// Return the function as a delayed computation type</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft113', 296)" onmouseover="showTip(event, 'ft113', 296)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft115', 297)" onmouseover="showTip(event, 'ft115', 297)" class="i">Delay</span>(<span onmouseout="hideTip(event, 'ft116', 298)" onmouseover="showTip(event, 'ft116', 298)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft116', 299)" onmouseover="showTip(event, 'ft116', 299)" class="i">f</span>
+  <span class="c">/// Compose computation and a delayed computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft113', 300)" onmouseover="showTip(event, 'ft113', 300)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft117', 301)" onmouseover="showTip(event, 'ft117', 301)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft118', 302)" onmouseover="showTip(event, 'ft118', 302)" class="i">m1</span>, <span onmouseout="hideTip(event, 'ft119', 303)" onmouseover="showTip(event, 'ft119', 303)" class="i">d2</span>) <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'ft113', 304)" onmouseover="showTip(event, 'ft113', 304)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft51', 305)" onmouseover="showTip(event, 'ft51', 305)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft118', 306)" onmouseover="showTip(event, 'ft118', 306)" class="i">m1</span>, <span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft119', 307)" onmouseover="showTip(event, 'ft119', 307)" class="i">d2</span> ())
+  <span class="c">/// Run the effects of a delayed computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft113', 308)" onmouseover="showTip(event, 'ft113', 308)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft120', 309)" onmouseover="showTip(event, 'ft120', 309)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft121', 310)" onmouseover="showTip(event, 'ft121', 310)" class="i">d1</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft121', 311)" onmouseover="showTip(event, 'ft121', 311)" class="i">d1</span>()<br /><button class="run" onclick='parent.runCode("// Extend the MaybeBuilder with additional members\r\ntype MaybeBuilder with\r\n  /// Creates a monadic unit computation\r\n  member m.Zero() = \r\n    m.Return( () )\r\n  /// Return the function as a delayed computation type\r\n  member m.Delay(f) = f\r\n  /// Compose computation and a delayed computation\r\n  member m.Combine(m1, d2) = \r\n    m.Bind(m1, fun () -\u003e d2 ())\r\n  /// Run the effects of a delayed computation\r\n  member m.Run(d1) = d1()");'></button></pre>
+
+
+<p>Note that the Maybe monad is perhaps not the best example of <em>monadic computation</em>, because
+it also provides monoidal structure (with <code>None</code> as the zero and left-biased choice as the
+binary operator). This means that there are two ways to implement the computation builder - 
+one that uses the monadic structure (above) and another that would use the monoidal structure
+(using <code>None</code> for <code>Zero</code> and a different <code>Combine</code>). The second approach is very similar to 
+<a href="http://tomasp.net/blog/imperative-i-return.aspx" title="Imperative computation in F# (I.) - Returning results from a function">imperative computation builder</a> described elsewhere.</p>
+
+<p>Using the <em>monadic</em> implementation of Maybe, we can write the following code.</p>
+
+<pre class="fssnip runnable">
+<span class="c">// Generates a number, but may fail if &#39;canFail&#39; is true</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft122', 312)" onmouseover="showTip(event, 'ft122', 312)" class="i">maybeNumber</span> <span onmouseout="hideTip(event, 'ft123', 313)" onmouseover="showTip(event, 'ft123', 313)" class="i">canFail</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft36', 314)" onmouseover="showTip(event, 'ft36', 314)" class="i">maybe</span> { <span class="k">if</span> <span onmouseout="hideTip(event, 'ft123', 315)" onmouseover="showTip(event, 'ft123', 315)" class="i">canFail</span> <span class="k">then</span>
+            <span class="k">do!</span> <span onmouseout="hideTip(event, 'ft41', 316)" onmouseover="showTip(event, 'ft41', 316)" class="i">maybeFail</span> ()
+          <span class="k">return</span> <span onmouseout="hideTip(event, 'ft38', 317)" onmouseover="showTip(event, 'ft38', 317)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft42', 318)" onmouseover="showTip(event, 'ft42', 318)" class="i">Next</span>(<span class="n">6</span>) }<br /><button class="run" onclick='parent.runCode("// Generates a number, but may fail if \u0027canFail\u0027 is true\r\nlet maybeNumber canFail = \r\n  maybe { if canFail then\r\n            do! maybeFail ()\r\n          return random.Next(6) }");'></button></pre>
+
+
+<p>If the parameter <code>canFail</code> is true, then the computation uses <code>maybeFail</code> to fail with a 
+50% chance. Otherwise, it always succeeds, returning a random number from 0 to 5. The structure
+of the computation is very similar to the previous Reader monad example and so is the translation:</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft124', 319)" onmouseover="showTip(event, 'ft124', 319)" class="i">maybeNumber</span> <span onmouseout="hideTip(event, 'ft123', 320)" onmouseover="showTip(event, 'ft123', 320)" class="i">canFail</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft36', 321)" onmouseover="showTip(event, 'ft36', 321)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft125', 322)" onmouseover="showTip(event, 'ft125', 322)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft36', 323)" onmouseover="showTip(event, 'ft36', 323)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft126', 324)" onmouseover="showTip(event, 'ft126', 324)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'ft36', 325)" onmouseover="showTip(event, 'ft36', 325)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft127', 326)" onmouseover="showTip(event, 'ft127', 326)" class="i">Combine</span>
+      ( ( <span class="k">if</span> <span onmouseout="hideTip(event, 'ft123', 327)" onmouseover="showTip(event, 'ft123', 327)" class="i">canFail</span> <span class="k">then</span> 
+            <span onmouseout="hideTip(event, 'ft36', 328)" onmouseover="showTip(event, 'ft36', 328)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft51', 329)" onmouseover="showTip(event, 'ft51', 329)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft41', 330)" onmouseover="showTip(event, 'ft41', 330)" class="i">maybeFail</span>(), <span class="k">fun</span> () <span class="k">-&gt;</span>
+              <span onmouseout="hideTip(event, 'ft36', 331)" onmouseover="showTip(event, 'ft36', 331)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft128', 332)" onmouseover="showTip(event, 'ft128', 332)" class="i">Zero</span>())
+          <span class="k">else</span> <span onmouseout="hideTip(event, 'ft36', 333)" onmouseover="showTip(event, 'ft36', 333)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft128', 334)" onmouseover="showTip(event, 'ft128', 334)" class="i">Zero</span>() ),
+        ( <span onmouseout="hideTip(event, 'ft36', 335)" onmouseover="showTip(event, 'ft36', 335)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft126', 336)" onmouseover="showTip(event, 'ft126', 336)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+            <span onmouseout="hideTip(event, 'ft36', 337)" onmouseover="showTip(event, 'ft36', 337)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 338)" onmouseover="showTip(event, 'ft48', 338)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft38', 339)" onmouseover="showTip(event, 'ft38', 339)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft42', 340)" onmouseover="showTip(event, 'ft42', 340)" class="i">Next</span>(<span class="n">6</span>)) )) )))<br /><button class="load" onclick='parent.loadCode("let maybeNumber canFail =\r\n  maybe.Run(maybe.Delay(fun () -\u003e\r\n    maybe.Combine\r\n      ( ( if canFail then \r\n            maybe.Bind(maybeFail(), fun () -\u003e\r\n              maybe.Zero())\r\n          else maybe.Zero() ),\r\n        ( maybe.Delay(fun () -\u003e\r\n            maybe.Return(random.Next(6)) )) )))");'></button></pre>
+
+
+<h2><a name="control">Monadic control flow</a></h2>
+
+<p>The final addition that can be made to a monadic computation expression builder is the support for
+F# control flow constructs that are available in the computation block. These include two looping
+constructs (<code>for</code> and <code>while</code>) and also exception handling constructs (<code>try .. with</code> and 
+<code>try .. finally</code>). The definition differs slightly for monadic computations and monadic containers.
+In particular, the <code>While</code> member and the exception handling constructs take one of the arguments
+as a delayed computation, which is either <code>M&lt;'T&gt;</code> or <code>unit -&gt; M&lt;'T&gt;</code>.</p>
+
+<h3>Monadic computations</h3>
+
+<p>The <code>ReaderBuilder</code> (a monadic computation) can be extended as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft26', 341)" onmouseover="showTip(event, 'ft26', 341)" class="i">ReaderBuilder</span> <span class="k">with</span> 
+  <span class="c">/// The exception handling needs to be lifted into the monadic </span>
+  <span class="c">/// computation type, so we need to use the computation structure</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 342)" onmouseover="showTip(event, 'ft86', 342)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft129', 343)" onmouseover="showTip(event, 'ft129', 343)" class="i">TryWith</span>(<span onmouseout="hideTip(event, 'ft31', 344)" onmouseover="showTip(event, 'ft31', 344)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft130', 345)" onmouseover="showTip(event, 'ft130', 345)" class="i">R</span> <span onmouseout="hideTip(event, 'ft131', 346)" onmouseover="showTip(event, 'ft131', 346)" class="i">body</span>, <span onmouseout="hideTip(event, 'ft132', 347)" onmouseover="showTip(event, 'ft132', 347)" class="i">handler</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft31', 348)" onmouseover="showTip(event, 'ft31', 348)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft130', 349)" onmouseover="showTip(event, 'ft130', 349)" class="i">R</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'ft101', 350)" onmouseover="showTip(event, 'ft101', 350)" class="i">state</span> <span class="k">-&gt;</span>
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'ft131', 351)" onmouseover="showTip(event, 'ft131', 351)" class="i">body</span> <span onmouseout="hideTip(event, 'ft101', 352)" onmouseover="showTip(event, 'ft101', 352)" class="i">state</span> 
+    <span class="k">with</span> <span onmouseout="hideTip(event, 'ft133', 353)" onmouseover="showTip(event, 'ft133', 353)" class="i">e</span> <span class="k">-&gt;</span> 
+      <span class="k">let</span> (<span onmouseout="hideTip(event, 'ft31', 354)" onmouseover="showTip(event, 'ft31', 354)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft130', 355)" onmouseover="showTip(event, 'ft130', 355)" class="i">R</span> <span onmouseout="hideTip(event, 'ft134', 356)" onmouseover="showTip(event, 'ft134', 356)" class="i">handlerBody</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft132', 357)" onmouseover="showTip(event, 'ft132', 357)" class="i">handler</span> <span onmouseout="hideTip(event, 'ft135', 358)" onmouseover="showTip(event, 'ft135', 358)" class="i">e</span> 
+      <span onmouseout="hideTip(event, 'ft134', 359)" onmouseover="showTip(event, 'ft134', 359)" class="i">handlerBody</span> <span onmouseout="hideTip(event, 'ft101', 360)" onmouseover="showTip(event, 'ft101', 360)" class="i">state</span>) 
+
+  <span class="c">/// The finalizer is defined similarly (but the body of the </span>
+  <span class="c">/// finalizer cannot be monadic - just a `unit -&gt; unit` function      </span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 361)" onmouseover="showTip(event, 'ft86', 361)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft136', 362)" onmouseover="showTip(event, 'ft136', 362)" class="i">TryFinally</span>(<span onmouseout="hideTip(event, 'ft31', 363)" onmouseover="showTip(event, 'ft31', 363)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft130', 364)" onmouseover="showTip(event, 'ft130', 364)" class="i">R</span> <span onmouseout="hideTip(event, 'ft131', 365)" onmouseover="showTip(event, 'ft131', 365)" class="i">body</span>, <span onmouseout="hideTip(event, 'ft137', 366)" onmouseover="showTip(event, 'ft137', 366)" class="i">finalizer</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft31', 367)" onmouseover="showTip(event, 'ft31', 367)" class="i">Reader</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft130', 368)" onmouseover="showTip(event, 'ft130', 368)" class="i">R</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'ft101', 369)" onmouseover="showTip(event, 'ft101', 369)" class="i">state</span> <span class="k">-&gt;</span>
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'ft131', 370)" onmouseover="showTip(event, 'ft131', 370)" class="i">body</span> <span onmouseout="hideTip(event, 'ft101', 371)" onmouseover="showTip(event, 'ft101', 371)" class="i">state</span>
+    <span class="k">finally</span> <span onmouseout="hideTip(event, 'ft137', 372)" onmouseover="showTip(event, 'ft137', 372)" class="i">finalizer</span>() )
+
+  <span class="c">/// Similar to &#39;Bind&#39;, but it disposes of the resource (a way to do </span>
+  <span class="c">/// deterministic finalization in .NET) after it gets out of scope</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 373)" onmouseover="showTip(event, 'ft86', 373)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft138', 374)" onmouseover="showTip(event, 'ft138', 374)" class="i">Using</span>(<span onmouseout="hideTip(event, 'ft139', 375)" onmouseover="showTip(event, 'ft139', 375)" class="i">res</span>, <span onmouseout="hideTip(event, 'ft140', 376)" onmouseover="showTip(event, 'ft140', 376)" class="i">f</span>) <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'ft86', 377)" onmouseover="showTip(event, 'ft86', 377)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft91', 378)" onmouseover="showTip(event, 'ft91', 378)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft139', 379)" onmouseover="showTip(event, 'ft139', 379)" class="i">res</span>, <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft141', 380)" onmouseover="showTip(event, 'ft141', 380)" class="i">disposableRes</span> <span class="k">-&gt;</span>
+      <span onmouseout="hideTip(event, 'ft86', 381)" onmouseover="showTip(event, 'ft86', 381)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft142', 382)" onmouseover="showTip(event, 'ft142', 382)" class="i">TryFinally</span>(<span onmouseout="hideTip(event, 'ft86', 383)" onmouseover="showTip(event, 'ft86', 383)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft111', 384)" onmouseover="showTip(event, 'ft111', 384)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft140', 385)" onmouseover="showTip(event, 'ft140', 385)" class="i">f</span> <span onmouseout="hideTip(event, 'ft141', 386)" onmouseover="showTip(event, 'ft141', 386)" class="i">disposableRes</span>), <span class="k">fun</span> () <span class="k">-&gt;</span>
+        (<span onmouseout="hideTip(event, 'ft141', 387)" onmouseover="showTip(event, 'ft141', 387)" class="i">disposableRes</span> <span class="o">:&gt;</span> <span onmouseout="hideTip(event, 'ft39', 388)" onmouseover="showTip(event, 'ft39', 388)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft143', 389)" onmouseover="showTip(event, 'ft143', 389)" class="i">IDisposable</span>)<span class="o">.</span><span class="i">Dispose</span>() ))
+
+  <span class="c">/// The &#39;while&#39; loop evaluates the condition and then either ends</span>
+  <span class="c">/// (returning &#39;Zero&#39;), or evaluates body once and then runs recursively</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 390)" onmouseover="showTip(event, 'ft86', 390)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft144', 391)" onmouseover="showTip(event, 'ft144', 391)" class="i">While</span>(<span onmouseout="hideTip(event, 'ft145', 392)" onmouseover="showTip(event, 'ft145', 392)" class="i">cond</span>, <span onmouseout="hideTip(event, 'ft146', 393)" onmouseover="showTip(event, 'ft146', 393)" class="i">body</span>) <span class="o">=</span> 
+    <span class="k">if</span> <span onmouseout="hideTip(event, 'ft68', 394)" onmouseover="showTip(event, 'ft68', 394)" class="i">not</span> (<span onmouseout="hideTip(event, 'ft145', 395)" onmouseover="showTip(event, 'ft145', 395)" class="i">cond</span>()) <span class="k">then</span> <span onmouseout="hideTip(event, 'ft86', 396)" onmouseover="showTip(event, 'ft86', 396)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft92', 397)" onmouseover="showTip(event, 'ft92', 397)" class="i">Zero</span>()
+    <span class="k">else</span> <span onmouseout="hideTip(event, 'ft86', 398)" onmouseover="showTip(event, 'ft86', 398)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft112', 399)" onmouseover="showTip(event, 'ft112', 399)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft86', 400)" onmouseover="showTip(event, 'ft86', 400)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft110', 401)" onmouseover="showTip(event, 'ft110', 401)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft146', 402)" onmouseover="showTip(event, 'ft146', 402)" class="i">body</span>), <span onmouseout="hideTip(event, 'ft86', 403)" onmouseover="showTip(event, 'ft86', 403)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft111', 404)" onmouseover="showTip(event, 'ft111', 404)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft86', 405)" onmouseover="showTip(event, 'ft86', 405)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft147', 406)" onmouseover="showTip(event, 'ft147', 406)" class="i">While</span>(<span onmouseout="hideTip(event, 'ft145', 407)" onmouseover="showTip(event, 'ft145', 407)" class="i">cond</span>, <span onmouseout="hideTip(event, 'ft146', 408)" onmouseover="showTip(event, 'ft146', 408)" class="i">body</span>)))
+
+  <span class="c">/// The &#39;for&#39; loop can be defined using &#39;While&#39; and &#39;Using&#39;</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft86', 409)" onmouseover="showTip(event, 'ft86', 409)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft148', 410)" onmouseover="showTip(event, 'ft148', 410)" class="i">For</span>(<span onmouseout="hideTip(event, 'ft149', 411)" onmouseover="showTip(event, 'ft149', 411)" class="i">xs</span><span class="o">:</span><span onmouseout="hideTip(event, 'ft150', 412)" onmouseover="showTip(event, 'ft150', 412)" class="i">seq</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>, <span onmouseout="hideTip(event, 'ft151', 413)" onmouseover="showTip(event, 'ft151', 413)" class="i">f</span>) <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'ft86', 414)" onmouseover="showTip(event, 'ft86', 414)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft152', 415)" onmouseover="showTip(event, 'ft152', 415)" class="i">Using</span>(<span onmouseout="hideTip(event, 'ft86', 416)" onmouseover="showTip(event, 'ft86', 416)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft88', 417)" onmouseover="showTip(event, 'ft88', 417)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft149', 418)" onmouseover="showTip(event, 'ft149', 418)" class="i">xs</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft153', 419)" onmouseover="showTip(event, 'ft153', 419)" class="i">GetEnumerator</span>()), <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft154', 420)" onmouseover="showTip(event, 'ft154', 420)" class="i">en</span> <span class="k">-&gt;</span>
+      <span onmouseout="hideTip(event, 'ft86', 421)" onmouseover="showTip(event, 'ft86', 421)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft147', 422)" onmouseover="showTip(event, 'ft147', 422)" class="i">While</span>( (<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft154', 423)" onmouseover="showTip(event, 'ft154', 423)" class="i">en</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft155', 424)" onmouseover="showTip(event, 'ft155', 424)" class="i">MoveNext</span>()), <span onmouseout="hideTip(event, 'ft86', 425)" onmouseover="showTip(event, 'ft86', 425)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft111', 426)" onmouseover="showTip(event, 'ft111', 426)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span> 
+        <span onmouseout="hideTip(event, 'ft151', 427)" onmouseover="showTip(event, 'ft151', 427)" class="i">f</span> <span onmouseout="hideTip(event, 'ft154', 428)" onmouseover="showTip(event, 'ft154', 428)" class="i">en</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft156', 429)" onmouseover="showTip(event, 'ft156', 429)" class="i">Current</span>) ) )<br /><button class="run" onclick='parent.runCode("type ReaderBuilder with \r\n  /// The exception handling needs to be lifted into the monadic \r\n  /// computation type, so we need to use the computation structure\r\n  member m.TryWith(Reader.R body, handler) = Reader.R (fun state -\u003e\r\n    try body state \r\n    with e -\u003e \r\n      let (Reader.R handlerBody) = handler e \r\n      handlerBody state) \r\n\r\n  /// The finalizer is defined similarly (but the body of the \r\n  /// finalizer cannot be monadic - just a `unit -\u003e unit` function      \r\n  member m.TryFinally(Reader.R body, finalizer) = Reader.R (fun state -\u003e\r\n    try body state\r\n    finally finalizer() )\r\n\r\n  /// Similar to \u0027Bind\u0027, but it disposes of the resource (a way to do \r\n  /// deterministic finalization in .NET) after it gets out of scope\r\n  member m.Using(res, f) =\r\n    m.Bind(res, fun disposableRes -\u003e\r\n      m.TryFinally(m.Delay(fun () -\u003e f disposableRes), fun () -\u003e\r\n        (disposableRes :\u003e System.IDisposable).Dispose() ))\r\n\r\n  /// The \u0027while\u0027 loop evaluates the condition and then either ends\r\n  /// (returning \u0027Zero\u0027), or evaluates body once and then runs recursively\r\n  member m.While(cond, body) = \r\n    if not (cond()) then m.Zero()\r\n    else m.Combine(m.Run(body), m.Delay(fun () -\u003e m.While(cond, body)))\r\n\r\n  /// The \u0027for\u0027 loop can be defined using \u0027While\u0027 and \u0027Using\u0027\r\n  member m.For(xs:seq\u003c\u0027T\u003e, f) = \r\n    m.Using(m.Return(xs.GetEnumerator()), fun en -\u003e\r\n      m.While( (fun () -\u003e en.MoveNext()), m.Delay(fun () -\u003e \r\n        f en.Current) ) )");'></button></pre>
+
+
+<p>For monadic computations that encapsulate untracked F# effects, the members <code>TryWith</code> and
+<code>TryFinally</code> cannot be implemented in terms of other operations. They need to understand the
+structure of the computation, in order to wrap the appropriate call that actually runs the
+effects with <code>try .. with</code> or <code>try .. finally</code>. For the Reader monad, this is quite easy.
+We just need to wrap the call that runs the underlying function when the initial state is 
+provided. However, it requires more structure than just monadic <em>bind</em> and <em>return</em>.</p>
+
+<p>The <code>Using</code> member is not discussed in the paper (see F# specification for details), but
+we include it for completeness. It has the same type signature as <code>Bind</code>, except that the
+value produced by the first computation implements the <code>IDisposable</code> interface. The member
+guarantees that it will deterministically free the resource after it gets out of scope, whic
+can be implemented using <code>TryFinally</code>. The member enables the <code>use! x = foo</code> syntax in the
+computation builder.</p>
+
+<p>Finally, the <code>For</code> and <code>While</code> members can be implemented in terms of the 
+other operations. In general, the <code>for</code> loop iterates over an F# sequence, which is an 
+imperative object that needs to be disposed of at the end. This can be done using the 
+<code>Using</code> member.</p>
+
+<h3>Monadic containers</h3>
+
+<p>The definitions for the Maybe monad are similar, but the exception handling members are 
+implemented differently. In case of monadic containers that use <code>unit -&gt; M&lt;'T&gt;</code> to represent
+delayed computation, we do not need to know anything about the <code>M&lt;'T&gt;</code> type:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft15', 430)" onmouseover="showTip(event, 'ft15', 430)" class="i">MaybeBuilder</span> <span class="k">with</span> 
+  <span class="c">/// The exception handling uses the delayed type directly</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft113', 431)" onmouseover="showTip(event, 'ft113', 431)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft157', 432)" onmouseover="showTip(event, 'ft157', 432)" class="i">TryWith</span>(<span onmouseout="hideTip(event, 'ft158', 433)" onmouseover="showTip(event, 'ft158', 433)" class="i">f</span>, <span onmouseout="hideTip(event, 'ft159', 434)" onmouseover="showTip(event, 'ft159', 434)" class="i">handler</span>) <span class="o">=</span> 
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'ft158', 435)" onmouseover="showTip(event, 'ft158', 435)" class="i">f</span>() 
+    <span class="k">with</span> <span onmouseout="hideTip(event, 'ft133', 436)" onmouseover="showTip(event, 'ft133', 436)" class="i">e</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft159', 437)" onmouseover="showTip(event, 'ft159', 437)" class="i">handler</span> <span onmouseout="hideTip(event, 'ft135', 438)" onmouseover="showTip(event, 'ft135', 438)" class="i">e</span>
+
+  <span class="c">/// The finalizer is defined similarly (but the body of the </span>
+  <span class="c">/// finalizer cannot be monadic - just a `unit -&gt; unit` function)      </span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft113', 439)" onmouseover="showTip(event, 'ft113', 439)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft160', 440)" onmouseover="showTip(event, 'ft160', 440)" class="i">TryFinally</span>(<span onmouseout="hideTip(event, 'ft158', 441)" onmouseover="showTip(event, 'ft158', 441)" class="i">f</span>, <span onmouseout="hideTip(event, 'ft137', 442)" onmouseover="showTip(event, 'ft137', 442)" class="i">finalizer</span>) <span class="o">=</span> 
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'ft158', 443)" onmouseover="showTip(event, 'ft158', 443)" class="i">f</span>()
+    <span class="k">finally</span> <span onmouseout="hideTip(event, 'ft137', 444)" onmouseover="showTip(event, 'ft137', 444)" class="i">finalizer</span>()
+
+  <span id="ftt161" onmouseout="hideTip(event, 'ft161', 445)" onmouseover="showTip(event, 'ft161', 445, document.getElementById('ftt161'))" class="omitted">(Other members are the same as for computations)</span><br /><button class="run" onclick='parent.runCode("type MaybeBuilder with \r\n  /// The exception handling uses the delayed type directly\r\n  member m.TryWith(f, handler) = \r\n    try f() \r\n    with e -\u003e handler e\r\n\r\n  /// The finalizer is defined similarly (but the body of the \r\n  /// finalizer cannot be monadic - just a `unit -\u003e unit` function)      \r\n  member m.TryFinally(f, finalizer) = \r\n    try f()\r\n    finally finalizer()\r\n\r\n  (*[omit:(Other members are the same as for computations)]*)\r\n  /// Similar to \u0027Bind\u0027, but it disposes of the resource (a way to do \r\n  /// deterministic finalization in .NET) after it gets out of scope\r\n  member m.Using(res, f) =\r\n    m.Bind(res, fun disposableRes -\u003e\r\n      m.TryFinally(m.Delay(fun () -\u003e f disposableRes), fun () -\u003e\r\n        (disposableRes :\u003e System.IDisposable).Dispose() ))\r\n\r\n  /// The \u0027while\u0027 loop evaluates the condition and then either ends\r\n  /// (returning \u0027Zero\u0027), or evaluates body once and then runs recursively\r\n  member m.While(cond, body) = \r\n    if not (cond()) then m.Zero()\r\n    else m.Combine(m.Run(body), m.Delay(fun () -\u003e m.While(cond, body)))\r\n\r\n  /// The \u0027for\u0027 loop can be defined using \u0027While\u0027 and \u0027Using\u0027\r\n  member m.For(xs:seq\u003c\u0027T\u003e, f) = \r\n    m.Using(m.Return(xs.GetEnumerator()), fun en -\u003e\r\n      m.While( (fun () -\u003e en.MoveNext()), m.Delay(fun () -\u003e \r\n        f en.Current) ) )(*[/omit]*)");'></button></pre>
+
+
+<p>As an example, consider the following two examples. The first one implements safe modulo 
+(division remainder) using the Maybe monad. The second tests whether a given number is 
+divisible by all specified numbers and fails if that is not the case (otherwise it succeeds,
+returning <code>Some()</code>).</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Safe modulo using the Maybe monad</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft162', 446)" onmouseover="showTip(event, 'ft162', 446)" class="i">safeMod</span> <span onmouseout="hideTip(event, 'ft163', 447)" onmouseover="showTip(event, 'ft163', 447)" class="i">a</span> <span onmouseout="hideTip(event, 'ft164', 448)" onmouseover="showTip(event, 'ft164', 448)" class="i">b</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft36', 449)" onmouseover="showTip(event, 'ft36', 449)" class="i">maybe</span> { <span class="k">try</span> 
+            <span class="k">return</span> <span onmouseout="hideTip(event, 'ft163', 450)" onmouseover="showTip(event, 'ft163', 450)" class="i">a</span> <span class="o">%</span> <span onmouseout="hideTip(event, 'ft164', 451)" onmouseover="showTip(event, 'ft164', 451)" class="i">b</span>
+          <span class="k">with</span> _ <span class="k">-&gt;</span> 
+            <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft6', 452)" onmouseover="showTip(event, 'ft6', 452)" class="i">None</span> }
+
+<span class="c">/// Fail if the number is divisible by any divisor</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft165', 453)" onmouseover="showTip(event, 'ft165', 453)" class="i">failDivisible</span> <span onmouseout="hideTip(event, 'ft166', 454)" onmouseover="showTip(event, 'ft166', 454)" class="i">num</span> <span onmouseout="hideTip(event, 'ft167', 455)" onmouseover="showTip(event, 'ft167', 455)" class="i">divisors</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft36', 456)" onmouseover="showTip(event, 'ft36', 456)" class="i">maybe</span> { <span class="k">for</span> <span onmouseout="hideTip(event, 'ft168', 457)" onmouseover="showTip(event, 'ft168', 457)" class="i">divisor</span> <span class="k">in</span> <span onmouseout="hideTip(event, 'ft167', 458)" onmouseover="showTip(event, 'ft167', 458)" class="i">divisors</span> <span class="k">do</span>
+            <span class="k">let!</span> <span onmouseout="hideTip(event, 'ft169', 459)" onmouseover="showTip(event, 'ft169', 459)" class="i">res</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft162', 460)" onmouseover="showTip(event, 'ft162', 460)" class="i">safeMod</span> <span onmouseout="hideTip(event, 'ft166', 461)" onmouseover="showTip(event, 'ft166', 461)" class="i">num</span> <span onmouseout="hideTip(event, 'ft168', 462)" onmouseover="showTip(event, 'ft168', 462)" class="i">divisor</span>    
+            <span class="k">if</span> <span class="i">res</span> <span class="o">=</span> <span class="n">0</span> <span class="k">then</span> <span class="k">return!</span> <span onmouseout="hideTip(event, 'ft6', 463)" onmouseover="showTip(event, 'ft6', 463)" class="i">None</span> }
+
+<span class="c">// Test whether 43 is a prime number</span>
+<span onmouseout="hideTip(event, 'ft165', 464)" onmouseover="showTip(event, 'ft165', 464)" class="i">failDivisible</span> <span class="n">43</span> [ <span class="n">2</span> <span class="o">..</span> <span class="n">7</span> ]
+<span class="c">// ... but fail when the input contains 0</span>
+<span onmouseout="hideTip(event, 'ft165', 465)" onmouseover="showTip(event, 'ft165', 465)" class="i">failDivisible</span> <span class="n">43</span> [ <span class="n">0</span> <span class="o">..</span> <span class="n">7</span> ]<br /><button class="run" onclick='parent.runCode("/// Safe modulo using the Maybe monad\r\nlet safeMod a b =\r\n  maybe { try \r\n            return a % b\r\n          with _ -\u003e \r\n            return! None }\r\n\r\n/// Fail if the number is divisible by any divisor\r\nlet failDivisible num divisors =\r\n  maybe { for divisor in divisors do\r\n            let! res = safeMod num divisor    \r\n            if res = 0 then return! None }\r\n\r\n// Test whether 43 is a prime number\r\nfailDivisible 43 [ 2 .. 7 ]\r\n// ... but fail when the input contains 0\r\nfailDivisible 43 [ 0 .. 7 ]");'></button></pre>
+
+
+<p>The two functions defined above are transalted using the new computation builder members
+as follows (we omit the wrapping of the entire computation in <code>Run</code> and <code>Delay</code>, because
+it has no effect in this example and it makes the translation harder to follow):</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft170', 466)" onmouseover="showTip(event, 'ft170', 466)" class="i">safeMod</span> <span onmouseout="hideTip(event, 'ft163', 467)" onmouseover="showTip(event, 'ft163', 467)" class="i">a</span> <span onmouseout="hideTip(event, 'ft164', 468)" onmouseover="showTip(event, 'ft164', 468)" class="i">b</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft36', 469)" onmouseover="showTip(event, 'ft36', 469)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft171', 470)" onmouseover="showTip(event, 'ft171', 470)" class="i">TryWith</span>
+   ( <span onmouseout="hideTip(event, 'ft36', 471)" onmouseover="showTip(event, 'ft36', 471)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft126', 472)" onmouseover="showTip(event, 'ft126', 472)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft36', 473)" onmouseover="showTip(event, 'ft36', 473)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 474)" onmouseover="showTip(event, 'ft48', 474)" class="i">Return</span>(<span onmouseout="hideTip(event, 'ft163', 475)" onmouseover="showTip(event, 'ft163', 475)" class="i">a</span> <span class="o">%</span> <span onmouseout="hideTip(event, 'ft164', 476)" onmouseover="showTip(event, 'ft164', 476)" class="i">b</span>)),
+     <span class="k">fun</span> _ <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft36', 477)" onmouseover="showTip(event, 'ft36', 477)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft49', 478)" onmouseover="showTip(event, 'ft49', 478)" class="i">ReturnFrom</span>(<span onmouseout="hideTip(event, 'ft6', 479)" onmouseover="showTip(event, 'ft6', 479)" class="i">None</span>) )
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft172', 480)" onmouseover="showTip(event, 'ft172', 480)" class="i">failDivisible</span> <span onmouseout="hideTip(event, 'ft166', 481)" onmouseover="showTip(event, 'ft166', 481)" class="i">num</span> <span onmouseout="hideTip(event, 'ft167', 482)" onmouseover="showTip(event, 'ft167', 482)" class="i">divisors</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft36', 483)" onmouseover="showTip(event, 'ft36', 483)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft173', 484)" onmouseover="showTip(event, 'ft173', 484)" class="i">For</span>(<span onmouseout="hideTip(event, 'ft167', 485)" onmouseover="showTip(event, 'ft167', 485)" class="i">divisors</span>, <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft168', 486)" onmouseover="showTip(event, 'ft168', 486)" class="i">divisor</span> <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'ft36', 487)" onmouseover="showTip(event, 'ft36', 487)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft51', 488)" onmouseover="showTip(event, 'ft51', 488)" class="i">Bind</span>(<span onmouseout="hideTip(event, 'ft170', 489)" onmouseover="showTip(event, 'ft170', 489)" class="i">safeMod</span> <span onmouseout="hideTip(event, 'ft166', 490)" onmouseover="showTip(event, 'ft166', 490)" class="i">num</span> <span onmouseout="hideTip(event, 'ft168', 491)" onmouseover="showTip(event, 'ft168', 491)" class="i">divisor</span>, <span class="k">fun</span> <span onmouseout="hideTip(event, 'ft169', 492)" onmouseover="showTip(event, 'ft169', 492)" class="i">res</span> <span class="k">-&gt;</span>
+      <span class="k">if</span> <span onmouseout="hideTip(event, 'ft169', 493)" onmouseover="showTip(event, 'ft169', 493)" class="i">res</span> <span class="o">=</span> <span class="n">0</span> <span class="k">then</span> <span onmouseout="hideTip(event, 'ft36', 494)" onmouseover="showTip(event, 'ft36', 494)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft49', 495)" onmouseover="showTip(event, 'ft49', 495)" class="i">ReturnFrom</span>(<span onmouseout="hideTip(event, 'ft6', 496)" onmouseover="showTip(event, 'ft6', 496)" class="i">None</span>)
+      <span class="k">else</span> <span onmouseout="hideTip(event, 'ft36', 497)" onmouseover="showTip(event, 'ft36', 497)" class="i">maybe</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft128', 498)" onmouseover="showTip(event, 'ft128', 498)" class="i">Zero</span>() ))<br /><button class="load" onclick='parent.loadCode("let safeMod a b =\r\n  maybe.TryWith\r\n   ( maybe.Delay(fun () -\u003e maybe.Return(a % b)),\r\n     fun _ -\u003e maybe.ReturnFrom(None) )\r\n\r\nlet failDivisible num divisors =\r\n  maybe.For(divisors, fun divisor -\u003e\r\n    maybe.Bind(safeMod num divisor, fun res -\u003e\r\n      if res = 0 then maybe.ReturnFrom(None)\r\n      else maybe.Zero() ))");'></button></pre>
+
+
+<div class="navigation">
+
+<p>Next: <a href="monoids.html">Monoidal computations</a> | <a href="home.html">Table of Contents</a></p>
+
+</div>
+
+
+    <!-- HTML for Tool Tips -->
+    <div class="tip" id="ft1">Multiple items<br />val unit : &#39;a -&gt; &#39;a option<br /><br />Full name: TryJoinads.Maybe.unit<br /><em><br /><br />&#160;The unit function of the Maybe monad</em><br /><br />--------------------<br />type unit = Unit<br /><br />Full name: Microsoft.FSharp.Core.unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft2">val value : &#39;a</div>
+<div class="tip" id="ft3">union case Option.Some: &#39;T -&gt; Option&lt;&#39;T&gt;</div>
+<div class="tip" id="ft4">val bind : (&#39;a -&gt; &#39;b option) -&gt; &#39;a option -&gt; &#39;b option<br /><br />Full name: TryJoinads.Maybe.bind<br /><em><br /><br />&#160;The bind operation of the Maybe monad </em></div>
+<div class="tip" id="ft5">val f : (&#39;a -&gt; &#39;b option)</div>
+<div class="tip" id="ft6">union case Option.None: Option&lt;&#39;T&gt;</div>
+<div class="tip" id="ft7">type Reader&lt;&#39;TState,&#39;T&gt; = | R of (&#39;TState -&gt; &#39;T)<br /><br />Full name: TryJoinads.Reader.Reader&lt;_,_&gt;<br /><em><br /><br />&#160;Represents a computation that depends on &#39;TState</em></div>
+<div class="tip" id="ft8">union case Reader.R: (&#39;TState -&gt; &#39;T) -&gt; Reader&lt;&#39;TState,&#39;T&gt;</div>
+<div class="tip" id="ft9">Multiple items<br />val unit : &#39;a -&gt; Reader&lt;&#39;b,&#39;a&gt;<br /><br />Full name: TryJoinads.Reader.unit<br /><em><br /><br />&#160;The unit function of the Reader monad</em><br /><br />--------------------<br />type unit = Unit<br /><br />Full name: Microsoft.FSharp.Core.unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft10">val bind : (&#39;a -&gt; Reader&lt;&#39;b,&#39;c&gt;) -&gt; Reader&lt;&#39;b,&#39;a&gt; -&gt; Reader&lt;&#39;b,&#39;c&gt;<br /><br />Full name: TryJoinads.Reader.bind<br /><em><br /><br />&#160;The bind operation of the Reader monad</em></div>
+<div class="tip" id="ft11">val f : (&#39;a -&gt; Reader&lt;&#39;b,&#39;c&gt;)</div>
+<div class="tip" id="ft12">val comp1 : (&#39;b -&gt; &#39;a)</div>
+<div class="tip" id="ft13">val state : &#39;b</div>
+<div class="tip" id="ft14">val comp2 : (&#39;b -&gt; &#39;c)</div>
+<div class="tip" id="ft15">type MaybeBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; MaybeBuilder<br />&#160;&#160;&#160;&#160;member Bind : v:&#39;c option * f:(&#39;c -&gt; &#39;d option) -&gt; &#39;d option<br />&#160;&#160;&#160;&#160;member Combine : m1:unit option * d2:(unit -&gt; &#39;b option) -&gt; &#39;b option<br />&#160;&#160;&#160;&#160;member Delay : f:&#39;c -&gt; &#39;c<br />&#160;&#160;&#160;&#160;member For : xs:seq&lt;&#39;T&gt; * f:(&#39;T -&gt; unit option) -&gt; unit option<br />&#160;&#160;&#160;&#160;member Return : v:&#39;b -&gt; &#39;b option<br />&#160;&#160;&#160;&#160;member ReturnFrom : m:&#39;a -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member Run : d1:(unit -&gt; &#39;a) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member TryFinally : f:(unit -&gt; &#39;a) * finalizer:(unit -&gt; unit) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member TryWith : f:(unit -&gt; &#39;a) * handler:(exn -&gt; &#39;a) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member Using : res:&#39;a option * f:(&#39;a -&gt; &#39;b option) -&gt; &#39;b option (requires &#39;a :&gt; System.IDisposable)<br />&#160;&#160;&#160;&#160;member While : cond:(unit -&gt; bool) * body:(unit -&gt; unit option) -&gt; unit option<br />&#160;&#160;&#160;&#160;member Zero : unit -&gt; unit option<br />&#160;&#160;end<br /><br />Full name: TryJoinads.MaybeBuilder<br /><em><br /><br />&#160;Computation builder for the Maybe monad</em></div>
+<div class="tip" id="ft16">val x : MaybeBuilder</div>
+<div class="tip" id="ft17">member MaybeBuilder.Bind : v:&#39;c option * f:(&#39;c -&gt; &#39;d option) -&gt; &#39;d option<br /><br />Full name: TryJoinads.MaybeBuilder.Bind</div>
+<div class="tip" id="ft18">val v : &#39;c option<br />&#160;&#160;type: &#39;c option<br /></div>
+<div class="tip" id="ft19">val f : (&#39;c -&gt; &#39;d option)</div>
+<div class="tip" id="ft20">module Maybe<br /><br />from TryJoinads</div>
+<div class="tip" id="ft21">member MaybeBuilder.Return : v:&#39;b -&gt; &#39;b option<br /><br />Full name: TryJoinads.MaybeBuilder.Return</div>
+<div class="tip" id="ft22">val v : &#39;b</div>
+<div class="tip" id="ft23">val unit : &#39;a -&gt; &#39;a option<br /><br />Full name: TryJoinads.Maybe.unit<br /><em><br /><br />&#160;The unit function of the Maybe monad</em></div>
+<div class="tip" id="ft24">member MaybeBuilder.ReturnFrom : m:&#39;a -&gt; &#39;a<br /><br />Full name: TryJoinads.MaybeBuilder.ReturnFrom</div>
+<div class="tip" id="ft25">val m : &#39;a</div>
+<div class="tip" id="ft26">type ReaderBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; ReaderBuilder<br />&#160;&#160;&#160;&#160;member Bind : v:Reader.Reader&lt;&#39;d,&#39;e&gt; * f:(&#39;e -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;) -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;<br />&#160;&#160;&#160;&#160;member Combine : m1:Reader.Reader&lt;&#39;a,unit&gt; * m2:Reader.Reader&lt;&#39;a,&#39;b&gt; -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br />&#160;&#160;&#160;&#160;member Delay : f:(unit -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br />&#160;&#160;&#160;&#160;member For : xs:seq&lt;&#39;T&gt; * f:(&#39;T -&gt; Reader.Reader&lt;&#39;a,unit&gt;) -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br />&#160;&#160;&#160;&#160;member Return : v:&#39;b -&gt; Reader.Reader&lt;&#39;c,&#39;b&gt;<br />&#160;&#160;&#160;&#160;member ReturnFrom : m:&#39;a -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member Run : m1:&#39;a -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member TryFinally : Reader.Reader&lt;&#39;a,&#39;b&gt; * finalizer:(unit -&gt; unit) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br />&#160;&#160;&#160;&#160;member TryWith : Reader.Reader&lt;&#39;a,&#39;b&gt; * handler:(exn -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br />&#160;&#160;&#160;&#160;member Using : res:Reader.Reader&lt;&#39;a,&#39;b&gt; * f:(&#39;b -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt; (requires &#39;b :&gt; System.IDisposable)<br />&#160;&#160;&#160;&#160;member While : cond:(unit -&gt; bool) * body:Reader.Reader&lt;&#39;a,unit&gt; -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br />&#160;&#160;&#160;&#160;member Zero : unit -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br />&#160;&#160;end<br /><br />Full name: TryJoinads.ReaderBuilder<br /><em><br /><br />&#160;Computation builder for the Reader monad</em></div>
+<div class="tip" id="ft27">val x : ReaderBuilder</div>
+<div class="tip" id="ft28">member ReaderBuilder.Bind : v:Reader.Reader&lt;&#39;d,&#39;e&gt; * f:(&#39;e -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;) -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.Bind</div>
+<div class="tip" id="ft29">val v : Reader.Reader&lt;&#39;d,&#39;e&gt;</div>
+<div class="tip" id="ft30">val f : (&#39;e -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;)</div>
+<div class="tip" id="ft31">module Reader<br /><br />from TryJoinads</div>
+<div class="tip" id="ft32">val bind : (&#39;a -&gt; Reader.Reader&lt;&#39;b,&#39;c&gt;) -&gt; Reader.Reader&lt;&#39;b,&#39;a&gt; -&gt; Reader.Reader&lt;&#39;b,&#39;c&gt;<br /><br />Full name: TryJoinads.Reader.bind<br /><em><br /><br />&#160;The bind operation of the Reader monad</em></div>
+<div class="tip" id="ft33">member ReaderBuilder.Return : v:&#39;b -&gt; Reader.Reader&lt;&#39;c,&#39;b&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.Return</div>
+<div class="tip" id="ft34">val unit : &#39;a -&gt; Reader.Reader&lt;&#39;b,&#39;a&gt;<br /><br />Full name: TryJoinads.Reader.unit<br /><em><br /><br />&#160;The unit function of the Reader monad</em></div>
+<div class="tip" id="ft35">member ReaderBuilder.ReturnFrom : m:&#39;a -&gt; &#39;a<br /><br />Full name: TryJoinads.ReaderBuilder.ReturnFrom</div>
+<div class="tip" id="ft36">val maybe : MaybeBuilder<br /><br />Full name: TryJoinads.maybe<br /><em><br /><br />&#160;Objects representing computaiton builder instances</em></div>
+<div class="tip" id="ft37">val reader : ReaderBuilder<br /><br />Full name: TryJoinads.reader</div>
+<div class="tip" id="ft38">val random : System.Random<br /><br />Full name: TryJoinads.random<br /><em><br /><br />&#160;Random number generator</em></div>
+<div class="tip" id="ft39">namespace System</div>
+<div class="tip" id="ft40">type Random =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; System.Random<br />&#160;&#160;&#160;&#160;new : int -&gt; System.Random<br />&#160;&#160;&#160;&#160;member Next : unit -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int * int -&gt; int<br />&#160;&#160;&#160;&#160;member NextBytes : System.Byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;member NextDouble : unit -&gt; float<br />&#160;&#160;end<br /><br />Full name: System.Random</div>
+<div class="tip" id="ft41">val maybeFail : unit -&gt; unit option<br /><br />Full name: TryJoinads.maybeFail<br /><em><br /><br />&#160;Either fails or returns some unit</em></div>
+<div class="tip" id="ft42">System.Random.Next() : int<br />System.Random.Next(maxValue: int) : int<br />System.Random.Next(minValue: int, maxValue: int) : int</div>
+<div class="tip" id="ft43">val maybeDice : unit -&gt; int option<br /><br />Full name: TryJoinads.maybeDice<br /><em><br /><br />&#160;Computation that either fails or returns a random number</em></div>
+<div class="tip" id="ft44">val maybeTwice : int option<br /><br />Full name: TryJoinads.maybeTwice<br />&#160;&#160;type: int option<br /><br /><em><br /><br />&#160;Computation that adds two dices (fails in 3/4 of cases)</em></div>
+<div class="tip" id="ft45">val n1 : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft46">val n2 : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft47">val maybeFail : unit -&gt; unit option<br /><br />Full name: TryJoinads.MaybeTranslations1.maybeFail</div>
+<div class="tip" id="ft48">member MaybeBuilder.Return : v:&#39;b -&gt; &#39;b option</div>
+<div class="tip" id="ft49">member MaybeBuilder.ReturnFrom : m:&#39;a -&gt; &#39;a</div>
+<div class="tip" id="ft50">val maybeDice : unit -&gt; int option<br /><br />Full name: TryJoinads.MaybeTranslations1.maybeDice</div>
+<div class="tip" id="ft51">member MaybeBuilder.Bind : v:&#39;c option * f:(&#39;c -&gt; &#39;d option) -&gt; &#39;d option</div>
+<div class="tip" id="ft52">val maybeTwice : int option<br /><br />Full name: TryJoinads.MaybeTranslations1.maybeTwice<br />&#160;&#160;type: int option<br /></div>
+<div class="tip" id="ft53">type M&lt;&#39;T&gt; = | M of &#39;T<br /><br />Full name: TryJoinads.M&lt;_&gt;<br />&#160;&#160;type: M&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft54">union case M.M: &#39;T -&gt; M&lt;&#39;T&gt;</div>
+<div class="tip" id="ft55">type MBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; MBuilder<br />&#160;&#160;&#160;&#160;member Bind : m:M&lt;&#39;T&gt; * f:(&#39;T -&gt; M&lt;&#39;R&gt;) -&gt; M&lt;&#39;R&gt;<br />&#160;&#160;&#160;&#160;member Return : v:&#39;T -&gt; M&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;member ReturnFrom : m:M&lt;&#39;T&gt; -&gt; M&lt;&#39;T&gt;<br />&#160;&#160;end<br /><br />Full name: TryJoinads.MBuilder</div>
+<div class="tip" id="ft56">val x : MBuilder</div>
+<div class="tip" id="ft57">member MBuilder.Bind : m:M&lt;&#39;T&gt; * f:(&#39;T -&gt; M&lt;&#39;R&gt;) -&gt; M&lt;&#39;R&gt;<br /><br />Full name: TryJoinads.MBuilder.Bind</div>
+<div class="tip" id="ft58">val m : M&lt;&#39;T&gt;<br />&#160;&#160;type: M&lt;&#39;T&gt;<br /></div>
+<div class="tip" id="ft59">val f : (&#39;T -&gt; M&lt;&#39;R&gt;)</div>
+<div class="tip" id="ft60">val failwith : string -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.Operators.failwith</div>
+<div class="tip" id="ft61">member MBuilder.Return : v:&#39;T -&gt; M&lt;&#39;T&gt;<br /><br />Full name: TryJoinads.MBuilder.Return</div>
+<div class="tip" id="ft62">val v : &#39;T</div>
+<div class="tip" id="ft63">member MBuilder.ReturnFrom : m:M&lt;&#39;T&gt; -&gt; M&lt;&#39;T&gt;<br /><br />Full name: TryJoinads.MBuilder.ReturnFrom</div>
+<div class="tip" id="ft64">val m : MBuilder<br /><br />Full name: TryJoinads.m</div>
+<div class="tip" id="ft65">val shouldEqual : &#39;a -&gt; &#39;a -&gt; unit (requires equality)<br /><br />Full name: TryJoinads.shouldEqual</div>
+<div class="tip" id="ft66">val a : &#39;a (requires equality)</div>
+<div class="tip" id="ft67">val b : &#39;a (requires equality)</div>
+<div class="tip" id="ft68">val not : bool -&gt; bool<br /><br />Full name: Microsoft.FSharp.Core.Operators.not</div>
+<div class="tip" id="ft69">val leftIdentity : &#39;a -&gt; (&#39;a -&gt; M&lt;&#39;b&gt;) -&gt; unit (requires equality)<br /><br />Full name: TryJoinads.leftIdentity<br /><em><br /><br />&#160;The left identity monad law</em></div>
+<div class="tip" id="ft70">val x : &#39;a</div>
+<div class="tip" id="ft71">val f : (&#39;a -&gt; M&lt;&#39;b&gt;) (requires equality)</div>
+<div class="tip" id="ft72">val m1 : M&lt;&#39;b&gt; (requires equality)<br />&#160;&#160;type: M&lt;&#39;b&gt;<br /></div>
+<div class="tip" id="ft73">val v : &#39;a</div>
+<div class="tip" id="ft74">val m2 : M&lt;&#39;b&gt; (requires equality)<br />&#160;&#160;type: M&lt;&#39;b&gt;<br /></div>
+<div class="tip" id="ft75">val rightIdentity : M&lt;&#39;a&gt; -&gt; unit (requires equality)<br /><br />Full name: TryJoinads.rightIdentity<br /><em><br /><br />&#160;The right identity monad law </em></div>
+<div class="tip" id="ft76">val n : M&lt;&#39;a&gt; (requires equality)<br />&#160;&#160;type: M&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft77">val m1 : M&lt;&#39;a&gt; (requires equality)<br />&#160;&#160;type: M&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft78">val x : &#39;a (requires equality)</div>
+<div class="tip" id="ft79">val m2 : M&lt;&#39;a&gt; (requires equality)<br />&#160;&#160;type: M&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft80">val associativity : M&lt;&#39;a&gt; -&gt; (&#39;a -&gt; M&lt;&#39;a&gt;) -&gt; (&#39;a -&gt; M&lt;&#39;b&gt;) -&gt; unit (requires equality)<br /><br />Full name: TryJoinads.associativity<br /><em><br /><br />&#160;The associativity monad law </em></div>
+<div class="tip" id="ft81">val n : M&lt;&#39;a&gt;<br />&#160;&#160;type: M&lt;&#39;a&gt;<br /></div>
+<div class="tip" id="ft82">val f : (&#39;a -&gt; M&lt;&#39;a&gt;)</div>
+<div class="tip" id="ft83">val g : (&#39;a -&gt; M&lt;&#39;b&gt;) (requires equality)</div>
+<div class="tip" id="ft84">val y : &#39;a</div>
+<div class="tip" id="ft85">val m3 : M&lt;&#39;b&gt; (requires equality)<br />&#160;&#160;type: M&lt;&#39;b&gt;<br /></div>
+<div class="tip" id="ft86">val m : ReaderBuilder</div>
+<div class="tip" id="ft87">member ReaderBuilder.Zero : unit -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.Zero<br /><em><br /><br />&#160;Creates a monadic unit computation</em></div>
+<div class="tip" id="ft88">member ReaderBuilder.Return : v:&#39;b -&gt; Reader.Reader&lt;&#39;c,&#39;b&gt;</div>
+<div class="tip" id="ft89">member ReaderBuilder.Delay : f:(unit -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.Delay<br /><em><br /><br />&#160;Wraps the effects in the computation type</em></div>
+<div class="tip" id="ft90">val f : (unit -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;)</div>
+<div class="tip" id="ft91">member ReaderBuilder.Bind : v:Reader.Reader&lt;&#39;d,&#39;e&gt; * f:(&#39;e -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;) -&gt; Reader.Reader&lt;&#39;d,&#39;f&gt;</div>
+<div class="tip" id="ft92">member ReaderBuilder.Zero : unit -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br /><em><br /><br />&#160;Creates a monadic unit computation</em></div>
+<div class="tip" id="ft93">member ReaderBuilder.Combine : m1:Reader.Reader&lt;&#39;a,unit&gt; * m2:Reader.Reader&lt;&#39;a,&#39;b&gt; -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.Combine<br /><em><br /><br />&#160;Compose effectful and another computation</em></div>
+<div class="tip" id="ft94">val m1 : Reader.Reader&lt;&#39;a,unit&gt;</div>
+<div class="tip" id="ft95">val m2 : Reader.Reader&lt;&#39;a,&#39;b&gt;</div>
+<div class="tip" id="ft96">member ReaderBuilder.Run : m1:&#39;a -&gt; &#39;a<br /><br />Full name: TryJoinads.ReaderBuilder.Run<br /><em><br /><br />&#160;Return a computation without affecting it<br />&#160;(Run is not used in this case and can be omitted)</em></div>
+<div class="tip" id="ft97">val m1 : &#39;a</div>
+<div class="tip" id="ft98">val readState : unit -&gt; Reader.Reader&lt;&#39;a,&#39;a&gt;<br /><br />Full name: TryJoinads.readState<br /><em><br /><br />&#160;Reads the state from the Reader monad</em></div>
+<div class="tip" id="ft99">Reader.R (fun state -&gt; state)</div>
+<div class="tip" id="ft100">val runReader : &#39;a -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt; -&gt; &#39;b<br /><br />Full name: TryJoinads.runReader<br /><em><br /><br />&#160;Runs the Reader monad with a given state</em></div>
+<div class="tip" id="ft101">val state : &#39;a</div>
+<div class="tip" id="ft102">val m : Reader.Reader&lt;&#39;a,&#39;b&gt;</div>
+<div class="tip" id="ft103">let (Reader.R f) = m in f state</div>
+<div class="tip" id="ft104">val printLog : bool -&gt; string -&gt; Reader.Reader&lt;string,unit&gt;<br /><br />Full name: TryJoinads.printLog<br /><em><br /><br />&#160;Prints given message and optionally also the state</em></div>
+<div class="tip" id="ft105">val detailed : bool<br />&#160;&#160;type: bool<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft106">val message : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft107">val state : string<br />&#160;&#160;type: string<br /></div>
+<div class="tip" id="ft108">val printfn : Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="ft109">val printLog : bool -&gt; string -&gt; Reader.Reader&lt;string,unit&gt;<br /><br />Full name: TryJoinads.ReaderTranslation2.printLog</div>
+<div class="tip" id="ft110">member ReaderBuilder.Run : m1:&#39;a -&gt; &#39;a<br /><em><br /><br />&#160;Return a computation without affecting it<br />&#160;(Run is not used in this case and can be omitted)</em></div>
+<div class="tip" id="ft111">member ReaderBuilder.Delay : f:(unit -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><em><br /><br />&#160;Wraps the effects in the computation type</em></div>
+<div class="tip" id="ft112">member ReaderBuilder.Combine : m1:Reader.Reader&lt;&#39;a,unit&gt; * m2:Reader.Reader&lt;&#39;a,&#39;b&gt; -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><em><br /><br />&#160;Compose effectful and another computation</em></div>
+<div class="tip" id="ft113">val m : MaybeBuilder</div>
+<div class="tip" id="ft114">member MaybeBuilder.Zero : unit -&gt; unit option<br /><br />Full name: TryJoinads.MaybeBuilder.Zero<br /><em><br /><br />&#160;Creates a monadic unit computation</em></div>
+<div class="tip" id="ft115">member MaybeBuilder.Delay : f:&#39;c -&gt; &#39;c<br /><br />Full name: TryJoinads.MaybeBuilder.Delay<br /><em><br /><br />&#160;Return the function as a delayed computation type</em></div>
+<div class="tip" id="ft116">val f : &#39;c</div>
+<div class="tip" id="ft117">member MaybeBuilder.Combine : m1:unit option * d2:(unit -&gt; &#39;b option) -&gt; &#39;b option<br /><br />Full name: TryJoinads.MaybeBuilder.Combine<br /><em><br /><br />&#160;Compose computation and a delayed computation</em></div>
+<div class="tip" id="ft118">val m1 : unit option<br />&#160;&#160;type: unit option<br /></div>
+<div class="tip" id="ft119">val d2 : (unit -&gt; &#39;b option)</div>
+<div class="tip" id="ft120">member MaybeBuilder.Run : d1:(unit -&gt; &#39;a) -&gt; &#39;a<br /><br />Full name: TryJoinads.MaybeBuilder.Run<br /><em><br /><br />&#160;Run the effects of a delayed computation</em></div>
+<div class="tip" id="ft121">val d1 : (unit -&gt; &#39;a)</div>
+<div class="tip" id="ft122">val maybeNumber : bool -&gt; int option<br /><br />Full name: TryJoinads.maybeNumber</div>
+<div class="tip" id="ft123">val canFail : bool<br />&#160;&#160;type: bool<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft124">val maybeNumber : bool -&gt; int option<br /><br />Full name: TryJoinads.MaybeTranslation2.maybeNumber</div>
+<div class="tip" id="ft125">member MaybeBuilder.Run : d1:(unit -&gt; &#39;a) -&gt; &#39;a<br /><em><br /><br />&#160;Run the effects of a delayed computation</em></div>
+<div class="tip" id="ft126">member MaybeBuilder.Delay : f:&#39;c -&gt; &#39;c<br /><em><br /><br />&#160;Return the function as a delayed computation type</em></div>
+<div class="tip" id="ft127">member MaybeBuilder.Combine : m1:unit option * d2:(unit -&gt; &#39;b option) -&gt; &#39;b option<br /><em><br /><br />&#160;Compose computation and a delayed computation</em></div>
+<div class="tip" id="ft128">member MaybeBuilder.Zero : unit -&gt; unit option<br /><em><br /><br />&#160;Creates a monadic unit computation</em></div>
+<div class="tip" id="ft129">member ReaderBuilder.TryWith : Reader.Reader&lt;&#39;a,&#39;b&gt; * handler:(exn -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.TryWith<br /><em><br /><br />&#160;The exception handling needs to be lifted into the monadic <br />&#160;computation type, so we need to use the computation structure</em></div>
+<div class="tip" id="ft130">union case Reader.Reader.R: (&#39;TState -&gt; &#39;T) -&gt; Reader.Reader&lt;&#39;TState,&#39;T&gt;</div>
+<div class="tip" id="ft131">val body : (&#39;a -&gt; &#39;b)</div>
+<div class="tip" id="ft132">val handler : (exn -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;)</div>
+<div class="tip" id="ft133">Multiple items<br />val e : exn<br />&#160;&#160;type: exn<br /><br /><br />--------------------<br />val e : exn<br />&#160;&#160;type: exn<br /></div>
+<div class="tip" id="ft134">val handlerBody : (&#39;a -&gt; &#39;b)</div>
+<div class="tip" id="ft135">val e : exn<br />&#160;&#160;type: exn<br /></div>
+<div class="tip" id="ft136">member ReaderBuilder.TryFinally : Reader.Reader&lt;&#39;a,&#39;b&gt; * finalizer:(unit -&gt; unit) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.TryFinally<br /><em><br /><br />&#160;The finalizer is defined similarly (but the body of the <br />&#160;finalizer cannot be monadic - just a `unit -&gt; unit` function      </em></div>
+<div class="tip" id="ft137">val finalizer : (unit -&gt; unit)</div>
+<div class="tip" id="ft138">member ReaderBuilder.Using : res:Reader.Reader&lt;&#39;a,&#39;b&gt; * f:(&#39;b -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt; (requires &#39;b :&gt; System.IDisposable)<br /><br />Full name: TryJoinads.ReaderBuilder.Using<br /><em><br /><br />&#160;Similar to &#39;Bind&#39;, but it disposes of the resource (a way to do <br />&#160;deterministic finalization in .NET) after it gets out of scope</em></div>
+<div class="tip" id="ft139">val res : Reader.Reader&lt;&#39;a,#System.IDisposable&gt;</div>
+<div class="tip" id="ft140">val f : (#System.IDisposable -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt;)</div>
+<div class="tip" id="ft141">val disposableRes : #System.IDisposable<br />&#160;&#160;type: #System.IDisposable<br /></div>
+<div class="tip" id="ft142">member ReaderBuilder.TryFinally : Reader.Reader&lt;&#39;a,&#39;b&gt; * finalizer:(unit -&gt; unit) -&gt; Reader.Reader&lt;&#39;a,&#39;b&gt;<br /><em><br /><br />&#160;The finalizer is defined similarly (but the body of the <br />&#160;finalizer cannot be monadic - just a `unit -&gt; unit` function      </em></div>
+<div class="tip" id="ft143">Multiple items<br />type IDisposable =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;member Dispose : unit -&gt; unit<br />&#160;&#160;end<br /><br />Full name: System.IDisposable<br /><br />--------------------<br />System.IDisposable</div>
+<div class="tip" id="ft144">member ReaderBuilder.While : cond:(unit -&gt; bool) * body:Reader.Reader&lt;&#39;a,unit&gt; -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.While<br /><em><br /><br />&#160;The &#39;while&#39; loop evaluates the condition and then either ends<br />&#160;(returning &#39;Zero&#39;), or evaluates body once and then runs recursively</em></div>
+<div class="tip" id="ft145">val cond : (unit -&gt; bool)</div>
+<div class="tip" id="ft146">val body : Reader.Reader&lt;&#39;a,unit&gt;</div>
+<div class="tip" id="ft147">member ReaderBuilder.While : cond:(unit -&gt; bool) * body:Reader.Reader&lt;&#39;a,unit&gt; -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br /><em><br /><br />&#160;The &#39;while&#39; loop evaluates the condition and then either ends<br />&#160;(returning &#39;Zero&#39;), or evaluates body once and then runs recursively</em></div>
+<div class="tip" id="ft148">member ReaderBuilder.For : xs:seq&lt;&#39;T&gt; * f:(&#39;T -&gt; Reader.Reader&lt;&#39;a,unit&gt;) -&gt; Reader.Reader&lt;&#39;a,unit&gt;<br /><br />Full name: TryJoinads.ReaderBuilder.For<br /><em><br /><br />&#160;The &#39;for&#39; loop can be defined using &#39;While&#39; and &#39;Using&#39;</em></div>
+<div class="tip" id="ft149">val xs : seq&lt;&#39;T&gt;<br />&#160;&#160;type: seq&lt;&#39;T&gt;<br />&#160;&#160;inherits: System.Collections.IEnumerable<br /></div>
+<div class="tip" id="ft150">Multiple items<br />val seq : seq&lt;&#39;T&gt; -&gt; seq&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.Operators.seq<br /><br />--------------------<br />type seq&lt;&#39;T&gt; = System.Collections.Generic.IEnumerable&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Collections.seq&lt;_&gt;<br />&#160;&#160;type: seq&lt;&#39;T&gt;<br />&#160;&#160;inherits: System.Collections.IEnumerable<br /></div>
+<div class="tip" id="ft151">val f : (&#39;T -&gt; Reader.Reader&lt;&#39;a,unit&gt;)</div>
+<div class="tip" id="ft152">member ReaderBuilder.Using : res:Reader.Reader&lt;&#39;a,&#39;b&gt; * f:(&#39;b -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt;) -&gt; Reader.Reader&lt;&#39;a,&#39;c&gt; (requires &#39;b :&gt; System.IDisposable)<br /><em><br /><br />&#160;Similar to &#39;Bind&#39;, but it disposes of the resource (a way to do <br />&#160;deterministic finalization in .NET) after it gets out of scope</em></div>
+<div class="tip" id="ft153">System.Collections.Generic.IEnumerable.GetEnumerator() : System.Collections.Generic.IEnumerator&lt;&#39;T&gt;</div>
+<div class="tip" id="ft154">val en : System.Collections.Generic.IEnumerator&lt;&#39;T&gt;<br />&#160;&#160;type: System.Collections.Generic.IEnumerator&lt;&#39;T&gt;<br />&#160;&#160;inherits: System.IDisposable<br />&#160;&#160;inherits: System.Collections.IEnumerator<br /></div>
+<div class="tip" id="ft155">System.Collections.IEnumerator.MoveNext() : bool</div>
+<div class="tip" id="ft156">property System.Collections.Generic.IEnumerator.Current: &#39;T</div>
+<div class="tip" id="ft157">member MaybeBuilder.TryWith : f:(unit -&gt; &#39;a) * handler:(exn -&gt; &#39;a) -&gt; &#39;a<br /><br />Full name: TryJoinads.MaybeBuilder.TryWith<br /><em><br /><br />&#160;The exception handling uses the delayed type directly</em></div>
+<div class="tip" id="ft158">val f : (unit -&gt; &#39;a)</div>
+<div class="tip" id="ft159">val handler : (exn -&gt; &#39;a)</div>
+<div class="tip" id="ft160">member MaybeBuilder.TryFinally : f:(unit -&gt; &#39;a) * finalizer:(unit -&gt; unit) -&gt; &#39;a<br /><br />Full name: TryJoinads.MaybeBuilder.TryFinally<br /><em><br /><br />&#160;The finalizer is defined similarly (but the body of the <br />&#160;finalizer cannot be monadic - just a `unit -&gt; unit` function)      </em></div>
+<div class="tip" id="ft161">/// Similar to &#39;Bind&#39;, but it disposes of the resource (a way to do <br />&#160;&#160;/// deterministic finalization in .NET) after it gets out of scope<br />&#160;&#160;member m.Using(res, f) =<br />&#160;&#160;&#160;&#160;m.Bind(res, fun disposableRes -&gt;<br />&#160;&#160;&#160;&#160;&#160;&#160;m.TryFinally(m.Delay(fun () -&gt; f disposableRes), fun () -&gt;<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;(disposableRes :&gt; System.IDisposable).Dispose() ))<br /><br />&#160;&#160;/// The &#39;while&#39; loop evaluates the condition and then either ends<br />&#160;&#160;/// (returning &#39;Zero&#39;), or evaluates body once and then runs recursively<br />&#160;&#160;member m.While(cond, body) = <br />&#160;&#160;&#160;&#160;if not (cond()) then m.Zero()<br />&#160;&#160;&#160;&#160;else m.Combine(m.Run(body), m.Delay(fun () -&gt; m.While(cond, body)))<br /><br />&#160;&#160;/// The &#39;for&#39; loop can be defined using &#39;While&#39; and &#39;Using&#39;<br />&#160;&#160;member m.For(xs:seq&lt;&#39;T&gt;, f) = <br />&#160;&#160;&#160;&#160;m.Using(m.Return(xs.GetEnumerator()), fun en -&gt;<br />&#160;&#160;&#160;&#160;&#160;&#160;m.While( (fun () -&gt; en.MoveNext()), m.Delay(fun () -&gt; <br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;f en.Current) ) )</div>
+<div class="tip" id="ft162">val safeMod : int -&gt; int -&gt; int option<br /><br />Full name: TryJoinads.safeMod<br /><em><br /><br />&#160;Safe modulo using the Maybe monad</em></div>
+<div class="tip" id="ft163">val a : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft164">val b : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft165">val failDivisible : int -&gt; seq&lt;int&gt; -&gt; unit option<br /><br />Full name: TryJoinads.failDivisible<br /><em><br /><br />&#160;Fail if the number is divisible by any divisor</em></div>
+<div class="tip" id="ft166">val num : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft167">val divisors : seq&lt;int&gt;<br />&#160;&#160;type: seq&lt;int&gt;<br />&#160;&#160;inherits: System.Collections.IEnumerable<br /></div>
+<div class="tip" id="ft168">val divisor : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft169">val res : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft170">val safeMod : int -&gt; int -&gt; int option<br /><br />Full name: TryJoinads.MaybeTranslation3.safeMod</div>
+<div class="tip" id="ft171">member MaybeBuilder.TryWith : f:(unit -&gt; &#39;a) * handler:(exn -&gt; &#39;a) -&gt; &#39;a<br /><em><br /><br />&#160;The exception handling uses the delayed type directly</em></div>
+<div class="tip" id="ft172">val failDivisible : int -&gt; seq&lt;int&gt; -&gt; unit option<br /><br />Full name: TryJoinads.MaybeTranslation3.failDivisible</div>
+<div class="tip" id="ft173">member MaybeBuilder.For : xs:seq&lt;&#39;T&gt; * f:(&#39;T -&gt; unit option) -&gt; unit option<br /><em><br /><br />&#160;The &#39;for&#39; loop can be defined using &#39;While&#39; and &#39;Using&#39;</em></div>
+
+  </body>
+  </html>

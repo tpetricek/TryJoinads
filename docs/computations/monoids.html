@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Computation expressions for monoids</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../../contentstyle.css" />
+    <script type="text/javascript" src="../../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Monoidal computations</h1>
+
+<p>In this article, we discuss how to use F# computation expressions to provide syntax for
+monoidal computations. Formally, a monoid is formed by an associative binary operation 
+and a unit element. In computation expressions, the binary operation is represented by
+the <code>Combine</code> operation. Importantly, it has a different type and purpose than for 
+monads. The unit element is defined as the <code>Zero</code> member.</p>
+
+<h2>Natural numbers with multiplication</h2>
+
+<p>The monoidal structure can be defined for a number of computations. Most well known are
+lists (which are covered in <a href="composed.html">composed computations</a>) and the Maybe data type
+(which we do not cover in this paper). In this section, we look at a simpler example -
+natural numbers with multiplication as the binary operation and 1 as the unit element.</p>
+
+<p>The basic computation builder for <code>mul { .. }</code> computation expressions can be defined
+as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft1', 1)" onmouseover="showTip(event, 'ft1', 1)" class="i">M</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 2)" onmouseover="showTip(event, 'ft2', 2)" class="i">M</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'ft3', 3)" onmouseover="showTip(event, 'ft3', 3)" class="i">int</span>
+
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft4', 4)" onmouseover="showTip(event, 'ft4', 4)" class="i">MulBuilder</span>() <span class="o">=</span>
+  <span class="c">/// Zero element of the monoid</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft5', 5)" onmouseover="showTip(event, 'ft5', 5)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft6', 6)" onmouseover="showTip(event, 'ft6', 6)" class="i">Zero</span>() <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 7)" onmouseover="showTip(event, 'ft2', 7)" class="i">M</span> <span class="n">1</span>
+  <span class="c">/// Binary operation of the monoid</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft5', 8)" onmouseover="showTip(event, 'ft5', 8)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft7', 9)" onmouseover="showTip(event, 'ft7', 9)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft2', 10)" onmouseover="showTip(event, 'ft2', 10)" class="i">M</span> <span onmouseout="hideTip(event, 'ft8', 11)" onmouseover="showTip(event, 'ft8', 11)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft2', 12)" onmouseover="showTip(event, 'ft2', 12)" class="i">M</span> <span onmouseout="hideTip(event, 'ft9', 13)" onmouseover="showTip(event, 'ft9', 13)" class="i">b</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 14)" onmouseover="showTip(event, 'ft2', 14)" class="i">M</span> (<span onmouseout="hideTip(event, 'ft8', 15)" onmouseover="showTip(event, 'ft8', 15)" class="i">a</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'ft9', 16)" onmouseover="showTip(event, 'ft9', 16)" class="i">b</span>)
+
+  <span class="c">/// Used to create elements of the monoid</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft5', 17)" onmouseover="showTip(event, 'ft5', 17)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft10', 18)" onmouseover="showTip(event, 'ft10', 18)" class="i">Yield</span>(<span onmouseout="hideTip(event, 'ft11', 19)" onmouseover="showTip(event, 'ft11', 19)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 20)" onmouseover="showTip(event, 'ft2', 20)" class="i">M</span> <span onmouseout="hideTip(event, 'ft11', 21)" onmouseover="showTip(event, 'ft11', 21)" class="i">v</span>
+  <span class="c">/// Enables the &#39;yield!&#39; syntax</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft5', 22)" onmouseover="showTip(event, 'ft5', 22)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft12', 23)" onmouseover="showTip(event, 'ft12', 23)" class="i">YieldFrom</span>(<span onmouseout="hideTip(event, 'ft2', 24)" onmouseover="showTip(event, 'ft2', 24)" class="i">M</span> <span onmouseout="hideTip(event, 'ft11', 25)" onmouseover="showTip(event, 'ft11', 25)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 26)" onmouseover="showTip(event, 'ft2', 26)" class="i">M</span> <span onmouseout="hideTip(event, 'ft11', 27)" onmouseover="showTip(event, 'ft11', 27)" class="i">v</span>
+
+  <span class="c">/// Perform all effects immediately</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft5', 28)" onmouseover="showTip(event, 'ft5', 28)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft13', 29)" onmouseover="showTip(event, 'ft13', 29)" class="i">Delay</span>(<span onmouseout="hideTip(event, 'ft14', 30)" onmouseover="showTip(event, 'ft14', 30)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft14', 31)" onmouseover="showTip(event, 'ft14', 31)" class="i">f</span>()
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft15', 32)" onmouseover="showTip(event, 'ft15', 32)" class="i">mul</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft4', 33)" onmouseover="showTip(event, 'ft4', 33)" class="i">MulBuilder</span>()<br /><button class="run" onclick='parent.runCode("type M = M of int\r\n\r\ntype MulBuilder() =\r\n  /// Zero element of the monoid\r\n  member x.Zero() = M 1\r\n  /// Binary operation of the monoid\r\n  member x.Combine(M a, M b) = M (a * b)\r\n\r\n  /// Used to create elements of the monoid\r\n  member x.Yield(v) = M v\r\n  /// Enables the \u0027yield!\u0027 syntax\r\n  member x.YieldFrom(M v) = M v\r\n\r\n  /// Perform all effects immediately\r\n  member x.Delay(f) = f()\r\n\r\nlet mul = MulBuilder()");'></button></pre>
+
+
+<p>Aside from <code>Zero</code> and <code>Combine</code>, we also define <code>Yield</code>, which wraps a number into the 
+<code>M</code> type that represents the monoid and <code>YieldFrom</code> that is required to enable <code>yield!</code>.
+We also define <code>Delay</code>, because it is required by the translation - in the current implementation,
+it just runs the given function immediately to perform the effects (but we get back to this
+topic in the next section).</p>
+
+<p>Using the computation builder defined above, we can write a function <code>factorial</code> that
+multiplies numbers from the given number to a provided upper bound (this is a more
+complete example than the one in the paper):</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// When called with &#39;factorial 0 x&#39; calculates &#39;x!&#39;</span>
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft16', 34)" onmouseover="showTip(event, 'ft16', 34)" class="i">factorial</span> <span onmouseout="hideTip(event, 'ft17', 35)" onmouseover="showTip(event, 'ft17', 35)" class="i">n</span> <span onmouseout="hideTip(event, 'ft18', 36)" onmouseover="showTip(event, 'ft18', 36)" class="i">bound</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft15', 37)" onmouseover="showTip(event, 'ft15', 37)" class="i">mul</span> { <span class="k">yield</span> <span onmouseout="hideTip(event, 'ft17', 38)" onmouseover="showTip(event, 'ft17', 38)" class="i">n</span>
+        <span class="k">if</span> <span onmouseout="hideTip(event, 'ft17', 39)" onmouseover="showTip(event, 'ft17', 39)" class="i">n</span> <span class="o">&lt;=</span> <span onmouseout="hideTip(event, 'ft18', 40)" onmouseover="showTip(event, 'ft18', 40)" class="i">bound</span> <span class="k">then</span> 
+          <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft16', 41)" onmouseover="showTip(event, 'ft16', 41)" class="i">factorial</span> (<span onmouseout="hideTip(event, 'ft17', 42)" onmouseover="showTip(event, 'ft17', 42)" class="i">n</span> <span class="o">+</span> <span class="n">1</span>) <span onmouseout="hideTip(event, 'ft18', 43)" onmouseover="showTip(event, 'ft18', 43)" class="i">bound</span> } 
+
+<span class="c">// Calculate the factorial of 10</span>
+<span onmouseout="hideTip(event, 'ft16', 44)" onmouseover="showTip(event, 'ft16', 44)" class="i">factorial</span> <span class="n">0</span> <span class="n">10</span><br /><button class="run" onclick='parent.runCode("/// When called with \u0027factorial 0 x\u0027 calculates \u0027x!\u0027\r\nlet rec factorial n bound = \r\n  mul { yield n\r\n        if n \u003c= bound then \r\n          yield! factorial (n + 1) bound } \r\n\r\n// Calculate the factorial of 10\r\nfactorial 0 10");'></button></pre>
+
+
+<p>The translation of the above function looks as follows:</p>
+
+<pre class="fssnip runnable">
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft19', 45)" onmouseover="showTip(event, 'ft19', 45)" class="i">factorial</span> <span onmouseout="hideTip(event, 'ft17', 46)" onmouseover="showTip(event, 'ft17', 46)" class="i">n</span> <span onmouseout="hideTip(event, 'ft18', 47)" onmouseover="showTip(event, 'ft18', 47)" class="i">bound</span> <span class="o">=</span> 
+  <span onmouseout="hideTip(event, 'ft15', 48)" onmouseover="showTip(event, 'ft15', 48)" class="i">mul</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft20', 49)" onmouseover="showTip(event, 'ft20', 49)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'ft15', 50)" onmouseover="showTip(event, 'ft15', 50)" class="i">mul</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft21', 51)" onmouseover="showTip(event, 'ft21', 51)" class="i">Combine</span>
+      ( <span onmouseout="hideTip(event, 'ft15', 52)" onmouseover="showTip(event, 'ft15', 52)" class="i">mul</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft22', 53)" onmouseover="showTip(event, 'ft22', 53)" class="i">Yield</span>(<span onmouseout="hideTip(event, 'ft17', 54)" onmouseover="showTip(event, 'ft17', 54)" class="i">n</span>),
+        <span onmouseout="hideTip(event, 'ft15', 55)" onmouseover="showTip(event, 'ft15', 55)" class="i">mul</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft20', 56)" onmouseover="showTip(event, 'ft20', 56)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+          <span class="k">if</span> <span onmouseout="hideTip(event, 'ft17', 57)" onmouseover="showTip(event, 'ft17', 57)" class="i">n</span> <span class="o">&lt;=</span> <span onmouseout="hideTip(event, 'ft18', 58)" onmouseover="showTip(event, 'ft18', 58)" class="i">bound</span> <span class="k">then</span> 
+            <span onmouseout="hideTip(event, 'ft15', 59)" onmouseover="showTip(event, 'ft15', 59)" class="i">mul</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft23', 60)" onmouseover="showTip(event, 'ft23', 60)" class="i">YieldFrom</span>(<span onmouseout="hideTip(event, 'ft19', 61)" onmouseover="showTip(event, 'ft19', 61)" class="i">factorial</span> (<span onmouseout="hideTip(event, 'ft17', 62)" onmouseover="showTip(event, 'ft17', 62)" class="i">n</span> <span class="o">+</span> <span class="n">1</span>) <span onmouseout="hideTip(event, 'ft18', 63)" onmouseover="showTip(event, 'ft18', 63)" class="i">bound</span>)
+          <span class="k">else</span> <span onmouseout="hideTip(event, 'ft15', 64)" onmouseover="showTip(event, 'ft15', 64)" class="i">mul</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft24', 65)" onmouseover="showTip(event, 'ft24', 65)" class="i">Zero</span>() )))<br /><button class="load" onclick='parent.loadCode("let rec factorial n bound = \r\n  mul.Delay(fun () -\u003e\r\n    mul.Combine\r\n      ( mul.Yield(n),\r\n        mul.Delay(fun () -\u003e\r\n          if n \u003c= bound then \r\n            mul.YieldFrom(factorial (n + 1) bound)\r\n          else mul.Zero() )))");'></button></pre>
+
+
+<h2>Monoid laws</h2>
+
+<p>Every monoid is required to obey two laws. The binary operation has to be associative
+(meaning that <em>a <em> (b </em> c) = (a <em> b) </em> c</em>) and the unit element has to behave as unit
+(meaning that <em>a <em> 1 = a = 1 </em> a</em>). The laws can be expressed using the computation
+expression syntax as follows:</p>
+
+<pre class="fssnip">
+<span class="c">/// The associativity monoid law </span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft31', 75)" onmouseover="showTip(event, 'ft31', 75)" class="i">associativity</span> <span onmouseout="hideTip(event, 'ft32', 76)" onmouseover="showTip(event, 'ft32', 76)" class="i">n1</span> <span onmouseout="hideTip(event, 'ft33', 77)" onmouseover="showTip(event, 'ft33', 77)" class="i">n2</span> <span onmouseout="hideTip(event, 'ft34', 78)" onmouseover="showTip(event, 'ft34', 78)" class="i">n3</span> <span class="o">=</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft35', 79)" onmouseover="showTip(event, 'ft35', 79)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 80)" onmouseover="showTip(event, 'ft25', 80)" class="i">m</span> { <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft32', 81)" onmouseover="showTip(event, 'ft32', 81)" class="i">n1</span> 
+               <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft33', 82)" onmouseover="showTip(event, 'ft33', 82)" class="i">n2</span>
+               <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft34', 83)" onmouseover="showTip(event, 'ft34', 83)" class="i">n3</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft36', 84)" onmouseover="showTip(event, 'ft36', 84)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 85)" onmouseover="showTip(event, 'ft25', 85)" class="i">m</span> { <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft25', 86)" onmouseover="showTip(event, 'ft25', 86)" class="i">m</span> { <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft32', 87)" onmouseover="showTip(event, 'ft32', 87)" class="i">n1</span> 
+                          <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft33', 88)" onmouseover="showTip(event, 'ft33', 88)" class="i">n2</span> }
+               <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft34', 89)" onmouseover="showTip(event, 'ft34', 89)" class="i">n3</span> }
+
+  <span onmouseout="hideTip(event, 'ft35', 90)" onmouseover="showTip(event, 'ft35', 90)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft26', 91)" onmouseover="showTip(event, 'ft26', 91)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft36', 92)" onmouseover="showTip(event, 'ft36', 92)" class="i">m2</span>
+
+<span class="c">/// The unit monoid laws </span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft37', 93)" onmouseover="showTip(event, 'ft37', 93)" class="i">unit</span> <span onmouseout="hideTip(event, 'ft32', 94)" onmouseover="showTip(event, 'ft32', 94)" class="i">n1</span> <span onmouseout="hideTip(event, 'ft33', 95)" onmouseover="showTip(event, 'ft33', 95)" class="i">n2</span> <span class="o">=</span>
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft35', 96)" onmouseover="showTip(event, 'ft35', 96)" class="i">m1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 97)" onmouseover="showTip(event, 'ft25', 97)" class="i">m</span> { <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft32', 98)" onmouseover="showTip(event, 'ft32', 98)" class="i">n1</span>
+               <span class="k">if</span> <span class="k">false</span> <span class="k">then</span> <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft33', 99)" onmouseover="showTip(event, 'ft33', 99)" class="i">n2</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft36', 100)" onmouseover="showTip(event, 'ft36', 100)" class="i">m2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 101)" onmouseover="showTip(event, 'ft25', 101)" class="i">m</span> { <span class="k">if</span> <span class="k">false</span> <span class="k">then</span> <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft33', 102)" onmouseover="showTip(event, 'ft33', 102)" class="i">n2</span>
+               <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft32', 103)" onmouseover="showTip(event, 'ft32', 103)" class="i">n1</span> }
+  <span class="k">let</span> <span onmouseout="hideTip(event, 'ft38', 104)" onmouseover="showTip(event, 'ft38', 104)" class="i">m3</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft25', 105)" onmouseover="showTip(event, 'ft25', 105)" class="i">m</span> { <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft32', 106)" onmouseover="showTip(event, 'ft32', 106)" class="i">n1</span> }
+
+  <span onmouseout="hideTip(event, 'ft35', 107)" onmouseover="showTip(event, 'ft35', 107)" class="i">m1</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft26', 108)" onmouseover="showTip(event, 'ft26', 108)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft38', 109)" onmouseover="showTip(event, 'ft38', 109)" class="i">m3</span>
+  <span onmouseout="hideTip(event, 'ft36', 110)" onmouseover="showTip(event, 'ft36', 110)" class="i">m2</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'ft26', 111)" onmouseover="showTip(event, 'ft26', 111)" class="i">shouldEqual</span> <span onmouseout="hideTip(event, 'ft38', 112)" onmouseover="showTip(event, 'ft38', 112)" class="i">m3</span></pre>
+
+
+<h2>Delayed monoidal computations</h2>
+
+<p>In the previous example, the computation is eager. The <code>mul { .. }</code> computation evaluates
+all elements that are generated using <code>yield</code> and multiplies all of them. This also means
+that <code>Delay</code> does not need to actually <em>delay</em> the effects, because they will be evaluated
+anyway. However, we could use other properties of multiplication - since <em>0 * x = 0</em>, the
+<code>Combine</code> member could check if the first argument is 0 and stop evaluating the rest of the
+computation. When using this alternative, the second argument of <code>Combine</code> needs to be
+a delayed computation - the following example uses the type <code>D = 1 -&gt; M</code>:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft39', 113)" onmouseover="showTip(event, 'ft39', 113)" class="i">LazyMulBuilder</span>() <span class="o">=</span>
+  <span class="c">/// Zero element of the monoid</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft40', 114)" onmouseover="showTip(event, 'ft40', 114)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft41', 115)" onmouseover="showTip(event, 'ft41', 115)" class="i">Zero</span>() <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 116)" onmouseover="showTip(event, 'ft2', 116)" class="i">M</span> <span class="n">1</span>
+  <span class="c">/// Binary operation of the monoid</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft40', 117)" onmouseover="showTip(event, 'ft40', 117)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft42', 118)" onmouseover="showTip(event, 'ft42', 118)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft2', 119)" onmouseover="showTip(event, 'ft2', 119)" class="i">M</span> <span onmouseout="hideTip(event, 'ft8', 120)" onmouseover="showTip(event, 'ft8', 120)" class="i">a</span>, <span onmouseout="hideTip(event, 'ft43', 121)" onmouseover="showTip(event, 'ft43', 121)" class="i">f</span>) <span class="o">=</span> 
+    <span class="k">if</span> <span onmouseout="hideTip(event, 'ft8', 122)" onmouseover="showTip(event, 'ft8', 122)" class="i">a</span> <span class="o">=</span> <span class="n">0</span> <span class="k">then</span> <span onmouseout="hideTip(event, 'ft2', 123)" onmouseover="showTip(event, 'ft2', 123)" class="i">M</span> <span class="n">0</span> <span class="k">else</span> 
+      <span class="k">let</span> (<span onmouseout="hideTip(event, 'ft2', 124)" onmouseover="showTip(event, 'ft2', 124)" class="i">M</span> <span onmouseout="hideTip(event, 'ft9', 125)" onmouseover="showTip(event, 'ft9', 125)" class="i">b</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft43', 126)" onmouseover="showTip(event, 'ft43', 126)" class="i">f</span>() <span class="k">in</span> <span onmouseout="hideTip(event, 'ft2', 127)" onmouseover="showTip(event, 'ft2', 127)" class="i">M</span> (<span onmouseout="hideTip(event, 'ft8', 128)" onmouseover="showTip(event, 'ft8', 128)" class="i">a</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'ft9', 129)" onmouseover="showTip(event, 'ft9', 129)" class="i">b</span>)
+
+  <span class="c">/// Used to create elements of the monoid</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft40', 130)" onmouseover="showTip(event, 'ft40', 130)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft44', 131)" onmouseover="showTip(event, 'ft44', 131)" class="i">Yield</span>(<span onmouseout="hideTip(event, 'ft11', 132)" onmouseover="showTip(event, 'ft11', 132)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 133)" onmouseover="showTip(event, 'ft2', 133)" class="i">M</span> <span onmouseout="hideTip(event, 'ft11', 134)" onmouseover="showTip(event, 'ft11', 134)" class="i">v</span>
+  <span class="c">/// Enables the &#39;yield!&#39; syntax</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft40', 135)" onmouseover="showTip(event, 'ft40', 135)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft45', 136)" onmouseover="showTip(event, 'ft45', 136)" class="i">YieldFrom</span>(<span onmouseout="hideTip(event, 'ft2', 137)" onmouseover="showTip(event, 'ft2', 137)" class="i">M</span> <span onmouseout="hideTip(event, 'ft11', 138)" onmouseover="showTip(event, 'ft11', 138)" class="i">v</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft2', 139)" onmouseover="showTip(event, 'ft2', 139)" class="i">M</span> <span onmouseout="hideTip(event, 'ft11', 140)" onmouseover="showTip(event, 'ft11', 140)" class="i">v</span>
+
+  <span class="c">/// Return the delayed computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft40', 141)" onmouseover="showTip(event, 'ft40', 141)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft46', 142)" onmouseover="showTip(event, 'ft46', 142)" class="i">Delay</span>(<span onmouseout="hideTip(event, 'ft47', 143)" onmouseover="showTip(event, 'ft47', 143)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft47', 144)" onmouseover="showTip(event, 'ft47', 144)" class="i">f</span>
+  <span class="c">/// Evaluate a delayed computation</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft40', 145)" onmouseover="showTip(event, 'ft40', 145)" class="i">x</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft48', 146)" onmouseover="showTip(event, 'ft48', 146)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft14', 147)" onmouseover="showTip(event, 'ft14', 147)" class="i">f</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'ft14', 148)" onmouseover="showTip(event, 'ft14', 148)" class="i">f</span>()
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft49', 149)" onmouseover="showTip(event, 'ft49', 149)" class="i">lmul</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft39', 150)" onmouseover="showTip(event, 'ft39', 150)" class="i">LazyMulBuilder</span>()<br /><button class="run" onclick='parent.runCode("type LazyMulBuilder() =\r\n  /// Zero element of the monoid\r\n  member x.Zero() = M 1\r\n  /// Binary operation of the monoid\r\n  member x.Combine(M a, f) = \r\n    if a = 0 then M 0 else \r\n      let (M b) = f() in M (a * b)\r\n\r\n  /// Used to create elements of the monoid\r\n  member x.Yield(v) = M v\r\n  /// Enables the \u0027yield!\u0027 syntax\r\n  member x.YieldFrom(M v) = M v\r\n\r\n  /// Return the delayed computation\r\n  member x.Delay(f) = f\r\n  /// Evaluate a delayed computation\r\n  member x.Run(f) = f()\r\n\r\nlet lmul = LazyMulBuilder()");'></button></pre>
+
+
+<p>The lazy <code>lmul</code> computation builder can be used to write the following code that multiplies
+an infinite sequence of randomly generated numbers in range 0 .. 10. The generator will eventually
+return 0 and then the computaiton stops:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Random number generator</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft50', 151)" onmouseover="showTip(event, 'ft50', 151)" class="i">random</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft51', 152)" onmouseover="showTip(event, 'ft51', 152)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft52', 153)" onmouseover="showTip(event, 'ft52', 153)" class="i">Random</span>()
+
+<span class="c">/// Multiply infinite sequence of random numbers</span>
+<span class="k">let</span> <span class="k">rec</span> <span onmouseout="hideTip(event, 'ft53', 154)" onmouseover="showTip(event, 'ft53', 154)" class="i">inf</span> () <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft49', 155)" onmouseover="showTip(event, 'ft49', 155)" class="i">lmul</span> { <span class="k">yield</span> <span onmouseout="hideTip(event, 'ft50', 156)" onmouseover="showTip(event, 'ft50', 156)" class="i">random</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft54', 157)" onmouseover="showTip(event, 'ft54', 157)" class="i">Next</span>(<span class="n">10</span>)
+         <span class="k">yield!</span> <span onmouseout="hideTip(event, 'ft53', 158)" onmouseover="showTip(event, 'ft53', 158)" class="i">inf</span> () }<br /><button class="run" onclick='parent.runCode("/// Random number generator\r\nlet random = System.Random()\r\n\r\n/// Multiply infinite sequence of random numbers\r\nlet rec inf () =\r\n  lmul { yield random.Next(10)\r\n         yield! inf () }");'></button></pre>
+
+
+<p>If we wrote the same function using the <code>mul</code> computation builder described earlier, than the 
+computation would loop forever and would never terminate.</p>
+
+<h2>Control flow constructs</h2>
+
+<p>Similarly to monadic computations, it is possible to extend a monoidal computation expression with
+standard F# control flow constructs including loops (<code>for</code> and <code>while</code>) and exception handlers.
+The following code sample extends the <code>LazyMulBuilder</code>:</p>
+
+<pre class="fssnip runnable">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'ft39', 159)" onmouseover="showTip(event, 'ft39', 159)" class="i">LazyMulBuilder</span> <span class="k">with</span>
+  <span class="c">/// The exception handling uses the delayed type directly</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft55', 160)" onmouseover="showTip(event, 'ft55', 160)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft56', 161)" onmouseover="showTip(event, 'ft56', 161)" class="i">TryWith</span>(<span onmouseout="hideTip(event, 'ft14', 162)" onmouseover="showTip(event, 'ft14', 162)" class="i">f</span>, <span onmouseout="hideTip(event, 'ft57', 163)" onmouseover="showTip(event, 'ft57', 163)" class="i">handler</span>) <span class="o">=</span> 
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'ft14', 164)" onmouseover="showTip(event, 'ft14', 164)" class="i">f</span>() 
+    <span class="k">with</span> <span onmouseout="hideTip(event, 'ft58', 165)" onmouseover="showTip(event, 'ft58', 165)" class="i">e</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft57', 166)" onmouseover="showTip(event, 'ft57', 166)" class="i">handler</span> <span onmouseout="hideTip(event, 'ft59', 167)" onmouseover="showTip(event, 'ft59', 167)" class="i">e</span>
+
+  <span class="c">/// The finalizer is defined similarly (but the body of the </span>
+  <span class="c">/// finalizer cannot be monoidal - just a `unit -&gt; unit` function)</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft55', 168)" onmouseover="showTip(event, 'ft55', 168)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft60', 169)" onmouseover="showTip(event, 'ft60', 169)" class="i">TryFinally</span>(<span onmouseout="hideTip(event, 'ft14', 170)" onmouseover="showTip(event, 'ft14', 170)" class="i">f</span>, <span onmouseout="hideTip(event, 'ft61', 171)" onmouseover="showTip(event, 'ft61', 171)" class="i">finalizer</span>) <span class="o">=</span> 
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'ft14', 172)" onmouseover="showTip(event, 'ft14', 172)" class="i">f</span>()
+    <span class="k">finally</span> <span onmouseout="hideTip(event, 'ft61', 173)" onmouseover="showTip(event, 'ft61', 173)" class="i">finalizer</span>()
+
+  <span class="c">/// The &#39;while&#39; loop evaluates the condition and then either ends</span>
+  <span class="c">/// (returning &#39;Zero&#39;), or evaluates body once and then runs recursively</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft55', 174)" onmouseover="showTip(event, 'ft55', 174)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft62', 175)" onmouseover="showTip(event, 'ft62', 175)" class="i">While</span>(<span onmouseout="hideTip(event, 'ft63', 176)" onmouseover="showTip(event, 'ft63', 176)" class="i">cond</span>, <span onmouseout="hideTip(event, 'ft64', 177)" onmouseover="showTip(event, 'ft64', 177)" class="i">body</span>) <span class="o">=</span> 
+    <span class="k">if</span> <span onmouseout="hideTip(event, 'ft29', 178)" onmouseover="showTip(event, 'ft29', 178)" class="i">not</span> (<span onmouseout="hideTip(event, 'ft63', 179)" onmouseover="showTip(event, 'ft63', 179)" class="i">cond</span>()) <span class="k">then</span> <span onmouseout="hideTip(event, 'ft55', 180)" onmouseover="showTip(event, 'ft55', 180)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft65', 181)" onmouseover="showTip(event, 'ft65', 181)" class="i">Zero</span>()
+    <span class="k">else</span> <span onmouseout="hideTip(event, 'ft55', 182)" onmouseover="showTip(event, 'ft55', 182)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft66', 183)" onmouseover="showTip(event, 'ft66', 183)" class="i">Combine</span>(<span onmouseout="hideTip(event, 'ft55', 184)" onmouseover="showTip(event, 'ft55', 184)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft67', 185)" onmouseover="showTip(event, 'ft67', 185)" class="i">Run</span>(<span onmouseout="hideTip(event, 'ft64', 186)" onmouseover="showTip(event, 'ft64', 186)" class="i">body</span>), <span onmouseout="hideTip(event, 'ft55', 187)" onmouseover="showTip(event, 'ft55', 187)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft68', 188)" onmouseover="showTip(event, 'ft68', 188)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft55', 189)" onmouseover="showTip(event, 'ft55', 189)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft69', 190)" onmouseover="showTip(event, 'ft69', 190)" class="i">While</span>(<span onmouseout="hideTip(event, 'ft63', 191)" onmouseover="showTip(event, 'ft63', 191)" class="i">cond</span>, <span onmouseout="hideTip(event, 'ft64', 192)" onmouseover="showTip(event, 'ft64', 192)" class="i">body</span>)))
+
+  <span class="c">/// The &#39;for&#39; loop can be defined using &#39;While&#39; and &#39;Using&#39;</span>
+  <span class="k">member</span> <span onmouseout="hideTip(event, 'ft55', 193)" onmouseover="showTip(event, 'ft55', 193)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft70', 194)" onmouseover="showTip(event, 'ft70', 194)" class="i">For</span>(<span onmouseout="hideTip(event, 'ft71', 195)" onmouseover="showTip(event, 'ft71', 195)" class="i">xs</span><span class="o">:</span><span onmouseout="hideTip(event, 'ft72', 196)" onmouseover="showTip(event, 'ft72', 196)" class="i">seq</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>, <span onmouseout="hideTip(event, 'ft73', 197)" onmouseover="showTip(event, 'ft73', 197)" class="i">f</span>) <span class="o">=</span> 
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'ft74', 198)" onmouseover="showTip(event, 'ft74', 198)" class="i">en</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'ft71', 199)" onmouseover="showTip(event, 'ft71', 199)" class="i">xs</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft75', 200)" onmouseover="showTip(event, 'ft75', 200)" class="i">GetEnumerator</span>()
+    <span onmouseout="hideTip(event, 'ft55', 201)" onmouseover="showTip(event, 'ft55', 201)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft76', 202)" onmouseover="showTip(event, 'ft76', 202)" class="i">TryFinally</span>
+      ( <span onmouseout="hideTip(event, 'ft55', 203)" onmouseover="showTip(event, 'ft55', 203)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft68', 204)" onmouseover="showTip(event, 'ft68', 204)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span>
+          <span onmouseout="hideTip(event, 'ft55', 205)" onmouseover="showTip(event, 'ft55', 205)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft69', 206)" onmouseover="showTip(event, 'ft69', 206)" class="i">While</span>( (<span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft74', 207)" onmouseover="showTip(event, 'ft74', 207)" class="i">en</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft77', 208)" onmouseover="showTip(event, 'ft77', 208)" class="i">MoveNext</span>()), <span onmouseout="hideTip(event, 'ft55', 209)" onmouseover="showTip(event, 'ft55', 209)" class="i">m</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft68', 210)" onmouseover="showTip(event, 'ft68', 210)" class="i">Delay</span>(<span class="k">fun</span> () <span class="k">-&gt;</span> 
+            <span onmouseout="hideTip(event, 'ft73', 211)" onmouseover="showTip(event, 'ft73', 211)" class="i">f</span> <span onmouseout="hideTip(event, 'ft74', 212)" onmouseover="showTip(event, 'ft74', 212)" class="i">en</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft78', 213)" onmouseover="showTip(event, 'ft78', 213)" class="i">Current</span>) )),
+        <span class="k">fun</span> () <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'ft74', 214)" onmouseover="showTip(event, 'ft74', 214)" class="i">en</span><span class="o">.</span><span onmouseout="hideTip(event, 'ft79', 215)" onmouseover="showTip(event, 'ft79', 215)" class="i">Dispose</span>() )<br /><button class="run" onclick='parent.runCode("type LazyMulBuilder with\r\n  /// The exception handling uses the delayed type directly\r\n  member m.TryWith(f, handler) = \r\n    try f() \r\n    with e -\u003e handler e\r\n\r\n  /// The finalizer is defined similarly (but the body of the \r\n  /// finalizer cannot be monoidal - just a `unit -\u003e unit` function)\r\n  member m.TryFinally(f, finalizer) = \r\n    try f()\r\n    finally finalizer()\r\n\r\n  /// The \u0027while\u0027 loop evaluates the condition and then either ends\r\n  /// (returning \u0027Zero\u0027), or evaluates body once and then runs recursively\r\n  member m.While(cond, body) = \r\n    if not (cond()) then m.Zero()\r\n    else m.Combine(m.Run(body), m.Delay(fun () -\u003e m.While(cond, body)))\r\n\r\n  /// The \u0027for\u0027 loop can be defined using \u0027While\u0027 and \u0027Using\u0027\r\n  member m.For(xs:seq\u003c\u0027T\u003e, f) = \r\n    let en = xs.GetEnumerator()\r\n    m.TryFinally\r\n      ( m.Delay(fun () -\u003e\r\n          m.While( (fun () -\u003e en.MoveNext()), m.Delay(fun () -\u003e \r\n            f en.Current) )),\r\n        fun () -\u003e en.Dispose() )");'></button></pre>
+
+
+<p>The definition of <code>TryWith</code> and <code>TryFinally</code> is the same as for <em>monadic containers</em> in the 
+<a href="monads.html">previous</a> section. As the delayed computation type is a function <code>unit -&gt; M&lt;'T&gt;</code>, 
+the handling does not need to inspect the structure of the computation and can be implemented
+by wrapping the function call with a handler. For monoidal computations that have a built-in 
+notion of delayed computations (such as lazy lists), the operations have to be implemented
+differently.</p>
+
+<p>Unlike for monads, we do not provide the <code>Using</code> member (which corresponds to binding and so
+it is not appropriate). This means that the <code>For</code> member needs to use <code>TryFinally</code> explicitly
+(unlike in the previous section). However, otherwise the definition of <code>While</code> and <code>For</code> also
+follows the one dicussed for monads. The new definitions allow us to write the following:</p>
+
+<pre class="fssnip runnable">
+<span class="c">/// Calculate the factorial of a number</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'ft80', 216)" onmouseover="showTip(event, 'ft80', 216)" class="i">factorial</span> <span onmouseout="hideTip(event, 'ft81', 217)" onmouseover="showTip(event, 'ft81', 217)" class="i">x</span> <span class="o">=</span>
+  <span onmouseout="hideTip(event, 'ft49', 218)" onmouseover="showTip(event, 'ft49', 218)" class="i">lmul</span> { <span class="k">for</span> <span onmouseout="hideTip(event, 'ft82', 219)" onmouseover="showTip(event, 'ft82', 219)" class="i">num</span> <span class="k">in</span> <span class="n">1</span> <span class="o">..</span> <span onmouseout="hideTip(event, 'ft81', 220)" onmouseover="showTip(event, 'ft81', 220)" class="i">x</span> <span class="k">do</span> 
+           <span class="k">yield</span> <span class="i">num</span> }<br /><button class="run" onclick='parent.runCode("/// Calculate the factorial of a number\r\nlet factorial x =\r\n  lmul { for num in 1 .. x do \r\n           yield num }");'></button></pre>
+
+
+<div class="navigation">
+
+<p>Prev: <a href="monads.html">Monadic computations</a> | Next: <a href="additive.html">Additive computations</a> | <a href="home.html">Table of Contents</a></p>
+
+</div>
+
+
+    <!-- HTML for Tool Tips -->
+    <div class="tip" id="ft1">type M = | M of int<br /><br />Full name: TryJoinads.M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft2">union case M.M: int -&gt; M</div>
+<div class="tip" id="ft3">Multiple items<br />val int : &#39;T -&gt; int (requires member op_Explicit)<br /><br />Full name: Microsoft.FSharp.Core.Operators.int<br /><br />--------------------<br />type int&lt;&#39;Measure&gt; = int<br /><br />Full name: Microsoft.FSharp.Core.int&lt;_&gt;<br />&#160;&#160;type: int&lt;&#39;Measure&gt;<br />&#160;&#160;inherits: System.ValueType<br /><br /><br />--------------------<br />type int = int32<br /><br />Full name: Microsoft.FSharp.Core.int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft4">type MulBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; MulBuilder<br />&#160;&#160;&#160;&#160;member Combine : M * M -&gt; M<br />&#160;&#160;&#160;&#160;member Delay : f:(unit -&gt; &#39;a) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member Yield : v:int -&gt; M<br />&#160;&#160;&#160;&#160;member YieldFrom : M -&gt; M<br />&#160;&#160;&#160;&#160;member Zero : unit -&gt; M<br />&#160;&#160;end<br /><br />Full name: TryJoinads.MulBuilder</div>
+<div class="tip" id="ft5">val x : MulBuilder</div>
+<div class="tip" id="ft6">member MulBuilder.Zero : unit -&gt; M<br /><br />Full name: TryJoinads.MulBuilder.Zero<br /><em><br /><br />&#160;Zero element of the monoid</em></div>
+<div class="tip" id="ft7">member MulBuilder.Combine : M * M -&gt; M<br /><br />Full name: TryJoinads.MulBuilder.Combine<br /><em><br /><br />&#160;Binary operation of the monoid</em></div>
+<div class="tip" id="ft8">val a : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft9">val b : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft10">member MulBuilder.Yield : v:int -&gt; M<br /><br />Full name: TryJoinads.MulBuilder.Yield<br /><em><br /><br />&#160;Used to create elements of the monoid</em></div>
+<div class="tip" id="ft11">val v : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft12">member MulBuilder.YieldFrom : M -&gt; M<br /><br />Full name: TryJoinads.MulBuilder.YieldFrom<br /><em><br /><br />&#160;Enables the &#39;yield!&#39; syntax</em></div>
+<div class="tip" id="ft13">member MulBuilder.Delay : f:(unit -&gt; &#39;a) -&gt; &#39;a<br /><br />Full name: TryJoinads.MulBuilder.Delay<br /><em><br /><br />&#160;Perform all effects immediately</em></div>
+<div class="tip" id="ft14">val f : (unit -&gt; &#39;a)</div>
+<div class="tip" id="ft15">val mul : MulBuilder<br /><br />Full name: TryJoinads.mul</div>
+<div class="tip" id="ft16">val factorial : int -&gt; int -&gt; M<br /><br />Full name: TryJoinads.factorial<br /><em><br /><br />&#160;When called with &#39;factorial 0 x&#39; calculates &#39;x!&#39;</em></div>
+<div class="tip" id="ft17">val n : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft18">val bound : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft19">val factorial : int -&gt; int -&gt; M<br /><br />Full name: TryJoinads.MulTranslation.factorial</div>
+<div class="tip" id="ft20">member MulBuilder.Delay : f:(unit -&gt; &#39;a) -&gt; &#39;a<br /><em><br /><br />&#160;Perform all effects immediately</em></div>
+<div class="tip" id="ft21">member MulBuilder.Combine : M * M -&gt; M<br /><em><br /><br />&#160;Binary operation of the monoid</em></div>
+<div class="tip" id="ft22">member MulBuilder.Yield : v:int -&gt; M<br /><em><br /><br />&#160;Used to create elements of the monoid</em></div>
+<div class="tip" id="ft23">member MulBuilder.YieldFrom : M -&gt; M<br /><em><br /><br />&#160;Enables the &#39;yield!&#39; syntax</em></div>
+<div class="tip" id="ft24">member MulBuilder.Zero : unit -&gt; M<br /><em><br /><br />&#160;Zero element of the monoid</em></div>
+<div class="tip" id="ft25">val m : MulBuilder<br /><br />Full name: TryJoinads.m</div>
+<div class="tip" id="ft26">val shouldEqual : &#39;a -&gt; &#39;a -&gt; unit (requires equality)<br /><br />Full name: TryJoinads.shouldEqual</div>
+<div class="tip" id="ft27">val a : &#39;a (requires equality)</div>
+<div class="tip" id="ft28">val b : &#39;a (requires equality)</div>
+<div class="tip" id="ft29">val not : bool -&gt; bool<br /><br />Full name: Microsoft.FSharp.Core.Operators.not</div>
+<div class="tip" id="ft30">val failwith : string -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.Operators.failwith</div>
+<div class="tip" id="ft31">val associativity : M -&gt; M -&gt; M -&gt; unit<br /><br />Full name: TryJoinads.associativity<br /><em><br /><br />&#160;The associativity monoid law </em></div>
+<div class="tip" id="ft32">val n1 : M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft33">val n2 : M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft34">val n3 : M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft35">val m1 : M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft36">val m2 : M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft37">Multiple items<br />val unit : M -&gt; M -&gt; unit<br /><br />Full name: TryJoinads.unit<br /><em><br /><br />&#160;The unit monoid laws </em><br /><br />--------------------<br />type unit = Unit<br /><br />Full name: Microsoft.FSharp.Core.unit<br />&#160;&#160;type: unit<br /></div>
+<div class="tip" id="ft38">val m3 : M<br />&#160;&#160;type: M<br /></div>
+<div class="tip" id="ft39">type LazyMulBuilder =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; LazyMulBuilder<br />&#160;&#160;&#160;&#160;member Combine : M * f:(unit -&gt; M) -&gt; M<br />&#160;&#160;&#160;&#160;member Delay : f:&#39;b -&gt; &#39;b<br />&#160;&#160;&#160;&#160;member For : xs:seq&lt;&#39;T&gt; * f:(&#39;T -&gt; M) -&gt; M<br />&#160;&#160;&#160;&#160;member Run : f:(unit -&gt; &#39;a) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member TryFinally : f:(unit -&gt; &#39;a) * finalizer:(unit -&gt; unit) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member TryWith : f:(unit -&gt; &#39;a) * handler:(exn -&gt; &#39;a) -&gt; &#39;a<br />&#160;&#160;&#160;&#160;member While : cond:(unit -&gt; bool) * body:(unit -&gt; M) -&gt; M<br />&#160;&#160;&#160;&#160;member Yield : v:int -&gt; M<br />&#160;&#160;&#160;&#160;member YieldFrom : M -&gt; M<br />&#160;&#160;&#160;&#160;member Zero : unit -&gt; M<br />&#160;&#160;end<br /><br />Full name: TryJoinads.LazyMulBuilder</div>
+<div class="tip" id="ft40">val x : LazyMulBuilder</div>
+<div class="tip" id="ft41">member LazyMulBuilder.Zero : unit -&gt; M<br /><br />Full name: TryJoinads.LazyMulBuilder.Zero<br /><em><br /><br />&#160;Zero element of the monoid</em></div>
+<div class="tip" id="ft42">member LazyMulBuilder.Combine : M * f:(unit -&gt; M) -&gt; M<br /><br />Full name: TryJoinads.LazyMulBuilder.Combine<br /><em><br /><br />&#160;Binary operation of the monoid</em></div>
+<div class="tip" id="ft43">val f : (unit -&gt; M)</div>
+<div class="tip" id="ft44">member LazyMulBuilder.Yield : v:int -&gt; M<br /><br />Full name: TryJoinads.LazyMulBuilder.Yield<br /><em><br /><br />&#160;Used to create elements of the monoid</em></div>
+<div class="tip" id="ft45">member LazyMulBuilder.YieldFrom : M -&gt; M<br /><br />Full name: TryJoinads.LazyMulBuilder.YieldFrom<br /><em><br /><br />&#160;Enables the &#39;yield!&#39; syntax</em></div>
+<div class="tip" id="ft46">member LazyMulBuilder.Delay : f:&#39;b -&gt; &#39;b<br /><br />Full name: TryJoinads.LazyMulBuilder.Delay<br /><em><br /><br />&#160;Return the delayed computation</em></div>
+<div class="tip" id="ft47">val f : &#39;b</div>
+<div class="tip" id="ft48">member LazyMulBuilder.Run : f:(unit -&gt; &#39;a) -&gt; &#39;a<br /><br />Full name: TryJoinads.LazyMulBuilder.Run<br /><em><br /><br />&#160;Evaluate a delayed computation</em></div>
+<div class="tip" id="ft49">val lmul : LazyMulBuilder<br /><br />Full name: TryJoinads.lmul</div>
+<div class="tip" id="ft50">val random : System.Random<br /><br />Full name: TryJoinads.random<br /><em><br /><br />&#160;Random number generator</em></div>
+<div class="tip" id="ft51">namespace System</div>
+<div class="tip" id="ft52">type Random =<br />&#160;&#160;class<br />&#160;&#160;&#160;&#160;new : unit -&gt; System.Random<br />&#160;&#160;&#160;&#160;new : int -&gt; System.Random<br />&#160;&#160;&#160;&#160;member Next : unit -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int -&gt; int<br />&#160;&#160;&#160;&#160;member Next : int * int -&gt; int<br />&#160;&#160;&#160;&#160;member NextBytes : System.Byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;member NextDouble : unit -&gt; float<br />&#160;&#160;end<br /><br />Full name: System.Random</div>
+<div class="tip" id="ft53">val inf : unit -&gt; M<br /><br />Full name: TryJoinads.inf<br /><em><br /><br />&#160;Multiply infinite sequence of random numbers</em></div>
+<div class="tip" id="ft54">System.Random.Next() : int<br />System.Random.Next(maxValue: int) : int<br />System.Random.Next(minValue: int, maxValue: int) : int</div>
+<div class="tip" id="ft55">val m : LazyMulBuilder</div>
+<div class="tip" id="ft56">member LazyMulBuilder.TryWith : f:(unit -&gt; &#39;a) * handler:(exn -&gt; &#39;a) -&gt; &#39;a<br /><br />Full name: TryJoinads.LazyMulBuilder.TryWith<br /><em><br /><br />&#160;The exception handling uses the delayed type directly</em></div>
+<div class="tip" id="ft57">val handler : (exn -&gt; &#39;a)</div>
+<div class="tip" id="ft58">Multiple items<br />val e : exn<br />&#160;&#160;type: exn<br /><br /><br />--------------------<br />val e : exn<br />&#160;&#160;type: exn<br /></div>
+<div class="tip" id="ft59">val e : exn<br />&#160;&#160;type: exn<br /></div>
+<div class="tip" id="ft60">member LazyMulBuilder.TryFinally : f:(unit -&gt; &#39;a) * finalizer:(unit -&gt; unit) -&gt; &#39;a<br /><br />Full name: TryJoinads.LazyMulBuilder.TryFinally<br /><em><br /><br />&#160;The finalizer is defined similarly (but the body of the <br />&#160;finalizer cannot be monoidal - just a `unit -&gt; unit` function)</em></div>
+<div class="tip" id="ft61">val finalizer : (unit -&gt; unit)</div>
+<div class="tip" id="ft62">member LazyMulBuilder.While : cond:(unit -&gt; bool) * body:(unit -&gt; M) -&gt; M<br /><br />Full name: TryJoinads.LazyMulBuilder.While<br /><em><br /><br />&#160;The &#39;while&#39; loop evaluates the condition and then either ends<br />&#160;(returning &#39;Zero&#39;), or evaluates body once and then runs recursively</em></div>
+<div class="tip" id="ft63">val cond : (unit -&gt; bool)</div>
+<div class="tip" id="ft64">val body : (unit -&gt; M)</div>
+<div class="tip" id="ft65">member LazyMulBuilder.Zero : unit -&gt; M<br /><em><br /><br />&#160;Zero element of the monoid</em></div>
+<div class="tip" id="ft66">member LazyMulBuilder.Combine : M * f:(unit -&gt; M) -&gt; M<br /><em><br /><br />&#160;Binary operation of the monoid</em></div>
+<div class="tip" id="ft67">member LazyMulBuilder.Run : f:(unit -&gt; &#39;a) -&gt; &#39;a<br /><em><br /><br />&#160;Evaluate a delayed computation</em></div>
+<div class="tip" id="ft68">member LazyMulBuilder.Delay : f:&#39;b -&gt; &#39;b<br /><em><br /><br />&#160;Return the delayed computation</em></div>
+<div class="tip" id="ft69">member LazyMulBuilder.While : cond:(unit -&gt; bool) * body:(unit -&gt; M) -&gt; M<br /><em><br /><br />&#160;The &#39;while&#39; loop evaluates the condition and then either ends<br />&#160;(returning &#39;Zero&#39;), or evaluates body once and then runs recursively</em></div>
+<div class="tip" id="ft70">member LazyMulBuilder.For : xs:seq&lt;&#39;T&gt; * f:(&#39;T -&gt; M) -&gt; M<br /><br />Full name: TryJoinads.LazyMulBuilder.For<br /><em><br /><br />&#160;The &#39;for&#39; loop can be defined using &#39;While&#39; and &#39;Using&#39;</em></div>
+<div class="tip" id="ft71">val xs : seq&lt;&#39;T&gt;<br />&#160;&#160;type: seq&lt;&#39;T&gt;<br />&#160;&#160;inherits: System.Collections.IEnumerable<br /></div>
+<div class="tip" id="ft72">Multiple items<br />val seq : seq&lt;&#39;T&gt; -&gt; seq&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.Operators.seq<br /><br />--------------------<br />type seq&lt;&#39;T&gt; = System.Collections.Generic.IEnumerable&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Collections.seq&lt;_&gt;<br />&#160;&#160;type: seq&lt;&#39;T&gt;<br />&#160;&#160;inherits: System.Collections.IEnumerable<br /></div>
+<div class="tip" id="ft73">val f : (&#39;T -&gt; M)</div>
+<div class="tip" id="ft74">val en : System.Collections.Generic.IEnumerator&lt;&#39;T&gt;<br />&#160;&#160;type: System.Collections.Generic.IEnumerator&lt;&#39;T&gt;<br />&#160;&#160;inherits: System.IDisposable<br />&#160;&#160;inherits: System.Collections.IEnumerator<br /></div>
+<div class="tip" id="ft75">System.Collections.Generic.IEnumerable.GetEnumerator() : System.Collections.Generic.IEnumerator&lt;&#39;T&gt;</div>
+<div class="tip" id="ft76">member LazyMulBuilder.TryFinally : f:(unit -&gt; &#39;a) * finalizer:(unit -&gt; unit) -&gt; &#39;a<br /><em><br /><br />&#160;The finalizer is defined similarly (but the body of the <br />&#160;finalizer cannot be monoidal - just a `unit -&gt; unit` function)</em></div>
+<div class="tip" id="ft77">System.Collections.IEnumerator.MoveNext() : bool</div>
+<div class="tip" id="ft78">property System.Collections.Generic.IEnumerator.Current: &#39;T</div>
+<div class="tip" id="ft79">System.IDisposable.Dispose() : unit</div>
+<div class="tip" id="ft80">val factorial : int -&gt; M<br /><br />Full name: TryJoinads.AnotherFactorial.factorial<br /><em><br /><br />&#160;Calculate the factorial of a number</em></div>
+<div class="tip" id="ft81">val x : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+<div class="tip" id="ft82">val num : int<br />&#160;&#160;type: int<br />&#160;&#160;inherits: System.ValueType<br /></div>
+
+  </body>
+  </html>

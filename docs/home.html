@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Welcome to Try Joinads</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../contentstyle.css" />
+    <script type="text/javascript" src="../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Introducing Try Joinads</h1>
+
+<p>Welcome to Try Joinads!</p>
+
+<p>This web site is an interactive tutorial that introduces <em>joinads</em> - a research extension of the F# language.
+The tutorial presents several uses of the extension. It focuses on concurrent, parallel and asynchronous
+programming, but it also shows several examples from other domains, including parsers and option values.
+Aside from uses of <em>joinads</em>, there are also several sections that discuss how to implement joinads for other
+types of values or computations.</p>
+
+<p>The tutorial uses an Interactive F# console hosted in a web browser using <a href="http://www.silverlight.net/" title="Silverlight homepage">Silverlight</a> (Windows or Mac) or 
+<a href="http://www.go-mono.com/moonlight/" title="Moonlight homepage">Moonlight</a> (Linux), so you can run the tutorials in your browser and experiment on your own. The console is based
+on an <a href="http://fsharppowerpack.codeplex.com/" title="Open-source release of F#">open-source release</a> of the F# compiler. A research implementation of the F# compiler that implements
+joinads is <a href="https://github.com/tpetricek/FSharp.Extensions" title="F# Extensions Source Code">also available</a>.</p>
+
+<p>If you have any comments or suggestions regarding the tutorials, or if you have another interesting implementation
+of joinads or an extension of the F# compiler that could be added, please get in touch: <a href="tomas@tomasp.net">tomas@tomasp.net</a> or 
+<a href="http://twitter.com/tomaspetricek">@tomaspetricek</a>.</p>
+
+<h2>Table of contents</h2>
+
+<h3>Introduction</h3>
+
+<p>The following article is the best place to start if you haven't seen joinads before.
+It shows a basic example and includes links to other resources.</p>
+
+<ul>
+<li><p><a href="intro.html"><strong>Introduction</strong></a> shows a
+basic example of parallel programming with joinads in F# and provides a
+general overview of the concept, as well as basic Haskell example.</p></li>
+<li><p><a href="pubs.html"><strong>Publications</strong></a> provides
+links to academic publications related to joinads. These contain more details about
+<em>joinad</em> as an algebraic structure and about the language feature design.</p></li>
+</ul>
+
+<h3>Programming with joinads</h3>
+
+<p>The following articles show several examples of using joinads for concurrent, parallel 
+and reactive programming. They use an implementation of joinad operations that is available
+in standard joinads library.</p>
+
+<ul>
+<li><p><a href="use/async.html"><strong>Asynchronous workflows and joinads</strong></a>
+shows how to use joinads in asynchronous programming. Applications include asynchronously waiting
+for multiple computations or waiting for the first computation that produces certain value.</p></li>
+<li><p><a href="use/tasks.html"><strong>Task-based parallelism</strong></a>
+has been already demonstrated in the <a href="intro.html">introduction</a>. This tutorial
+shows a more complete example that uses joinads for recursive tree processing with
+short-circuiting.</p></li>
+<li><p><a href="use/agents.html"><strong>Agent-based programming</strong></a>
+can benefit from the notation used by joinads when implementing agent (<code>MailboxProcessor</code>) that
+uses the <code>Scan</code> method. This tutorial shows several examples.</p></li>
+<li><p><a href="use/joins.html"><strong>Concurrent programming using joins</strong></a> 
+shows a library that uses joinads to embed <em>join calculus</em> in F#. The library can be used for
+writing concurrent primitives, such as blocking collection and others.</p></li>
+</ul>
+
+<h3>Implementing joinads</h3>
+
+<p>The following articles briefly explain how to implement joinads for several standard types
+of computations including <code>option</code> values and F# asynchronous workflows.</p>
+
+<ul>
+<li><p><a href="implement/options.html"><strong>Programming with option values</strong></a>
+shows the implementation of joinad computation builder for the <code>option&lt;'T&gt;</code> type. The sample
+uses parallel <em>composition</em> and <em>choice</em>.</p></li>
+<li><p><a href="implement/parsers.html"><strong>Writing parsers with joinads</strong></a>
+shows that joinads are useful in areas other than just concurrent and parallel programming.
+For parsers, joinads make it possible to express the <em>intersection of languages</em>.</p></li>
+<li><p><a href="implement/async.html"><strong>Joinads for asynchronous workflows</strong></a>
+explains how to add joinad operations to the <code>Async&lt;'T&gt;</code> type. The sample also provides more
+details on how aliasing is used in joinads.</p></li>
+</ul>
+
+<span></span>
+
+
+    <!-- HTML for Tool Tips -->
+    
+  </body>
+  </html>

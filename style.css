@@ -1,0 +1,263 @@
+@font-face {
+  font-family: 'GudeaLocal';
+  font-style: normal;
+  font-weight: 400;
+  src: url('gudea.eot');
+}
+
+div#header {
+  height:60px;
+  background:white;
+}
+
+div#wrapper {
+  height: 500px;
+  margin:0px 20px 0px 20px;
+}
+
+div#left, div#right {  
+  overflow:hidden; 
+} 
+
+.vsplitbar {
+	width: 25px;
+	background-image:url('img/divider.png');
+	background-position:center;
+	background-repeat:no-repeat;
+}
+
+/* footer */
+
+div#footer {
+  padding:25px 0px 0px 30px;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:60%;
+  color:#606060;
+}
+
+div#footer .block {
+  float:left;
+  margin-right:30px;
+}
+
+div#footer a:link, div#footer a:visited {
+  color:#2050e0;
+  text-decoration:none;
+}
+div#footer a:hover {
+  color:#2050e0;
+  text-decoration:underline;
+}
+
+/* ---------------------------------- rounded corners ---------------------------------- */
+
+#corner_tl {
+  position:absolute;
+  left:0px;
+  top:0px;
+  background:url('img/corner_tl.png');
+  width:4px;
+  height:3px;
+}
+#corner_tr {
+  position:absolute;
+  right:0px;
+  top:0px;
+  background:url('img/corner_tr.png');
+  width:4px;
+  height:3px;
+}
+#corner_bl {
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background:url('img/corner_bl.png');
+  width:4px;
+  height:3px;
+}
+#corner_br {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  background:url('img/corner_br.png');
+  width:4px;
+  height:3px;
+}
+
+#ddcorner_tl {
+  position:absolute;
+  left:0px;
+  top:0px;
+  background:url('img/ddcorner_tl.png');
+  width:4px;
+  height:3px;
+}
+#ddcorner_tr {
+  position:absolute;
+  right:0px;
+  top:0px;
+  background:url('img/ddcorner_tr.png');
+  width:4px;
+  height:3px;
+}
+#ddcorner_bl {
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background:url('img/ddcorner_bl.png');
+  width:4px;
+  height:3px;
+}
+#ddcorner_br {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  background:url('img/ddcorner_br.png');
+  width:4px;
+  height:3px;
+}
+
+#dcorner_tl {
+  position:absolute;
+  left:0px;
+  top:0px;
+  background:url('img/dcorner_tl.png');
+  width:4px;
+  height:3px;
+}
+#dcorner_tr {
+  position:absolute;
+  right:0px;
+  top:0px;
+  background:url('img/dcorner_tr.png');
+  width:4px;
+  height:3px;
+}
+#dcorner_bl {
+  position:absolute;
+  left:0px;
+  bottom:0px;
+  background:url('img/dcorner_bl.png');
+  width:4px;
+  height:3px;
+}
+#dcorner_br {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  background:url('img/dcorner_br.png');
+  width:4px;
+  height:3px;
+}
+
+/* ---------------------------------- panels ---------------------------------- */
+
+div#content_title {
+  background:#70879a;
+  height:23px;
+  padding:7px 0px 0px 10px;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:90%;
+  color:White;
+}
+div#content_nav {
+  border:1px solid #70879a;
+  border-bottom-style:none;
+  height:20px;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:75%;
+  text-align:right;
+  padding-right:10px;
+  padding-top:4px;
+  color:#70879a;
+  background:#f4f8f8;
+}
+
+div#content_nav a:link, div#content_nav a:visited {
+  color:#507a80;
+  margin:2px 5px 0px 5px;
+  text-decoration:none;
+}
+
+div#content_nav a:hover {
+  color:#507a80;
+  text-decoration:underline;
+}
+
+div#content_wrap {
+  border:1px solid #70879a;
+}
+
+div#content_hider {
+  position:absolute;
+  display:none;
+  background:url('img/hider.png');
+  width:100%;
+  height:100%;
+}
+
+iframe#content {  
+  overflow:auto; 
+  overflow-y:scroll;
+  background:#f4f8f8;
+  width:100%;
+  border-style:none;
+} 
+
+/* placeholder stuff in the right panel */
+
+div#slplaceholder {
+  background:#4c667c;
+  padding:60px 60px 20px 60px;
+  text-align:center;
+  font-family:Verdana, Verdana, Geneva, sans-serif;
+  font-size:90%;
+  color:White;
+}
+
+div#loadbutton {
+  background:#709cc4;
+  position:relative;
+  width:200px;
+  margin:60px auto 0px auto;
+  padding:5px;
+}
+
+div#slplaceholder a {
+  color:white;
+  font-size:90%;
+  text-decoration:none;
+}
+
+#info {
+  color:White;
+  font-size:90%;
+}
+
+#info h1 {
+  font-family:Gudea, GudeaLocal, Verdana, Verdana, Geneva, sans-serif;
+  margin:0px 0px 10px 0px;
+  font-size:170%;
+}
+
+#info p {
+  margin:15px 0px 0px 0px;
+}
+#info p a {
+  color:#c0d0ff;
+}
+
+/* ---------------------------------- header ---------------------------------- */
+
+#header h1 {
+  font-family:Gudea, GudeaLocal, Verdana, Verdana, Geneva, sans-serif;
+  font-weight:normal;
+  margin-left:25px;
+  color:#4c667c;
+}
+
+#header h1 small
+{
+  font-size:60%;
+  margin-left:40px;
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title id="title">Publications</title>
+    <link href="http://fonts.googleapis.com/css?family=Gudea" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="../contentstyle.css" />
+    <script type="text/javascript" src="../tips.js"></script>
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-1561220-5']);
+      _gaq.push(['_setDomainName', 'tryjoinads.org']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </head>
+  <body class="content" onload="parent.updateTitle(document.getElementById('title').innerHTML)">
+    <h1>Publications about joinads</h1>
+
+<p>We first implemented joinads as an extension for F# and wrote a preliminary report
+about the work, which appeared in PADL 2011. More recently, joinads have been added
+to Haskell and refined slightly to make the algebraic structure simple and better
+defined. The extended paper appeared in Haskell Symposium 2011.</p>
+
+<p>There are numerous differences between the two versions - the original version 
+didn't require <em>joinad</em> to be a <em>monad</em> and had a more complex operation corresponding
+to <em>choice</em> and <em>aliasing</em>. The revised version simplifies the set of operations
+and provides better formal background. The implementation on this page is mostly
+based on the newer (Haskell) version.</p>
+
+<h2>Extending Monads with Pattern Matching</h2>
+
+<p>Tomas Petricek, Alan Mycroft and Don Syme<br />
+<em>Proceedings of Haskell Symposium 2011</em></p>
+
+<p>The abstract of the paper:</p>
+
+<blockquote>
+  <p>Sequencing of effectful computations can be neatly captured using monads and elegantly 
+written using <code>do</code> notation. In practice such monads often allow additional ways of 
+composing computations, which have to be written explicitly using combinators.</p>
+
+  <p>We identify joinads, an abstract notion of computation that is stronger than monads 
+and captures many such ad-hoc extensions. In particular, joinads are monads with three 
+additional operations: one of type <code>m a -&gt; m b -&gt; m (a, b)</code> captures various forms of 
+parallel composition, one of type <code>m a -&gt; m a -&gt; m a</code> that is inspired by choice and one 
+of type <code>m a -&gt; m (m a)</code> that captures aliasing of computations. Algebraically, the first 
+two operations form a near-semiring with commutative multiplication.</p>
+
+  <p>We introduce <code>docase</code> notation that can be viewed as a monadic version of <code>case</code>. Joinad 
+laws make it possible to prove various syntactic equivalences of programs written using 
+<code>docase</code> that are analogous to equivalences about <code>case</code>. Examples of joinads that benefit 
+from the notation include speculative parallelism, waiting for a combination of user 
+interface events, but also encoding of validation rules using the intersection of parsers.</p>
+</blockquote>
+
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/docase.html">the author's academic page</a>.</p>
+
+<br />
+
+<h2>Evaluation strategies for monadic computations</h2>
+
+<p>Tomas Petricek<br />
+<em>Proceedings of MSFP 2012</em></p>
+
+<blockquote>
+  <p>Monads have become a powerful tool for structuring effectful computations in functional 
+programming, because they make the order of effects explicit. When translating pure code to a 
+monadic version, we need to specify evaluation order explicitly. This requires us to choose 
+between <em>call-by-value</em> or <em>call-by-name</em> style. The two translations give programs with 
+different semantics, structure and also different types.</p>
+
+  <p>In this paper, we translate pure code to monadic using an additional operation <code>malias</code> 
+that abstracts out the evaluation strategy. The <code>malias</code> operation is based on <em>computational comonads</em>; 
+we use a categorical framework to specify the laws that are required to hold about the operation.</p>
+
+  <p>We show two implementations of <code>malias</code> for any monad that give <em>call-by-value</em> and 
+<em>call-by-name</em> semantics. Although we do not give <em>call-by-need</em> semantics for any monad, we 
+show how to turn any monad into an extended monad with <em>call-by-need</em> semantics, which partly 
+answers a standing open question. Moreover, using our unified translation, it is possible to 
+change the evaluation strategy of functional code translated to the monadic form without 
+changing its structure or types.</p>
+</blockquote>
+
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/malias.html">the author's academic page</a>.</p>
+
+<br />
+
+<h2>Fun with Parallel Monad Comprehensions</h2>
+
+<p>Tomas Petricek<br />
+<em>The Monad.Reader, Issue 18 (Unreviewed article)</em></p>
+
+<blockquote>
+  <p>Monad comprehensions have an interesting history. They were the first syntactic extension for 
+programming with monads. They were implemented in Haskell, but later replaced with plain list 
+comprehensions and monadic <code>do</code> notation. Now, monad comprehensions are back in Haskell,
+more powerful than ever before!</p>
+
+  <p>Redesigned monad comprehensions generalize the syntax for working with lists. Quite interestingly, 
+they also generalize syntax for zipping, grouping and ordering of lists. This article shows how 
+to use some of the new expressive power when working with well-known monads. You'll learn 
+what "parallel composition" means for parsers, a poor man's concurrency monad and an 
+evaluation order monad.</p>
+</blockquote>
+
+<p>The article can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/articles/comprefun.html">the author's academic page</a>.</p>
+
+<br />
+
+<h2>Joinads: a retargetable control-flow construct<br />for reactive, parallel and concurrent programming</h2>
+
+<p>Tomas Petricek and Don Syme<br />
+<em>Proceedings of PADL 2011</em></p>
+
+<p>The abstract of the paper:</p>
+
+<blockquote>
+  <p>Modern challenges led to a design of a wide range of programming models for reactive,
+parallel and concurrent programming, but these are often difficult to encode in general 
+purpose languages. We present an abstract type of computations called <em>joinads</em> together 
+with a syntactic language extension that aims to make it easier to use joinads in 
+modern functional languages.</p>
+
+  <p>Our extension generalizes pattern matching to work on abstract computations. It keeps a 
+familiar syntax and semantics of pattern matching making it easy to reason about code, 
+even in a non-standard programming model. We demonstrate our extension using three important 
+programming models – a reactive model based on events; a concurrent model based on join 
+calculus and a parallel model using futures. All three models are implemented as libraries 
+that benefit from our syntactic extension. This makes them easier to use and also opens 
+space for exploring new useful programming models.</p>
+</blockquote>
+
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/joinads.html">the author's academic page</a>.</p>
+
+<div class="navigation">
+
+<p>Next: <a href="use/async.html">Asynchronous workflows and joinads</a> | <a href="toc.html">Table of contents</a></p>
+
+</div>
+
+
+    <!-- HTML for Tool Tips -->
+    
+  </body>
+  </html>
