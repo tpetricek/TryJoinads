@@ -35,6 +35,40 @@ to <em>choice</em> and <em>aliasing</em>. The revised version simplifies the set
 and provides better formal background. The implementation on this page is mostly
 based on the newer (Haskell) version.</p>
 
+<p>Additionally, the page below also contains information about PADL 2014 paper that
+discusses F# computation expressions in a broader perspective and uses an extension
+(implemented in the editor here) for writing applicative functors.</p>
+
+<h2>The F# Computation Expression Zoo</h2>
+
+<p>Tomas Petricek and Don Syme<br />
+<em>Proceedings of PADL 2014</em></p>
+
+<p>The abstract of the paper:</p>
+
+<blockquote>
+  <p>Many computations can be structured using abstract computation types such as monoids, monad transformers or 
+applicative functors. Functional programmers use those abstractions directly while main-stream
+languages often integrate concrete instances as language features - e.g. generators in Python
+or asynchronous computations in C# 5.0. The question is, is there a sweet spot between 
+convenient, hardwired language features, and an inconvenient but flexible libraries?</p>
+
+  <p>F# <em>computation expressions</em> answer this question in the affirmative. Unlike 
+the <code>do</code> notation in Haskell, computation expressions are not tied to a single kind of abstraction.
+They support a wide range of computations, depending on what operations are available. They also 
+provide greater syntactic flexibility leading to a more intuitive syntax, without resorting to 
+full macro-based meta-programming.</p>
+
+  <p>We show that computation expressions can structure well-known computations including monoidal 
+list comprehensions, monadic parsers, applicative formlets and asynchronous sequences based on the 
+list monad transformer. We also present typing rules for computation expressions that are capable of 
+capturing all these applications.</p>
+</blockquote>
+
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/computation-zoo/">the author's academic page</a>.</p>
+
+<br />
+
 <h2>Extending Monads with Pattern Matching</h2>
 
 <p>Tomas Petricek, Alan Mycroft and Don Syme<br />
@@ -61,7 +95,7 @@ from the notation include speculative parallelism, waiting for a combination of 
 interface events, but also encoding of validation rules using the intersection of parsers.</p>
 </blockquote>
 
-<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/docase.html">the author's academic page</a>.</p>
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/docase/">the author's academic page</a>.</p>
 
 <br />
 
@@ -89,7 +123,7 @@ change the evaluation strategy of functional code translated to the monadic form
 changing its structure or types.</p>
 </blockquote>
 
-<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/malias.html">the author's academic page</a>.</p>
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/malias/">the author's academic page</a>.</p>
 
 <br />
 
@@ -111,7 +145,7 @@ what "parallel composition" means for parsers, a poor man's concurrency monad an
 evaluation order monad.</p>
 </blockquote>
 
-<p>The article can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/articles/comprefun.html">the author's academic page</a>.</p>
+<p>The article can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/articles/comprefun/">the author's academic page</a>.</p>
 
 <br />
 
@@ -138,7 +172,7 @@ that benefit from our syntactic extension. This makes them easier to use and als
 space for exploring new useful programming models.</p>
 </blockquote>
 
-<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/joinads.html">the author's academic page</a>.</p>
+<p>The paper can be downloaded from <a href="http://www.cl.cam.ac.uk/~tp322/papers/joinads/">the author's academic page</a>.</p>
 
 <div class="navigation">
 
