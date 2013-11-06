@@ -92,41 +92,41 @@ F# computation zoo
 
 ### Monads 
 
- * [**Functional monads and laws**](monads.html) discusses the definition of computation
+ * [**Functional monads and laws**](computations/monads.html) discusses the definition of computation
    expression for a monad in terms of _bind_ and _return_ and shows syntactic equalities that 
    correspond to well-known monad laws.
 
- * [**Sequencing of monads**](monads.html#seq) shows how (untracked) effects can be 
+ * [**Sequencing of monads**](computations/monads.html#seq) shows how (untracked) effects can be 
    handled in computation expressions. The section shows both approaches - for _monadic containers_
    and for _monadic computations_.
 
- * [**Monadic control flow**](monads.html#control) extends the previous definitions of 
+ * [**Monadic control flow**](computations/monads.html#control) extends the previous definitions of 
    a monad with additional control flow constructs including `for` and `while` loops and
    exception handling constructs.
 
 ### Semigroups and monoids
 
- * [**Monoidal computation**](monoids.html) shows how to define computatione expressions
+ * [**Monoidal computation**](computations/monoids.html) shows how to define computatione expressions
    for a simple monoidal structure. It discusses the ways of embedding effects in monoidal
    computations and shows syntactic equalities that correspond to monoid laws.
    
 ### Composed computations
 
- * [**Additive parsers**](additive.html#parsers) shows one alternative syntax for 
+ * [**Additive parsers**](computations/additive.html#parsers) shows one alternative syntax for 
    working with computations that are _monadic_ and _monoidal_ at the same time.
    The syntax is demonstrated using parser combinators.
 
- * [**Additive sequences**](additive.html#seq) shows an alternative syntax for 
+ * [**Additive sequences**](computations/additive.html#seq) shows an alternative syntax for 
    working with _monadic_ and _monoidal_ computation. The syntax emphasizes the 
    monoidal structure and is demonstrated using lists.
 
- * [**Layered monads**](layered.html) demonstrates a computation expression that can be
+ * [**Layered monads**](computations/layered.html) demonstrates a computation expression that can be
    used to work with computations that are formed by composing monads. The example
    is based on monad transformers known from Haskell.
 
 ### Applicative functors
 
- * [**Applicative functors**](applicative.html) demonstrates a research extension for 
+ * [**Applicative functors**](computations/applicative.html) demonstrates a research extension for 
    F# that allows using _applicative functors_ (also called _idioms_) using the 
    computation expression syntax. An example uses formlets that are used for building
    HTML forms.
