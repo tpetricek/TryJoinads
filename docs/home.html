@@ -32,6 +32,11 @@ programming, but it also shows several examples from other domains, including pa
 Aside from uses of <em>joinads</em>, there are also several sections that discuss how to implement joinads for other
 types of values or computations.</p>
 
+<p>Aside from joinads, the web site also includes examples of encoding various abstract computation types
+(such as monads, monoids, applicative functors and monad transformers) using F# computation expressions.
+These use mostly standard F# computation expressions, with an extension for applicative functors and
+accompany the article <a href="pubs.html">F# Computation Zoo</a>.</p>
+
 <p>The tutorial uses an Interactive F# console hosted in a web browser using <a href="http://www.silverlight.net/" title="Silverlight homepage">Silverlight</a> (Windows or Mac) or 
 <a href="http://www.go-mono.com/moonlight/" title="Moonlight homepage">Moonlight</a> (Linux), so you can run the tutorials in your browser and experiment on your own. The console is based
 on an <a href="http://fsharppowerpack.codeplex.com/" title="Open-source release of F#">open-source release</a> of the F# compiler. A research implementation of the F# compiler that implements
@@ -41,7 +46,7 @@ joinads is <a href="https://github.com/tpetricek/FSharp.Extensions" title="F# Ex
 of joinads or an extension of the F# compiler that could be added, please get in touch: <a href="tomas@tomasp.net">tomas@tomasp.net</a> or 
 <a href="http://twitter.com/tomaspetricek">@tomaspetricek</a>.</p>
 
-<h2>Table of contents</h2>
+<h2>Joinads research extension</h2>
 
 <h3>Introduction</h3>
 
@@ -94,6 +99,53 @@ For parsers, joinads make it possible to express the <em>intersection of languag
 <li><p><a href="implement/async.html"><strong>Joinads for asynchronous workflows</strong></a>
 explains how to add joinad operations to the <code>Async&lt;'T&gt;</code> type. The sample also provides more
 details on how aliasing is used in joinads.</p></li>
+</ul>
+
+<h2>F# computation zoo</h2>
+
+<h3>Monads</h3>
+
+<ul>
+<li><p><a href="monads.html"><strong>Functional monads and laws</strong></a> discusses the definition of computation
+expression for a monad in terms of <em>bind</em> and <em>return</em> and shows syntactic equalities that
+correspond to well-known monad laws.</p></li>
+<li><p><a href="monads.html#seq"><strong>Sequencing of monads</strong></a> shows how (untracked) effects can be 
+handled in computation expressions. The section shows both approaches - for <em>monadic containers</em>
+and for <em>monadic computations</em>.</p></li>
+<li><p><a href="monads.html#control"><strong>Monadic control flow</strong></a> extends the previous definitions of 
+a monad with additional control flow constructs including <code>for</code> and <code>while</code> loops and
+exception handling constructs.</p></li>
+</ul>
+
+<h3>Semigroups and monoids</h3>
+
+<ul>
+<li><a href="monoids.html"><strong>Monoidal computation</strong></a> shows how to define computatione expressions
+for a simple monoidal structure. It discusses the ways of embedding effects in monoidal
+computations and shows syntactic equalities that correspond to monoid laws.</li>
+</ul>
+
+<h3>Composed computations</h3>
+
+<ul>
+<li><p><a href="additive.html#parsers"><strong>Additive parsers</strong></a> shows one alternative syntax for 
+working with computations that are <em>monadic</em> and <em>monoidal</em> at the same time.
+The syntax is demonstrated using parser combinators.</p></li>
+<li><p><a href="additive.html#seq"><strong>Additive sequences</strong></a> shows an alternative syntax for 
+working with <em>monadic</em> and <em>monoidal</em> computation. The syntax emphasizes the
+monoidal structure and is demonstrated using lists.</p></li>
+<li><p><a href="layered.html"><strong>Layered monads</strong></a> demonstrates a computation expression that can be
+used to work with computations that are formed by composing monads. The example
+is based on monad transformers known from Haskell.</p></li>
+</ul>
+
+<h3>Applicative functors</h3>
+
+<ul>
+<li><a href="applicative.html"><strong>Applicative functors</strong></a> demonstrates a research extension for 
+F# that allows using <em>applicative functors</em> (also called <em>idioms</em>) using the
+computation expression syntax. An example uses formlets that are used for building
+HTML forms.</li>
 </ul>
 
 <span></span>
