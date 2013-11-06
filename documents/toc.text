@@ -34,20 +34,20 @@ F# computation zoo
 
 ### Monads 
 
- * [**Functional monads and laws**](monads.html)
- * [**Sequencing of monads**](monads.html#seq)
- * [**Monadic control flow**](monads.html#control)
+ * [Functional monads and laws](computations/monads.html)
+ * [Sequencing of monads](computations/monads.html#seq)
+ * [Monadic control flow](computations/monads.html#control)
 
 ### Semigroups and monoids
 
- * [**Monoidal computation**](monoids.html)
+ * [Monoidal computation](computations/monoids.html)
 
 ### Composed computations
 
- * [**Additive parsers**](additive.html#parsers)
- * [**Additive sequences**](additive.html#seq)
- * [**Layered monads**](layered.html)
+ * [Additive parsers](computations/additive.html#parsers)
+ * [Additive sequences](computations/additive.html#seq)
+ * [Layered monads](computations/layered.html)
 
 ### Applicative functors
 
- * [**Applicative functors**](applicative.html)
+ * [Applicative functors](computations/applicative.html)
