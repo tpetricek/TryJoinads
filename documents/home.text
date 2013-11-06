@@ -11,6 +11,11 @@ programming, but it also shows several examples from other domains, including pa
 Aside from uses of _joinads_, there are also several sections that discuss how to implement joinads for other
 types of values or computations.
 
+Aside from joinads, the web site also includes examples of encoding various abstract computation types
+(such as monads, monoids, applicative functors and monad transformers) using F# computation expressions.
+These use mostly standard F# computation expressions, with an extension for applicative functors and
+accompany the article [F# Computation Zoo](pubs.html). 
+
 The tutorial uses an Interactive F# console hosted in a web browser using [Silverlight][sl] (Windows or Mac) or 
 [Moonlight][ml] (Linux), so you can run the tutorials in your browser and experiment on your own. The console is based
 on an [open-source release][oss] of the F# compiler. A research implementation of the F# compiler that implements
@@ -26,8 +31,8 @@ of joinads or an extension of the F# compiler that could be added, please get in
  [fsx]: https://github.com/tpetricek/FSharp.Extensions "F# Extensions Source Code"
 
 
-Table of contents
------------------
+Joinads research extension
+--------------------------
 
 ### Introduction
 
@@ -81,5 +86,49 @@ of computations including `option` values and F# asynchronous workflows.
  * [**Joinads for asynchronous workflows**](implement/async.html)
    explains how to add joinad operations to the `Async<'T>` type. The sample also provides more
    details on how aliasing is used in joinads.
+
+F# computation zoo
+------------------
+
+### Monads 
+
+ * [**Functional monads and laws**](monads.html) discusses the definition of computation
+   expression for a monad in terms of _bind_ and _return_ and shows syntactic equalities that 
+   correspond to well-known monad laws.
+
+ * [**Sequencing of monads**](monads.html#seq) shows how (untracked) effects can be 
+   handled in computation expressions. The section shows both approaches - for _monadic containers_
+   and for _monadic computations_.
+
+ * [**Monadic control flow**](monads.html#control) extends the previous definitions of 
+   a monad with additional control flow constructs including `for` and `while` loops and
+   exception handling constructs.
+
+### Semigroups and monoids
+
+ * [**Monoidal computation**](monoids.html) shows how to define computatione expressions
+   for a simple monoidal structure. It discusses the ways of embedding effects in monoidal
+   computations and shows syntactic equalities that correspond to monoid laws.
+   
+### Composed computations
+
+ * [**Additive parsers**](additive.html#parsers) shows one alternative syntax for 
+   working with computations that are _monadic_ and _monoidal_ at the same time.
+   The syntax is demonstrated using parser combinators.
+
+ * [**Additive sequences**](additive.html#seq) shows an alternative syntax for 
+   working with _monadic_ and _monoidal_ computation. The syntax emphasizes the 
+   monoidal structure and is demonstrated using lists.
+
+ * [**Layered monads**](layered.html) demonstrates a computation expression that can be
+   used to work with computations that are formed by composing monads. The example
+   is based on monad transformers known from Haskell.
+
+### Applicative functors
+
+ * [**Applicative functors**](applicative.html) demonstrates a research extension for 
+   F# that allows using _applicative functors_ (also called _idioms_) using the 
+   computation expression syntax. An example uses formlets that are used for building
+   HTML forms.
 
 <span></span>

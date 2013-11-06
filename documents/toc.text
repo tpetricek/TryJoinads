@@ -7,6 +7,9 @@ This page contains a brief table of contents of the Try Joinads web site. For a 
 table of contents that shows annotations for every article, go to the
 [Welcome to Try Joinads](home.html) page.
 
+Joinads research extension
+--------------------------
+
 ### Introduction
 
 * [Welcome to Try Joinads](home.html)
@@ -25,3 +28,26 @@ table of contents that shows annotations for every article, go to the
 * [Programming with option values](implement/options.html)
 * [Writing parsers with joinads](implement/parsers.html)
 * [Joinads for asynchronous workflows](implement/async.html)
+
+F# computation zoo
+------------------
+
+### Monads 
+
+ * [**Functional monads and laws**](monads.html)
+ * [**Sequencing of monads**](monads.html#seq)
+ * [**Monadic control flow**](monads.html#control)
+
+### Semigroups and monoids
+
+ * [**Monoidal computation**](monoids.html)
+
+### Composed computations
+
+ * [**Additive parsers**](additive.html#parsers)
+ * [**Additive sequences**](additive.html#seq)
+ * [**Layered monads**](layered.html)
+
+### Applicative functors
+
+ * [**Applicative functors**](applicative.html)
